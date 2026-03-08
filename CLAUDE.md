@@ -24,6 +24,28 @@ debriefer/
 
 **Tooling**: npm workspaces, turborepo, TypeScript 5.x, vitest, Node.js 22
 
+## Git Workflow
+
+**Main branch is protected — all changes go through PRs.**
+
+1. Create a feature branch: `git checkout -b feat/descriptive-name` (or `fix/`, `chore/`, `docs/`)
+2. Make changes, commit with descriptive messages
+3. Push branch: `git push -u origin feat/descriptive-name`
+4. Create PR: `gh pr create --title "..." --body "..."`
+5. PR gets Copilot auto-review
+6. Merge after review
+
+**Never push directly to main.** Branch protection is enforced on GitHub.
+
+### Branch Naming
+
+| Prefix | Use Case | Example |
+|--------|----------|---------|
+| `feat/` | New features, new sources | `feat/wikipedia-source` |
+| `fix/` | Bug fixes | `fix/early-stop-counting` |
+| `chore/` | Maintenance, deps | `chore/update-dependencies` |
+| `docs/` | Documentation only | `docs/add-source-guide` |
+
 ## Common Commands
 
 ```bash
