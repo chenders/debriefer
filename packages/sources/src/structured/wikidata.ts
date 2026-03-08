@@ -39,7 +39,12 @@ const DEFAULT_USER_AGENT = "debriefer/0.1.0 (https://github.com/chenders/debrief
  * Escapes backslashes first, then double quotes, to prevent injection.
  */
 export function escapeSparql(str: string): string {
-  return str.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+  return str
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, "\\n")
+    .replace(/\r/g, "\\r")
+    .replace(/\t/g, "\\t")
 }
 
 /**
@@ -321,11 +326,19 @@ export class WikidataSource extends BaseResearchSource<ResearchSubject> {
       const query = this.queryBuilder(subject)
       return createHash("sha256").update(query).digest("hex").slice(0, 16)
     }
-    // Default builder: name + validated birth year
+    // Default builder: name + validated birth year (number or numeric string,
+    // matching the same parsing logic used in defaultQueryBuilder)
     const rawBirthYear = subject.context?.birthYear
-    const birthYear =
-      typeof rawBirthYear === "number" && Number.isFinite(rawBirthYear) ? rawBirthYear : undefined
-    return birthYear ? `${subject.name}:${birthYear}` : subject.name
+    let birthYear: number | undefined
+    if (typeof rawBirthYear === "number" && Number.isFinite(rawBirthYear)) {
+      birthYear = rawBirthYear
+    } else if (typeof rawBirthYear === "string") {
+      const parsed = parseInt(rawBirthYear, 10)
+      if (Number.isFinite(parsed)) {
+        birthYear = parsed
+      }
+    }
+    return birthYear !== undefined ? `${subject.name}:${birthYear}` : subject.name
   }
 
   /**
@@ -347,15 +360,15 @@ export class WikidataSource extends BaseResearchSource<ResearchSubject> {
           if (signal.aborted) throw new DOMException("Aborted", "AbortError")
           const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt)
           await new Promise<void>((resolve, reject) => {
-            const timer = setTimeout(resolve, delay)
-            signal.addEventListener(
-              "abort",
-              () => {
-                clearTimeout(timer)
-                reject(signal.reason)
-              },
-              { once: true }
-            )
+            const onAbort = () => {
+              clearTimeout(timer)
+              reject(signal.reason)
+            }
+            const timer = setTimeout(() => {
+              signal.removeEventListener("abort", onAbort)
+              resolve()
+            }, delay)
+            signal.addEventListener("abort", onAbort, { once: true })
           })
           continue
         }
@@ -378,15 +391,15 @@ export class WikidataSource extends BaseResearchSource<ResearchSubject> {
         if (attempt < this.maxRetries) {
           const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt)
           await new Promise<void>((resolve, reject) => {
-            const timer = setTimeout(resolve, delay)
-            signal.addEventListener(
-              "abort",
-              () => {
-                clearTimeout(timer)
-                reject(signal.reason)
-              },
-              { once: true }
-            )
+            const onAbort = () => {
+              clearTimeout(timer)
+              reject(signal.reason)
+            }
+            const timer = setTimeout(() => {
+              signal.removeEventListener("abort", onAbort)
+              resolve()
+            }, delay)
+            signal.addEventListener("abort", onAbort, { once: true })
           })
           continue
         }

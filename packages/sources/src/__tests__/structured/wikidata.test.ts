@@ -102,6 +102,12 @@ describe("escapeSparql", () => {
   it("escapes multiple backslashes and quotes", () => {
     expect(escapeSparql('a\\b\\c"d"e')).toBe('a\\\\b\\\\c\\"d\\"e')
   })
+
+  it("escapes newlines, carriage returns, and tabs", () => {
+    expect(escapeSparql("line1\nline2")).toBe("line1\\nline2")
+    expect(escapeSparql("col1\tcol2")).toBe("col1\\tcol2")
+    expect(escapeSparql("a\r\nb")).toBe("a\\r\\nb")
+  })
 })
 
 // ============================================================================
@@ -614,6 +620,18 @@ describe("WikidataSource", () => {
     it("ignores non-finite birthYear values", () => {
       const source = new WikidataSource()
       const subject = makeSubject({ context: { birthYear: NaN } })
+      expect(source.buildQuery(subject)).toBe("John Wayne")
+    })
+
+    it("includes string birthYear in cache key (matching defaultQueryBuilder parsing)", () => {
+      const source = new WikidataSource()
+      const subject = makeSubject({ context: { birthYear: "1907" } })
+      expect(source.buildQuery(subject)).toBe("John Wayne:1907")
+    })
+
+    it("ignores non-numeric string birthYear in cache key", () => {
+      const source = new WikidataSource()
+      const subject = makeSubject({ context: { birthYear: "unknown" } })
       expect(source.buildQuery(subject)).toBe("John Wayne")
     })
   })
