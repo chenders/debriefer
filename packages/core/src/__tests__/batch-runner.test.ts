@@ -250,7 +250,7 @@ describe("ParallelBatchRunner", () => {
     })
 
     const results = await runner.run([1], async () => {
-      throw "string error" // eslint-disable-line no-throw-literal -- testing non-Error throw handling
+      throw "string error"
     })
 
     expect(results[0]!.result).toBeNull()

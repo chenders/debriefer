@@ -154,26 +154,6 @@ describe("ResearchOrchestrator", () => {
 
     // Test 2: Sources within a phase run concurrently
     it("sources within a phase run concurrently", async () => {
-      let concurrentCount = 0
-      let maxConcurrent = 0
-
-      const _makeTimedSource = (name: string) =>
-        createMockSource({
-          name,
-          type: name,
-          reliabilityTier: ReliabilityTier.UNRELIABLE_UGC,
-          reliabilityScore: 0.35,
-          lookupDelay: 50,
-          onLookup: () => {
-            concurrentCount++
-            maxConcurrent = Math.max(maxConcurrent, concurrentCount)
-            // Decrement happens after the delay in the lookup mock,
-            // but we need to track it differently since onLookup fires
-            // before the delay. Let's use a different approach.
-          },
-        })
-
-      // Override: track concurrency via a shared counter that includes the delay
       let inFlight = 0
       let peakInFlight = 0
 

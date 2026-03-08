@@ -102,7 +102,7 @@ function getModelCosts(model: string): { input: number; output: number } {
  *
  * The consumer provides:
  * - `promptBuilder`: converts subject + findings into system/user prompts
- * - `responseParser` (optional): validates/transforms the raw JSON response
+ * - `responseParser`: validates/transforms the raw JSON response
  *
  * The synthesizer handles:
  * - Anthropic API calls with configurable model and max tokens
