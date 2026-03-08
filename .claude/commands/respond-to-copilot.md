@@ -13,6 +13,7 @@ Review and respond to GitHub Copilot review comments on a pull request.
    - Otherwise find PR for current branch via `gh pr view`
 
 2. **Fetch all review comments**
+
    ```bash
    gh api repos/chenders/debriefer/pulls/{pr_number}/comments | jq '.[] | {id, body, path, line}'
    ```
@@ -30,11 +31,13 @@ Review and respond to GitHub Copilot review comments on a pull request.
    - Push changes
 
 6. **Reply to each comment**
+
    ```bash
    gh api -X POST repos/chenders/debriefer/pulls/{pr}/comments/{id}/replies -f body="Fixed in $(git rev-parse --short HEAD). Explanation."
    ```
 
-7. **Resolve implemented threads** (use PRRT_ thread IDs, not PRRC_ comment IDs)
+7. **Resolve implemented threads** (use PRRT* thread IDs, not PRRC* comment IDs)
+
    ```bash
    # Get thread IDs
    gh api graphql -f query='query { repository(owner: "chenders", name: "debriefer") { pullRequest(number: PR) { reviewThreads(first: 50) { nodes { id isResolved comments(first: 1) { nodes { body } } } } } } }'
@@ -53,4 +56,4 @@ Review and respond to GitHub Copilot review comments on a pull request.
 
 - Never dismiss suggestions without explanation
 - Never defer work without explicit user approval
-- Thread IDs (PRRT_) are NOT the same as comment IDs (PRRC_)
+- Thread IDs (PRRT*) are NOT the same as comment IDs (PRRC*)

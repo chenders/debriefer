@@ -7,26 +7,31 @@ Run all quality checks on demand.
 Run the following checks:
 
 ### 1. Build
+
 ```bash
 npx turbo build
 ```
 
 ### 2. Tests
+
 ```bash
 npx turbo test
 ```
 
 ### 3. Type Check
+
 ```bash
 npx turbo type-check
 ```
 
 ### 4. Lint
+
 ```bash
 npx turbo lint
 ```
 
 ### 5. Format Check
+
 ```bash
 npx prettier --check .
 ```

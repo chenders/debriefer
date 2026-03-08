@@ -32,6 +32,7 @@ For each source file, check:
 - **Integration**: Does it work with the orchestrator flow?
 
 For sources specifically:
+
 - `isAvailable()` returns false when API key missing
 - `fetchResult()` handles HTTP errors gracefully
 - Cache hit/miss paths

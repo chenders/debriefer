@@ -43,7 +43,7 @@ describe("ReliabilityTier", () => {
 
   it("all enum values are lowercase_snake_case strings", () => {
     for (const tier of allTiers) {
-      expect(tier).toMatch(/^[a-z][a-z0-9]*(_[a-z0-9]+)*$/)
+      expect(tier).toMatch(/^[a-z][a-z0-9]*(_[a-z0-9]+)*$/) // eslint-disable-line security/detect-unsafe-regex
     }
   })
 
