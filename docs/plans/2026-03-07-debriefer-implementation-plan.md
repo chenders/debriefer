@@ -11,6 +11,7 @@
 **Reference design:** `docs/plans/2026-03-07-debriefer-design.md`
 
 **Reference architecture (deadonfilm source):**
+
 - Shared utils: `server/src/lib/shared/` (concurrency.ts, readability-extract.ts, sanitize-source-text.ts, duckduckgo-search.ts, fetch-page-with-fallbacks.ts)
 - Death base source: `server/src/lib/death-sources/base-source.ts`
 - Bio base source: `server/src/lib/biography-sources/base-source.ts`
@@ -31,6 +32,7 @@
 ### Task 1: Create debriefer repo and monorepo structure
 
 **Files:**
+
 - Create: `debriefer/` repo with full directory structure
 - Create: `package.json` (workspace root)
 - Create: `turbo.json`
@@ -123,6 +125,7 @@ git init
 **Step 5: Create package directories and package.json files**
 
 For `packages/core/package.json`:
+
 ```json
 {
   "name": "debriefer",
@@ -156,6 +159,7 @@ For `packages/core/package.json`:
 ```
 
 For `packages/sources/package.json`:
+
 ```json
 {
   "name": "debriefer-sources",
@@ -180,6 +184,7 @@ For `packages/sources/package.json`:
 ```
 
 For `packages/cli/package.json`:
+
 ```json
 {
   "name": "debriefer-cli",
@@ -196,6 +201,7 @@ For `packages/cli/package.json`:
 ```
 
 For `packages/server/package.json`:
+
 ```json
 {
   "name": "debriefer-server",
@@ -213,6 +219,7 @@ For `packages/server/package.json`:
 ```
 
 For `packages/mcp/package.json`:
+
 ```json
 {
   "name": "debriefer-mcp",
@@ -251,6 +258,7 @@ git commit -m "feat: scaffold monorepo with 5 packages"
 ### Task 2: Implement core type system
 
 **Files:**
+
 - Create: `packages/core/src/types.ts`
 - Test: `packages/core/src/__tests__/types.test.ts`
 
@@ -258,27 +266,27 @@ git commit -m "feat: scaffold monorepo with 5 packages"
 
 ```typescript
 // packages/core/src/__tests__/types.test.ts
-import { describe, it, expect } from 'vitest'
-import type { ResearchSubject, RawFinding, ScoredFinding, ResearchConfig } from '../types.js'
+import { describe, it, expect } from "vitest"
+import type { ResearchSubject, RawFinding, ScoredFinding, ResearchConfig } from "../types.js"
 
-describe('core types', () => {
-  it('ResearchSubject accepts minimal fields', () => {
-    const subject: ResearchSubject = { id: '1', name: 'Test' }
-    expect(subject.name).toBe('Test')
+describe("core types", () => {
+  it("ResearchSubject accepts minimal fields", () => {
+    const subject: ResearchSubject = { id: "1", name: "Test" }
+    expect(subject.name).toBe("Test")
   })
 
-  it('ResearchSubject accepts context', () => {
+  it("ResearchSubject accepts context", () => {
     const subject: ResearchSubject = {
       id: 1,
-      name: 'John Wayne',
-      context: { deathday: '1979-06-11', tmdbId: 2157 },
+      name: "John Wayne",
+      context: { deathday: "1979-06-11", tmdbId: 2157 },
     }
-    expect(subject.context?.deathday).toBe('1979-06-11')
+    expect(subject.context?.deathday).toBe("1979-06-11")
   })
 
-  it('RawFinding has required and optional fields', () => {
+  it("RawFinding has required and optional fields", () => {
     const finding: RawFinding = {
-      text: 'He died of stomach cancer.',
+      text: "He died of stomach cancer.",
       confidence: 0.85,
       costUsd: 0,
     }
@@ -286,13 +294,13 @@ describe('core types', () => {
     expect(finding.confidence).toBe(0.85)
   })
 
-  it('ResearchConfig has sensible defaults expressible', () => {
+  it("ResearchConfig has sensible defaults expressible", () => {
     const config: ResearchConfig = {
       concurrency: 5,
       confidenceThreshold: 0.6,
       reliabilityThreshold: 0.6,
       earlyStopThreshold: 3,
-      costLimits: { maxCostPerSubject: 0.50 },
+      costLimits: { maxCostPerSubject: 0.5 },
     }
     expect(config.concurrency).toBe(5)
   })
@@ -304,11 +312,13 @@ describe('core types', () => {
 ```bash
 cd packages/core && npx vitest run src/__tests__/types.test.ts
 ```
+
 Expected: FAIL (module not found)
 
 **Step 3: Implement types.ts**
 
 Extract and generalize from `server/src/lib/death-sources/types.ts` and `server/src/lib/biography-sources/types.ts`. See design doc Section 2 for full type definitions. Key types:
+
 - `ResearchSubject` (id, name, context)
 - `RawFinding` (text, url, publication, articleTitle, confidence, costUsd, metadata)
 - `ScoredFinding extends RawFinding` (+ sourceType, sourceName, reliabilityTier, reliabilityScore)
@@ -325,6 +335,7 @@ Extract and generalize from `server/src/lib/death-sources/types.ts` and `server/
 ```bash
 cd packages/core && npx vitest run src/__tests__/types.test.ts
 ```
+
 Expected: PASS
 
 **Step 5: Commit**
@@ -337,6 +348,7 @@ git commit -m "feat(core): add core type system"
 ### Task 3: Implement reliability scoring
 
 **Files:**
+
 - Create: `packages/core/src/reliability.ts`
 - Test: `packages/core/src/__tests__/reliability.test.ts`
 
@@ -344,31 +356,27 @@ git commit -m "feat(core): add core type system"
 
 ```typescript
 // packages/core/src/__tests__/reliability.test.ts
-import { describe, it, expect } from 'vitest'
-import {
-  ReliabilityTier,
-  RELIABILITY_SCORES,
-  getReliabilityScore,
-} from '../reliability.js'
+import { describe, it, expect } from "vitest"
+import { ReliabilityTier, RELIABILITY_SCORES, getReliabilityScore } from "../reliability.js"
 
-describe('ReliabilityTier', () => {
-  it('has all 12 tiers', () => {
+describe("ReliabilityTier", () => {
+  it("has all 12 tiers", () => {
     expect(Object.keys(ReliabilityTier)).toHaveLength(12)
   })
 
-  it('TIER_1_NEWS scores 0.95', () => {
+  it("TIER_1_NEWS scores 0.95", () => {
     expect(RELIABILITY_SCORES[ReliabilityTier.TIER_1_NEWS]).toBe(0.95)
   })
 
-  it('UNRELIABLE_UGC scores 0.35', () => {
+  it("UNRELIABLE_UGC scores 0.35", () => {
     expect(RELIABILITY_SCORES[ReliabilityTier.UNRELIABLE_UGC]).toBe(0.35)
   })
 
-  it('getReliabilityScore returns correct score', () => {
+  it("getReliabilityScore returns correct score", () => {
     expect(getReliabilityScore(ReliabilityTier.STRUCTURED_DATA)).toBe(1.0)
   })
 
-  it('scores are ordered descending', () => {
+  it("scores are ordered descending", () => {
     const tiers = Object.values(ReliabilityTier)
     const scores = tiers.map((t) => RELIABILITY_SCORES[t])
     for (let i = 1; i < scores.length; i++) {
@@ -400,6 +408,7 @@ git commit -m "feat(core): add Wikipedia RSP-based reliability scoring"
 ### Task 4: Implement SourceRateLimiter
 
 **Files:**
+
 - Create: `packages/core/src/rate-limiter.ts`
 - Test: `packages/core/src/__tests__/rate-limiter.test.ts`
 
@@ -426,6 +435,7 @@ git commit -m "feat(core): add per-domain SourceRateLimiter"
 ### Task 5: Implement BatchCostTracker
 
 **Files:**
+
 - Create: `packages/core/src/cost-tracker.ts`
 - Test: `packages/core/src/__tests__/cost-tracker.test.ts`
 
@@ -440,6 +450,7 @@ Test: addCost, getTotalCost, getSubjectCost, isSubjectLimitExceeded, isTotalLimi
 ### Task 6: Implement ParallelBatchRunner
 
 **Files:**
+
 - Create: `packages/core/src/batch-runner.ts`
 - Test: `packages/core/src/__tests__/batch-runner.test.ts`
 
@@ -454,6 +465,7 @@ Test: processes items with bounded concurrency, reports progress via callback, h
 ### Task 7: Implement CacheProvider interface + InMemoryCache
 
 **Files:**
+
 - Create: `packages/core/src/cache/types.ts`
 - Create: `packages/core/src/cache/in-memory.ts`
 - Test: `packages/core/src/__tests__/cache.test.ts`
@@ -467,6 +479,7 @@ Test: get/set/delete, TTL expiration (use `vi.useFakeTimers()`), cache miss retu
 ### Task 8: Implement TelemetryProvider interface + ConsoleTelemetry
 
 **Files:**
+
 - Create: `packages/core/src/telemetry/types.ts`
 - Create: `packages/core/src/telemetry/console.ts`
 - Create: `packages/core/src/telemetry/noop.ts`
@@ -481,6 +494,7 @@ Test: ConsoleTelemetry logs events to console (spy), NoopTelemetry does nothing 
 ### Task 9: Implement confidence calculation
 
 **Files:**
+
 - Create: `packages/core/src/confidence.ts`
 - Test: `packages/core/src/__tests__/confidence.test.ts`
 
@@ -501,6 +515,7 @@ The key generalization: instead of hardcoded `DEATH_KEYWORDS` and `BIO_REQUIRED_
 ### Task 10: Implement BaseResearchSource
 
 **Files:**
+
 - Create: `packages/core/src/base-source.ts`
 - Test: `packages/core/src/__tests__/base-source.test.ts`
 
@@ -515,6 +530,7 @@ Create a `TestSource extends BaseResearchSource<ResearchSubject>` that returns a
 **Step 3: Implement base-source.ts**
 
 Generalize from both deadonfilm base classes. Key changes from deadonfilm:
+
 - Remove `DataSourceType` / `BiographySourceType` enum dependency — use `string` for type
 - Accept `CacheProvider` injection instead of importing `death-sources/cache.ts` directly
 - Accept `SourceRateLimiter` injection instead of importing it
@@ -534,6 +550,7 @@ git commit -m "feat(core): add BaseResearchSource with caching, rate limiting, t
 ### Task 11: Implement Synthesizer interface + ClaudeSynthesizer
 
 **Files:**
+
 - Create: `packages/core/src/synthesizer.ts`
 - Test: `packages/core/src/__tests__/synthesizer.test.ts`
 
@@ -550,6 +567,7 @@ Key generalization: the synthesis prompt is provided by the consumer, not hardco
 ### Task 12: Implement ResearchOrchestrator
 
 **Files:**
+
 - Create: `packages/core/src/orchestrator.ts`
 - Test: `packages/core/src/__tests__/orchestrator.test.ts`
 
@@ -558,6 +576,7 @@ Key generalization: the synthesis prompt is provided by the consumer, not hardco
 **Step 1: Write the failing test**
 
 Create 3 mock sources across 2 phases. Test:
+
 - `debrief()`: executes phases sequentially, sources within phase concurrently
 - `debrief()`: accumulates all findings, passes to synthesizer
 - `debrief()`: early stops when threshold met
@@ -571,6 +590,7 @@ Create 3 mock sources across 2 phases. Test:
 **Step 3: Implement orchestrator.ts**
 
 Core algorithm (from both deadonfilm orchestrators):
+
 1. For each subject: iterate phases sequentially
 2. Within each phase: `Promise.allSettled()` all source lookups
 3. Accumulate successful findings into `scoredFindings[]` (tag with reliability info)
@@ -592,25 +612,26 @@ git commit -m "feat(core): add ResearchOrchestrator with phased execution and ea
 ### Task 13: Create core package index and verify build
 
 **Files:**
+
 - Create: `packages/core/src/index.ts` (re-exports all public API)
 
 **Step 1: Create index.ts that exports everything**
 
 ```typescript
-export { ResearchOrchestrator } from './orchestrator.js'
-export { BaseResearchSource } from './base-source.js'
-export { ClaudeSynthesizer } from './synthesizer.js'
-export { ReliabilityTier, RELIABILITY_SCORES, getReliabilityScore } from './reliability.js'
-export { SourceRateLimiter } from './rate-limiter.js'
-export { BatchCostTracker } from './cost-tracker.js'
-export { ParallelBatchRunner } from './batch-runner.js'
-export { InMemoryCache } from './cache/in-memory.js'
-export { ConsoleTelemetry } from './telemetry/console.js'
-export { NoopTelemetry } from './telemetry/noop.js'
-export { calculateConfidence } from './confidence.js'
-export type { /* all types */ } from './types.js'
-export type { CacheProvider } from './cache/types.js'
-export type { TelemetryProvider, TelemetrySpan } from './telemetry/types.js'
+export { ResearchOrchestrator } from "./orchestrator.js"
+export { BaseResearchSource } from "./base-source.js"
+export { ClaudeSynthesizer } from "./synthesizer.js"
+export { ReliabilityTier, RELIABILITY_SCORES, getReliabilityScore } from "./reliability.js"
+export { SourceRateLimiter } from "./rate-limiter.js"
+export { BatchCostTracker } from "./cost-tracker.js"
+export { ParallelBatchRunner } from "./batch-runner.js"
+export { InMemoryCache } from "./cache/in-memory.js"
+export { ConsoleTelemetry } from "./telemetry/console.js"
+export { NoopTelemetry } from "./telemetry/noop.js"
+export { calculateConfidence } from "./confidence.js"
+export type {} from /* all types */ "./types.js"
+export type { CacheProvider } from "./cache/types.js"
+export type { TelemetryProvider, TelemetrySpan } from "./telemetry/types.js"
 ```
 
 **Step 2: Build and verify**
@@ -618,6 +639,7 @@ export type { TelemetryProvider, TelemetrySpan } from './telemetry/types.js'
 ```bash
 cd packages/core && npm run build
 ```
+
 Expected: clean compilation, `dist/` populated with .js and .d.ts files
 
 **Step 3: Run all core tests**
@@ -625,6 +647,7 @@ Expected: clean compilation, `dist/` populated with .js and .d.ts files
 ```bash
 cd packages/core && npm test
 ```
+
 Expected: all pass
 
 **Step 4: Commit**
@@ -640,6 +663,7 @@ git commit -m "feat(core): complete core package with public API exports"
 ### Task 14: Implement shared source utilities
 
 **Files:**
+
 - Create: `packages/sources/src/shared/readability-extract.ts`
 - Create: `packages/sources/src/shared/sanitize-text.ts`
 - Create: `packages/sources/src/shared/html-utils.ts`
@@ -648,6 +672,7 @@ git commit -m "feat(core): complete core package with public API exports"
 - Test: `packages/sources/src/__tests__/shared/` (one test per file)
 
 **Reference:**
+
 - `server/src/lib/shared/readability-extract.ts`
 - `server/src/lib/shared/sanitize-source-text.ts`
 - `server/src/lib/death-sources/html-utils.ts`
@@ -661,11 +686,13 @@ Key changes: remove lazy imports from `death-sources/`. Browser fallback and arc
 ### Task 15: Implement structured data sources (Wikidata, Wikipedia)
 
 **Files:**
+
 - Create: `packages/sources/src/structured/wikidata.ts`
 - Create: `packages/sources/src/structured/wikipedia.ts`
 - Test: `packages/sources/src/__tests__/structured/`
 
 **Reference:**
+
 - `server/src/lib/death-sources/sources/wikidata.ts`
 - `server/src/lib/death-sources/sources/wikipedia.ts`
 - `server/src/lib/biography-sources/sources/wikidata.ts`
@@ -674,6 +701,7 @@ Key changes: remove lazy imports from `death-sources/`. Browser fallback and arc
 Key change: each source is now generic, extending `BaseResearchSource<ResearchSubject>`. The consumer provides query-building logic via constructor options or by subclassing. The source itself handles the API call, parsing, and confidence calculation.
 
 Each source exports a factory function:
+
 ```typescript
 export function wikidata(options?: WikidataOptions): WikidataSource { ... }
 export function wikipedia(options?: WikipediaOptions): WikipediaSource { ... }
@@ -684,6 +712,7 @@ export function wikipedia(options?: WikipediaOptions): WikipediaSource { ... }
 ### Task 16: Implement web search sources
 
 **Files:**
+
 - Create: `packages/sources/src/web-search/google.ts`
 - Create: `packages/sources/src/web-search/bing.ts`
 - Create: `packages/sources/src/web-search/duckduckgo.ts`
@@ -692,6 +721,7 @@ export function wikipedia(options?: WikipediaOptions): WikipediaSource { ... }
 - Test: `packages/sources/src/__tests__/web-search/`
 
 **Reference:**
+
 - `server/src/lib/death-sources/sources/google-search.ts`
 - `server/src/lib/death-sources/sources/bing-search.ts`
 - `server/src/lib/death-sources/sources/duckduckgo-search.ts`
@@ -703,6 +733,7 @@ export function wikipedia(options?: WikipediaOptions): WikipediaSource { ... }
 ### Task 17: Implement news sources
 
 **Files:**
+
 - Create: `packages/sources/src/news/guardian.ts`
 - Create: `packages/sources/src/news/nytimes.ts`
 - Create: `packages/sources/src/news/ap-news.ts`
@@ -719,12 +750,14 @@ export function wikipedia(options?: WikipediaOptions): WikipediaSource { ... }
 ### Task 18: Implement book sources
 
 **Files:**
+
 - Create: `packages/sources/src/books/google-books.ts`
 - Create: `packages/sources/src/books/open-library.ts`
 - Create: `packages/sources/src/books/ia-books.ts`
 - Test: `packages/sources/src/__tests__/books/`
 
 **Reference:**
+
 - `server/src/lib/shared/google-books-api.ts`
 - `server/src/lib/shared/open-library-api.ts`
 - `server/src/lib/shared/ia-books-api.ts`
@@ -734,6 +767,7 @@ export function wikipedia(options?: WikipediaOptions): WikipediaSource { ... }
 ### Task 19: Implement archive sources
 
 **Files:**
+
 - Create: `packages/sources/src/archives/chronicling-america.ts`
 - Create: `packages/sources/src/archives/trove.ts`
 - Create: `packages/sources/src/archives/europeana.ts`
@@ -747,6 +781,7 @@ export function wikipedia(options?: WikipediaOptions): WikipediaSource { ... }
 ### Task 20: Implement obituary sources
 
 **Files:**
+
 - Create: `packages/sources/src/obituary/find-a-grave.ts`
 - Create: `packages/sources/src/obituary/legacy.ts`
 - Test: `packages/sources/src/__tests__/obituary/`
@@ -756,21 +791,24 @@ export function wikipedia(options?: WikipediaOptions): WikipediaSource { ... }
 ### Task 21: Create sources package index
 
 **Files:**
+
 - Create: `packages/sources/src/index.ts`
 
 Export all sources as factory functions:
+
 ```typescript
-export { wikidata } from './structured/wikidata.js'
-export { wikipedia } from './structured/wikipedia.js'
-export { googleSearch } from './web-search/google.js'
+export { wikidata } from "./structured/wikidata.js"
+export { wikipedia } from "./structured/wikipedia.js"
+export { googleSearch } from "./web-search/google.js"
 // ... all sources
 ```
 
 Also export shared utilities that consumers might need:
+
 ```typescript
-export { extractArticle } from './shared/readability-extract.js'
-export { sanitizeText } from './shared/sanitize-text.js'
-export { htmlToText } from './shared/html-utils.js'
+export { extractArticle } from "./shared/readability-extract.js"
+export { sanitizeText } from "./shared/sanitize-text.js"
+export { htmlToText } from "./shared/html-utils.js"
 ```
 
 Build, test all, commit.
@@ -782,6 +820,7 @@ Build, test all, commit.
 ### Task 22: Implement CLI
 
 **Files:**
+
 - Create: `packages/cli/src/index.ts`
 - Test: manual testing (CLI is thin wrapper)
 
@@ -789,39 +828,45 @@ Build, test all, commit.
 
 ```typescript
 #!/usr/bin/env node
-import { Command } from 'commander'
-import { ResearchOrchestrator, ClaudeSynthesizer } from 'debriefer'
-import * as sources from 'debriefer-sources'
+import { Command } from "commander"
+import { ResearchOrchestrator, ClaudeSynthesizer } from "debriefer"
+import * as sources from "debriefer-sources"
 
 const program = new Command()
-  .name('debriefer')
-  .description('Multi-source research orchestration engine')
-  .version('0.1.0')
+  .name("debriefer")
+  .description("Multi-source research orchestration engine")
+  .version("0.1.0")
 
 program
-  .command('debrief')
-  .description('Research a subject')
-  .argument('<name>', 'Subject name to research')
-  .option('--budget <amount>', 'Max cost in USD', parseFloat, 1.0)
-  .option('--categories <list>', 'Comma-separated source categories', 'structured,news,books')
-  .option('--concurrency <n>', 'Parallel subjects', parseInt, 5)
-  .option('--model <model>', 'Synthesis model', 'claude-sonnet-4-20250514')
-  .option('--prompt <prompt>', 'Synthesis system prompt')
-  .option('--format <format>', 'Output format: json, text', 'json')
-  .option('--no-synthesis', 'Skip AI synthesis, return raw findings only')
-  .action(async (name, options) => { /* wire up orchestrator */ })
+  .command("debrief")
+  .description("Research a subject")
+  .argument("<name>", "Subject name to research")
+  .option("--budget <amount>", "Max cost in USD", parseFloat, 1.0)
+  .option("--categories <list>", "Comma-separated source categories", "structured,news,books")
+  .option("--concurrency <n>", "Parallel subjects", parseInt, 5)
+  .option("--model <model>", "Synthesis model", "claude-sonnet-4-20250514")
+  .option("--prompt <prompt>", "Synthesis system prompt")
+  .option("--format <format>", "Output format: json, text", "json")
+  .option("--no-synthesis", "Skip AI synthesis, return raw findings only")
+  .action(async (name, options) => {
+    /* wire up orchestrator */
+  })
 
 program
-  .command('sources')
-  .description('List available sources')
-  .action(async () => { /* list sources with tiers */ })
+  .command("sources")
+  .description("List available sources")
+  .action(async () => {
+    /* list sources with tiers */
+  })
 
 program
-  .command('serve')
-  .description('Start HTTP server')
-  .option('--port <port>', 'Port', parseInt, 8090)
-  .option('--config <path>', 'Config file path', 'debriefer.config.yml')
-  .action(async (options) => { /* start server */ })
+  .command("serve")
+  .description("Start HTTP server")
+  .option("--port <port>", "Port", parseInt, 8090)
+  .option("--config <path>", "Config file path", "debriefer.config.yml")
+  .action(async (options) => {
+    /* start server */
+  })
 
 program.parse()
 ```
@@ -835,6 +880,7 @@ Build, test manually, commit.
 ### Task 23: Implement HTTP server
 
 **Files:**
+
 - Create: `packages/server/src/index.ts`
 - Create: `packages/server/src/routes/debrief.ts`
 - Create: `packages/server/src/routes/runs.ts`
@@ -855,6 +901,7 @@ Test POST /api/debrief with mocked orchestrator. Test GET /api/sources returns s
 ### Task 24: Implement config file loading
 
 **Files:**
+
 - Create: `packages/server/src/config.ts`
 - Test: `packages/server/src/__tests__/config.test.ts`
 
@@ -865,6 +912,7 @@ Load `debriefer.config.yml` using Node.js `fs` + a YAML parser. Merge with envir
 ### Task 25: Create Docker setup
 
 **Files:**
+
 - Create: `docker/Dockerfile`
 - Create: `docker/docker-compose.yml`
 
@@ -897,6 +945,7 @@ git commit -m "feat(server): add HTTP server with Docker support"
 ### Task 26: Implement MCP server
 
 **Files:**
+
 - Create: `packages/mcp/src/index.ts`
 - Create: `packages/mcp/src/tools.ts`
 - Test: `packages/mcp/src/__tests__/tools.test.ts`
@@ -915,13 +964,16 @@ Define each MCP tool with its input schema (JSON Schema), description, and handl
 
 ```typescript
 #!/usr/bin/env node
-import { Server } from '@modelcontextprotocol/sdk/server/index.js'
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { registerTools } from './tools.js'
+import { Server } from "@modelcontextprotocol/sdk/server/index.js"
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
+import { registerTools } from "./tools.js"
 
-const server = new Server({ name: 'debriefer', version: '0.1.0' }, {
-  capabilities: { tools: {} }
-})
+const server = new Server(
+  { name: "debriefer", version: "0.1.0" },
+  {
+    capabilities: { tools: {} },
+  }
+)
 
 registerTools(server)
 
@@ -950,6 +1002,7 @@ git commit -m "feat(mcp): add MCP server for AI assistant integration"
 ### Task 27: Implement Python client
 
 **Files:**
+
 - Create: `clients/python/debriefer/__init__.py`
 - Create: `clients/python/debriefer/client.py`
 - Create: `clients/python/debriefer/types.py`
@@ -1037,12 +1090,14 @@ git checkout -b feat/debriefer-extraction
 ### Task 30: Refactor biography enrichment to use debriefer
 
 **Files:**
+
 - Modify: `server/src/lib/biography-sources/orchestrator.ts`
 - Create: `server/src/lib/biography-sources/debriefer-adapter.ts`
 
 The biography orchestrator is the cleaner of the two — refactor it first.
 
 **Approach:** Create an adapter that:
+
 1. Maps `ActorForBiography` → `ResearchSubject` (with context fields)
 2. Wraps existing biography sources as `BaseResearchSource<ResearchSubject>` instances
 3. Provides the biography synthesis prompt to `ClaudeSynthesizer`
@@ -1078,6 +1133,7 @@ Cover: installation, quick start, core concepts (subjects, sources, reliability,
 ### Task 34: Add RedisCache and SqliteCache implementations
 
 **Files:**
+
 - Create: `packages/core/src/cache/redis.ts`
 - Create: `packages/core/src/cache/sqlite.ts`
 - Test: `packages/core/src/__tests__/cache-redis.test.ts` (use ioredis-mock)
@@ -1086,6 +1142,7 @@ Cover: installation, quick start, core concepts (subjects, sources, reliability,
 ### Task 35: Add OpenTelemetry provider
 
 **Files:**
+
 - Create: `packages/core/src/telemetry/opentelemetry.ts`
 - Test: `packages/core/src/__tests__/telemetry-otel.test.ts`
 

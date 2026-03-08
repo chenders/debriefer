@@ -131,10 +131,7 @@ export interface SynthesisResult<TOutput> {
  * Ships with ClaudeSynthesizer. Consumers can implement for OpenAI, Gemini,
  * local models, or skip AI entirely with a pass-through implementation.
  */
-export interface Synthesizer<
-  TSubject extends ResearchSubject,
-  TOutput,
-> {
+export interface Synthesizer<TSubject extends ResearchSubject, TOutput> {
   synthesize(
     subject: TSubject,
     findings: ScoredFinding[],
@@ -362,20 +359,13 @@ export interface BatchStats extends BatchProgressStats {
  * - Start/Complete for paired begin/end events
  * - No suffix for point-in-time events
  */
-export interface LifecycleHooks<
-  TSubject extends ResearchSubject,
-  TOutput,
-> {
+export interface LifecycleHooks<TSubject extends ResearchSubject, TOutput> {
   /** Fired once at the start of a batch run */
   onRunStart?(subjectCount: number, config: ResearchConfig): void
   /** Fired before processing each subject */
   onSubjectStart?(subject: TSubject, index: number, total: number): void
   /** Fired before each source lookup */
-  onSourceAttempt?(
-    subject: TSubject,
-    sourceName: string,
-    phase: number
-  ): void
+  onSourceAttempt?(subject: TSubject, sourceName: string, phase: number): void
   /** Fired after each source lookup completes (success or failure) */
   onSourceComplete?(
     subject: TSubject,
@@ -384,33 +374,19 @@ export interface LifecycleHooks<
     costUsd: number
   ): void
   /** Fired after all sources in a phase complete */
-  onPhaseComplete?(
-    subject: TSubject,
-    phase: number,
-    findingsInPhase: ScoredFinding[]
-  ): void
+  onPhaseComplete?(subject: TSubject, phase: number, findingsInPhase: ScoredFinding[]): void
   /** Fired when early stopping is triggered */
   onEarlyStop?(subject: TSubject, phase: number, reason: string): void
   /** Fired before AI synthesis begins */
   onSynthesisStart?(subject: TSubject, findingCount: number): void
   /** Fired after AI synthesis completes */
-  onSynthesisComplete?(
-    subject: TSubject,
-    result: SynthesisResult<TOutput>
-  ): void
+  onSynthesisComplete?(subject: TSubject, result: SynthesisResult<TOutput>): void
   /** Fired after processing each subject (success or failure) */
-  onSubjectComplete?(
-    subject: TSubject,
-    result: DebriefResult<TOutput>
-  ): void
+  onSubjectComplete?(subject: TSubject, result: DebriefResult<TOutput>): void
   /** Fired periodically during batch processing with progress stats */
   onBatchProgress?(stats: BatchProgressStats): void
   /** Fired when a cost limit is reached */
-  onCostLimitReached?(
-    subject: TSubject,
-    costUsd: number,
-    limit: number
-  ): void
+  onCostLimitReached?(subject: TSubject, costUsd: number, limit: number): void
   /** Fired once when the batch run completes successfully */
   onRunComplete?(stats: BatchStats): void
   /** Fired if the batch run fails with an unrecoverable error */

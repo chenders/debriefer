@@ -59,9 +59,9 @@ export interface BaseSourceOptions {
  * The `lookup()` method orchestrates caching, rate limiting, timeout signals,
  * confidence calculation, and telemetry around the subclass's `fetchResult()`.
  */
-export abstract class BaseResearchSource<TSubject extends ResearchSubject>
-  implements MinimalSource<TSubject>
-{
+export abstract class BaseResearchSource<
+  TSubject extends ResearchSubject,
+> implements MinimalSource<TSubject> {
   abstract readonly name: string
   abstract readonly type: string
   abstract readonly reliabilityTier: ReliabilityTier
@@ -117,10 +117,7 @@ export abstract class BaseResearchSource<TSubject extends ResearchSubject>
    * @param signal - Caller-provided abort signal (combined with timeout signal)
    * @returns The raw finding, or null if no relevant data was found or an error occurred
    */
-  async lookup(
-    subject: TSubject,
-    signal: AbortSignal
-  ): Promise<RawFinding | null> {
+  async lookup(subject: TSubject, signal: AbortSignal): Promise<RawFinding | null> {
     const cacheKey = this.buildCacheKey(subject)
 
     // Check cache
@@ -142,9 +139,7 @@ export abstract class BaseResearchSource<TSubject extends ResearchSubject>
 
     // Create timeout signal and combine with caller signal
     const timeoutSignal = AbortSignal.timeout(this.options.timeoutMs!)
-    const combinedSignal = signal
-      ? AbortSignal.any([signal, timeoutSignal])
-      : timeoutSignal
+    const combinedSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
 
     // Execute lookup with telemetry
     const span = this.telemetry?.startSpan(`source:${this.name}`)
@@ -152,11 +147,7 @@ export abstract class BaseResearchSource<TSubject extends ResearchSubject>
       const result = await this.fetchResult(subject, combinedSignal)
 
       // Calculate confidence if not already set and keywords are configured
-      if (
-        result &&
-        result.confidence === -1 &&
-        this.options.requiredKeywords
-      ) {
+      if (result && result.confidence === -1 && this.options.requiredKeywords) {
         result.confidence = calculateConfidence(
           result.text,
           this.options.requiredKeywords,
@@ -171,10 +162,10 @@ export abstract class BaseResearchSource<TSubject extends ResearchSubject>
 
       return result
     } catch (error) {
-      this.telemetry?.recordError(
-        error instanceof Error ? error : new Error(String(error)),
-        { source: this.name, subject: subject.name }
-      )
+      this.telemetry?.recordError(error instanceof Error ? error : new Error(String(error)), {
+        source: this.name,
+        subject: subject.name,
+      })
       return null
     } finally {
       span?.end()
@@ -182,10 +173,7 @@ export abstract class BaseResearchSource<TSubject extends ResearchSubject>
   }
 
   /** Subclasses implement this — the actual data fetching logic */
-  protected abstract fetchResult(
-    subject: TSubject,
-    signal: AbortSignal
-  ): Promise<RawFinding | null>
+  protected abstract fetchResult(subject: TSubject, signal: AbortSignal): Promise<RawFinding | null>
 
   /** Build search query string for this subject. Override for domain-specific queries. */
   buildQuery(subject: TSubject): string {

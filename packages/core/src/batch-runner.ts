@@ -20,11 +20,7 @@ export interface ParallelBatchRunnerOptions<T, R> {
   /** Optional abort signal for cancellation */
   signal?: AbortSignal
   /** Called after each item completes successfully */
-  onItemComplete?: (
-    item: T,
-    result: R,
-    progress: BatchProgress
-  ) => void | Promise<void>
+  onItemComplete?: (item: T, result: R, progress: BatchProgress) => void | Promise<void>
   /** Called when an item throws (item still counts as completed) */
   onItemError?: (item: T, error: Error, progress: BatchProgress) => void
 }
@@ -48,10 +44,7 @@ export class ParallelBatchRunner<T, R> {
    * Process items in parallel with bounded concurrency.
    * Results are returned in input order. Failed items have result: null.
    */
-  async run(
-    items: T[],
-    processItem: (item: T) => Promise<R>
-  ): Promise<Array<BatchResult<T, R>>> {
+  async run(items: T[], processItem: (item: T) => Promise<R>): Promise<Array<BatchResult<T, R>>> {
     if (items.length === 0) return []
 
     const { concurrency, signal, onItemComplete, onItemError } = this.options

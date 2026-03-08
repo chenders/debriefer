@@ -43,7 +43,7 @@ describe("ReliabilityTier", () => {
 
   it("all enum values are lowercase_snake_case strings", () => {
     for (const tier of allTiers) {
-      expect(tier).toMatch(/^[a-z][a-z0-9]*(_[a-z0-9]+)*$/)
+      expect(tier).toMatch(/^[a-z][a-z0-9]*(_[a-z0-9]+)*$/) // eslint-disable-line security/detect-unsafe-regex
     }
   })
 
@@ -83,7 +83,7 @@ describe("RELIABILITY_SCORES", () => {
   })
 
   it("all scores are between 0 and 1 inclusive", () => {
-    for (const [tier, score] of Object.entries(RELIABILITY_SCORES)) {
+    for (const [_tier, score] of Object.entries(RELIABILITY_SCORES)) {
       expect(score).toBeGreaterThanOrEqual(0)
       expect(score).toBeLessThanOrEqual(1)
     }

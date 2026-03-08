@@ -15,17 +15,17 @@ describe("BatchCostTracker", () => {
 
     it("addSubjectCost accumulates correctly", () => {
       tracker.addSubjectCost("actor-1", 0.05)
-      tracker.addSubjectCost("actor-1", 0.10)
+      tracker.addSubjectCost("actor-1", 0.1)
       expect(tracker.getTotalCost()).toBeCloseTo(0.15)
     })
 
     it("tracks per-subject costs independently", () => {
       tracker.addSubjectCost("actor-1", 0.05)
-      tracker.addSubjectCost("actor-2", 0.20)
-      tracker.addSubjectCost("actor-1", 0.10)
+      tracker.addSubjectCost("actor-2", 0.2)
+      tracker.addSubjectCost("actor-1", 0.1)
 
       expect(tracker.getSubjectCost("actor-1")).toBeCloseTo(0.15)
-      expect(tracker.getSubjectCost("actor-2")).toBeCloseTo(0.20)
+      expect(tracker.getSubjectCost("actor-2")).toBeCloseTo(0.2)
       expect(tracker.getTotalCost()).toBeCloseTo(0.35)
     })
 
@@ -75,7 +75,7 @@ describe("BatchCostTracker", () => {
     let tracker: BatchCostTracker
 
     beforeEach(() => {
-      tracker = new BatchCostTracker({ maxCostPerSubject: 0.50 })
+      tracker = new BatchCostTracker({ maxCostPerSubject: 0.5 })
     })
 
     it("isSubjectLimitExceeded returns false below limit", () => {
@@ -84,13 +84,13 @@ describe("BatchCostTracker", () => {
     })
 
     it("isSubjectLimitExceeded returns true when per-subject limit hit", () => {
-      tracker.addSubjectCost("actor-1", 0.30)
-      tracker.addSubjectCost("actor-1", 0.20)
+      tracker.addSubjectCost("actor-1", 0.3)
+      tracker.addSubjectCost("actor-1", 0.2)
       expect(tracker.isSubjectLimitExceeded("actor-1")).toBe(true)
     })
 
     it("does not affect other subjects", () => {
-      tracker.addSubjectCost("actor-1", 0.60)
+      tracker.addSubjectCost("actor-1", 0.6)
       expect(tracker.isSubjectLimitExceeded("actor-1")).toBe(true)
       expect(tracker.isSubjectLimitExceeded("actor-2")).toBe(false)
     })
@@ -98,7 +98,7 @@ describe("BatchCostTracker", () => {
     it("addSubjectCost returns true when per-subject limit exceeded", () => {
       const first = tracker.addSubjectCost("actor-1", 0.25)
       expect(first).toBe(false)
-      const second = tracker.addSubjectCost("actor-1", 0.30)
+      const second = tracker.addSubjectCost("actor-1", 0.3)
       expect(second).toBe(true)
     })
   })

@@ -10,9 +10,13 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src/",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type { TelemetryProvider, TelemetrySpan } from "../types.js"
 
 export class ConsoleTelemetry implements TelemetryProvider {

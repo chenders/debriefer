@@ -17,7 +17,12 @@ export { ClaudeSynthesizer, NoopSynthesizer, stripMarkdownCodeFences } from "./s
 export type { ClaudeSynthesizerOptions } from "./synthesizer.js"
 
 // Reliability scoring
-export { ReliabilityTier, RELIABILITY_SCORES, getReliabilityScore, meetsReliabilityThreshold } from "./reliability.js"
+export {
+  ReliabilityTier,
+  RELIABILITY_SCORES,
+  getReliabilityScore,
+  meetsReliabilityThreshold,
+} from "./reliability.js"
 
 // Infrastructure
 export { SourceRateLimiter } from "./rate-limiter.js"
@@ -55,8 +60,4 @@ export type {
 } from "./types.js"
 
 // Error types
-export {
-  CostLimitExceededError,
-  SourceTimeoutError,
-  SourceAccessBlockedError,
-} from "./types.js"
+export { CostLimitExceededError, SourceTimeoutError, SourceAccessBlockedError } from "./types.js"

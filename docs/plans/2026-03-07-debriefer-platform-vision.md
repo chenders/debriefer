@@ -50,6 +50,7 @@ This document describes the full platform vision for debriefer: a hosted researc
 A React-based admin/monitoring interface (similar to what deadonfilm already has for enrichment management, but generalized).
 
 **Features**:
+
 - **Run manager**: Start research runs, monitor progress in real-time, view results
 - **Source health**: Dashboard showing source availability, hit rates, error rates, cost efficiency
 - **Cost analytics**: Spending by source category, per-query cost distribution, budget utilization
@@ -64,12 +65,14 @@ A React-based admin/monitoring interface (similar to what deadonfilm already has
 A registry where community members can publish and discover source integrations.
 
 **How it works**:
+
 - Sources are npm packages that extend `BaseResearchSource`
 - Published to npm with a `debriefer-source` keyword for discoverability
 - The marketplace indexes these packages and displays: name, description, reliability tier, cost, availability status, community rating
 - Users install sources via `npm install debriefer-source-sec-edgar` and register them in their config
 
 **Source package convention**:
+
 ```
 debriefer-source-{name}/
 ├── src/
@@ -93,16 +96,16 @@ requiredEnvVars: []
 
 **Potential community sources** (by domain):
 
-| Domain | Sources |
-|--------|---------|
-| Legal | SEC EDGAR, PACER (court records), state corporate registries |
-| Academic | PubMed, arXiv, Semantic Scholar, CrossRef, JSTOR |
-| Government | data.gov, Census Bureau, BLS, FDA, USPTO patents |
-| Financial | Yahoo Finance, FRED (Federal Reserve), World Bank Open Data |
-| Social | Reddit (via API), Hacker News, Stack Exchange |
-| Geospatial | OpenStreetMap, GeoNames, US Gazetteer |
-| Medical | ClinicalTrials.gov, WHO, CDC, DrugBank |
-| Media | Podcast transcripts, YouTube captions, C-SPAN |
+| Domain     | Sources                                                      |
+| ---------- | ------------------------------------------------------------ |
+| Legal      | SEC EDGAR, PACER (court records), state corporate registries |
+| Academic   | PubMed, arXiv, Semantic Scholar, CrossRef, JSTOR             |
+| Government | data.gov, Census Bureau, BLS, FDA, USPTO patents             |
+| Financial  | Yahoo Finance, FRED (Federal Reserve), World Bank Open Data  |
+| Social     | Reddit (via API), Hacker News, Stack Exchange                |
+| Geospatial | OpenStreetMap, GeoNames, US Gazetteer                        |
+| Medical    | ClinicalTrials.gov, WHO, CDC, DrugBank                       |
+| Media      | Podcast transcripts, YouTube captions, C-SPAN                |
 
 ### 3. Hosted API Service
 
@@ -110,14 +113,15 @@ A managed version of debriefer-server where users don't need to self-host.
 
 **Tiers**:
 
-| Tier | Price | Includes |
-|------|-------|----------|
-| Free | $0/mo | 100 debriefs/mo, built-in free sources only, community support |
-| Pro | $49/mo | 2,000 debriefs/mo, all built-in sources, API key management, priority support |
-| Team | $199/mo | 10,000 debriefs/mo, shared workspace, run history, SSO |
-| Enterprise | Custom | Unlimited, SLA, dedicated instance, custom sources, on-premise deployment |
+| Tier       | Price   | Includes                                                                      |
+| ---------- | ------- | ----------------------------------------------------------------------------- |
+| Free       | $0/mo   | 100 debriefs/mo, built-in free sources only, community support                |
+| Pro        | $49/mo  | 2,000 debriefs/mo, all built-in sources, API key management, priority support |
+| Team       | $199/mo | 10,000 debriefs/mo, shared workspace, run history, SSO                        |
+| Enterprise | Custom  | Unlimited, SLA, dedicated instance, custom sources, on-premise deployment     |
 
 **Key managed features**:
+
 - **API key vault**: Users provide their API keys (Anthropic, Google, Bing, etc.) once. Debriefer manages rotation, rate limits, and failover.
 - **Shared cache**: Findings cached across all users (for public information). A debrief about "John Wayne" that was already researched recently returns cached findings instantly at zero cost.
 - **Usage dashboard**: Real-time cost tracking, budget alerts, spending caps.
@@ -181,22 +185,26 @@ Research queries, not API calls. A single "debrief" that orchestrates 15 sources
 ## Cross-Ecosystem Strategy
 
 ### Phase 1: TypeScript primary (Option 3)
+
 - npm packages: `debriefer`, `debriefer-sources`, `debriefer-cli`, `debriefer-server`
 - Full power, zero overhead, all features
 
 ### Phase 2: HTTP service + thin clients
+
 - Python (`pip install debriefer`): HTTP client with Pydantic models
 - Go: HTTP client with typed structs
 - Ruby: HTTP client gem
 - All clients get the same API, same reliability scoring, same results
 
 ### Phase 3: Native Python SDK (long-term)
+
 - Port core orchestrator to Python
 - Shared source plugin spec (sources defined in YAML + a lookup function)
 - Sources written once (TypeScript or Python), registered in the same marketplace
 - Python-native data science integration: Pandas DataFrames, Jupyter widgets
 
 ### Phase 4: Language-agnostic source spec (very long-term)
+
 - Sources defined as containers (Docker/WASM) with a standard I/O protocol
 - Any language can implement a source
 - Debriefer orchestrates containers rather than function calls
@@ -204,40 +212,41 @@ Research queries, not API calls. A single "debrief" that orchestrates 15 sources
 
 ## Potential Integrations
 
-| Integration | How |
-|-------------|-----|
-| LangChain/LlamaIndex | Debriefer as a LangChain Tool or LlamaIndex QueryEngine |
-| MCP (Model Context Protocol) | Debriefer as an MCP server — any AI assistant can research via debriefer |
-| Jupyter | `%debrief "query"` magic command, results rendered as rich widgets |
-| Zapier/n8n | Webhook triggers, research-as-a-step in automation workflows |
-| VS Code | Extension that debriefs from the editor (select text, right-click, "Research this") |
-| Slack/Discord | Bot that responds to `/debrief query` with structured results |
+| Integration                  | How                                                                                 |
+| ---------------------------- | ----------------------------------------------------------------------------------- |
+| LangChain/LlamaIndex         | Debriefer as a LangChain Tool or LlamaIndex QueryEngine                             |
+| MCP (Model Context Protocol) | Debriefer as an MCP server — any AI assistant can research via debriefer            |
+| Jupyter                      | `%debrief "query"` magic command, results rendered as rich widgets                  |
+| Zapier/n8n                   | Webhook triggers, research-as-a-step in automation workflows                        |
+| VS Code                      | Extension that debriefs from the editor (select text, right-click, "Research this") |
+| Slack/Discord                | Bot that responds to `/debrief query` with structured results                       |
 
 ## Revenue Projections (Speculative)
 
 Based on market analysis of comparable tools (Tavily, Firecrawl, Apify):
 
-| Year | Users | ARR | Model |
-|------|-------|-----|-------|
-| Y1 | 500 free, 50 pro | $30K | Open-source adoption + early pro users |
-| Y2 | 2,000 free, 200 pro, 10 team | $150K | Word of mouth, community sources |
-| Y3 | 10,000 free, 500 pro, 50 team, 5 enterprise | $500K-$1M | Enterprise contracts, marketplace |
+| Year | Users                                       | ARR       | Model                                  |
+| ---- | ------------------------------------------- | --------- | -------------------------------------- |
+| Y1   | 500 free, 50 pro                            | $30K      | Open-source adoption + early pro users |
+| Y2   | 2,000 free, 200 pro, 10 team                | $150K     | Word of mouth, community sources       |
+| Y3   | 10,000 free, 500 pro, 50 team, 5 enterprise | $500K-$1M | Enterprise contracts, marketplace      |
 
 ## Risks and Mitigations
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Well-funded competitor adds reliability scoring | High | First-mover advantage, depth of 60+ battle-tested sources, community moat |
-| Source APIs change/break frequently | Medium | Each source has maintainer, automated health checks, community PRs |
-| AI synthesis costs make free tier unsustainable | Medium | Free tier uses structured data only (no AI). Pro tier covers AI costs via subscription |
-| npm/PyPI name squatting | Low | Both names verified available as of 2026-03-07 |
-| Playwright/browser deps make Docker images large | Low | Slim image without browsers is default. Full image is opt-in |
-| Legal issues with scraping news sites | Medium | Respect robots.txt, use official APIs where available, cache aggressively to minimize requests |
-| Open-source fork undercuts commercial offering | Low | The commercial value is in managed infrastructure (caching, key vault, shared cache), not the code |
+| Risk                                             | Impact | Mitigation                                                                                         |
+| ------------------------------------------------ | ------ | -------------------------------------------------------------------------------------------------- |
+| Well-funded competitor adds reliability scoring  | High   | First-mover advantage, depth of 60+ battle-tested sources, community moat                          |
+| Source APIs change/break frequently              | Medium | Each source has maintainer, automated health checks, community PRs                                 |
+| AI synthesis costs make free tier unsustainable  | Medium | Free tier uses structured data only (no AI). Pro tier covers AI costs via subscription             |
+| npm/PyPI name squatting                          | Low    | Both names verified available as of 2026-03-07                                                     |
+| Playwright/browser deps make Docker images large | Low    | Slim image without browsers is default. Full image is opt-in                                       |
+| Legal issues with scraping news sites            | Medium | Respect robots.txt, use official APIs where available, cache aggressively to minimize requests     |
+| Open-source fork undercuts commercial offering   | Low    | The commercial value is in managed infrastructure (caching, key vault, shared cache), not the code |
 
 ## Success Criteria
 
 ### Option 3 (current build) is successful when:
+
 - Both deadonfilm enrichment systems (death + biography) run on debriefer
 - `npm install debriefer` works and the README example runs out of the box
 - Docker container starts and serves the HTTP API
@@ -245,6 +254,7 @@ Based on market analysis of comparable tools (Tavily, Firecrawl, Apify):
 - At least 40 of the 60+ sources pass integration tests
 
 ### Option 4 (platform) is successful when:
+
 - 10+ community-contributed source packages exist
 - 100+ monthly active users on the free tier
 - 3+ paying enterprise customers

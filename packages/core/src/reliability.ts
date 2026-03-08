@@ -64,9 +64,6 @@ export function getReliabilityScore(tier: ReliabilityTier): number {
 }
 
 /** Check if a source meets a minimum reliability threshold */
-export function meetsReliabilityThreshold(
-  tier: ReliabilityTier,
-  threshold: number
-): boolean {
+export function meetsReliabilityThreshold(tier: ReliabilityTier, threshold: number): boolean {
   return RELIABILITY_SCORES[tier] >= threshold
 }

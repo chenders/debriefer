@@ -39,12 +39,12 @@ debriefer/
 
 ### Branch Naming
 
-| Prefix | Use Case | Example |
-|--------|----------|---------|
-| `feat/` | New features, new sources | `feat/wikipedia-source` |
-| `fix/` | Bug fixes | `fix/early-stop-counting` |
-| `chore/` | Maintenance, deps | `chore/update-dependencies` |
-| `docs/` | Documentation only | `docs/add-source-guide` |
+| Prefix   | Use Case                  | Example                     |
+| -------- | ------------------------- | --------------------------- |
+| `feat/`  | New features, new sources | `feat/wikipedia-source`     |
+| `fix/`   | Bug fixes                 | `fix/early-stop-counting`   |
+| `chore/` | Maintenance, deps         | `chore/update-dependencies` |
+| `docs/`  | Documentation only        | `docs/add-source-guide`     |
 
 ## Common Commands
 
@@ -68,19 +68,19 @@ npx vitest run src/__tests__/orchestrator.test.ts  # single test file
 
 The core is generic via TypeScript generics: `ResearchOrchestrator<TSubject, TOutput>`.
 
-| Module | File | Purpose |
-|--------|------|---------|
-| Orchestrator | `orchestrator.ts` | Phased execution, early stopping, batch processing, lifecycle hooks |
-| BaseResearchSource | `base-source.ts` | Abstract base class for all sources (caching, rate limiting, timeout, confidence) |
-| ClaudeSynthesizer | `synthesizer.ts` | AI synthesis via Anthropic SDK; also NoopSynthesizer for raw findings |
-| ReliabilityTier | `reliability.ts` | 12-tier scoring based on Wikipedia RSP (0.0–1.0) |
-| SourceRateLimiter | `rate-limiter.ts` | Per-domain async queue preventing thundering herd |
-| BatchCostTracker | `cost-tracker.ts` | Per-subject and total cost limits |
-| ParallelBatchRunner | `batch-runner.ts` | Concurrency-limited batch processor with p-limit |
-| InMemoryCache | `cache/in-memory.ts` | CacheProvider with TTL and optional maxSize eviction |
-| Telemetry | `telemetry/console.ts`, `telemetry/noop.ts` | Pluggable observability |
-| Confidence | `confidence.ts` | Generic keyword-based confidence scoring |
-| Types | `types.ts` | All core interfaces, error classes |
+| Module              | File                                        | Purpose                                                                           |
+| ------------------- | ------------------------------------------- | --------------------------------------------------------------------------------- |
+| Orchestrator        | `orchestrator.ts`                           | Phased execution, early stopping, batch processing, lifecycle hooks               |
+| BaseResearchSource  | `base-source.ts`                            | Abstract base class for all sources (caching, rate limiting, timeout, confidence) |
+| ClaudeSynthesizer   | `synthesizer.ts`                            | AI synthesis via Anthropic SDK; also NoopSynthesizer for raw findings             |
+| ReliabilityTier     | `reliability.ts`                            | 12-tier scoring based on Wikipedia RSP (0.0–1.0)                                  |
+| SourceRateLimiter   | `rate-limiter.ts`                           | Per-domain async queue preventing thundering herd                                 |
+| BatchCostTracker    | `cost-tracker.ts`                           | Per-subject and total cost limits                                                 |
+| ParallelBatchRunner | `batch-runner.ts`                           | Concurrency-limited batch processor with p-limit                                  |
+| InMemoryCache       | `cache/in-memory.ts`                        | CacheProvider with TTL and optional maxSize eviction                              |
+| Telemetry           | `telemetry/console.ts`, `telemetry/noop.ts` | Pluggable observability                                                           |
+| Confidence          | `confidence.ts`                             | Generic keyword-based confidence scoring                                          |
+| Types               | `types.ts`                                  | All core interfaces, error classes                                                |
 
 ### Key Design Principles
 
@@ -167,20 +167,20 @@ const signal = callerSignal ?? AbortSignal.timeout(30000)
 
 Based on Wikipedia's Reliable Sources Perennial list (RSP). When adding new sources, consult the RSP list to determine the appropriate tier:
 
-| Tier | Score | RSP Equivalent | Examples |
-|------|-------|----------------|----------|
-| STRUCTURED_DATA | 1.0 | N/A | Wikidata, government databases |
-| TIER_1_NEWS | 0.95 | "Generally reliable" | AP, NYT, BBC, Reuters |
-| TRADE_PRESS | 0.9 | "Generally reliable" (domain) | Variety, Nature |
-| ARCHIVAL | 0.9 | Primary sources | Trove, Europeana |
-| SECONDARY_COMPILATION | 0.85 | Wikipedia self-assessment | Wikipedia |
-| SEARCH_AGGREGATOR | 0.7 | Depends on linked sources | Google, Bing, DDG |
-| ARCHIVE_MIRROR | 0.7 | Mirrors | Internet Archive |
-| MARGINAL_EDITORIAL | 0.65 | "Use with caution" | People Magazine |
-| MARGINAL_MIXED | 0.6 | Mixed editorial + UGC | Legacy.com |
-| AI_MODEL | 0.55 | No RSP equivalent | Claude, GPT |
-| UNRELIABLE_FAST | 0.5 | "Generally unreliable" | TMZ |
-| UNRELIABLE_UGC | 0.35 | User-generated content | Find a Grave |
+| Tier                  | Score | RSP Equivalent                | Examples                       |
+| --------------------- | ----- | ----------------------------- | ------------------------------ |
+| STRUCTURED_DATA       | 1.0   | N/A                           | Wikidata, government databases |
+| TIER_1_NEWS           | 0.95  | "Generally reliable"          | AP, NYT, BBC, Reuters          |
+| TRADE_PRESS           | 0.9   | "Generally reliable" (domain) | Variety, Nature                |
+| ARCHIVAL              | 0.9   | Primary sources               | Trove, Europeana               |
+| SECONDARY_COMPILATION | 0.85  | Wikipedia self-assessment     | Wikipedia                      |
+| SEARCH_AGGREGATOR     | 0.7   | Depends on linked sources     | Google, Bing, DDG              |
+| ARCHIVE_MIRROR        | 0.7   | Mirrors                       | Internet Archive               |
+| MARGINAL_EDITORIAL    | 0.65  | "Use with caution"            | People Magazine                |
+| MARGINAL_MIXED        | 0.6   | Mixed editorial + UGC         | Legacy.com                     |
+| AI_MODEL              | 0.55  | No RSP equivalent             | Claude, GPT                    |
+| UNRELIABLE_FAST       | 0.5   | "Generally unreliable"        | TMZ                            |
+| UNRELIABLE_UGC        | 0.35  | User-generated content        | Find a Grave                   |
 
 ## Adding a New Source
 
@@ -196,19 +196,19 @@ Based on Wikipedia's Reliable Sources Perennial list (RSP). When adding new sour
 
 ## Implementation Status
 
-| Phase | Status | Description |
-|-------|--------|-------------|
-| 1. Scaffold | Complete | Monorepo, 5 packages, Docker, Python stub |
-| 2. Core types | Complete | 19 types, 3 error classes, ReliabilityTier |
-| 3. Infrastructure | Complete | Rate limiter, cost tracker, batch runner, cache, telemetry, confidence |
-| 4. Engine | Complete | BaseResearchSource, ClaudeSynthesizer, ResearchOrchestrator |
-| 5. Built-in sources | Pending | Migrate 60+ sources from deadonfilm |
-| 6. CLI | Pending | Commander.js CLI |
-| 7. HTTP server | Pending | Express REST API + Docker |
-| 8. MCP server | Pending | Model Context Protocol for AI assistants |
-| 9. Python client | Pending | httpx + Pydantic HTTP wrapper |
-| 10. Deadonfilm integration | Pending | Refactor deadonfilm to consume debriefer |
-| 11. Polish + publish | Pending | README, npm publish, PyPI, Docker Hub |
+| Phase                      | Status   | Description                                                            |
+| -------------------------- | -------- | ---------------------------------------------------------------------- |
+| 1. Scaffold                | Complete | Monorepo, 5 packages, Docker, Python stub                              |
+| 2. Core types              | Complete | 19 types, 3 error classes, ReliabilityTier                             |
+| 3. Infrastructure          | Complete | Rate limiter, cost tracker, batch runner, cache, telemetry, confidence |
+| 4. Engine                  | Complete | BaseResearchSource, ClaudeSynthesizer, ResearchOrchestrator            |
+| 5. Built-in sources        | Pending  | Migrate 60+ sources from deadonfilm                                    |
+| 6. CLI                     | Pending  | Commander.js CLI                                                       |
+| 7. HTTP server             | Pending  | Express REST API + Docker                                              |
+| 8. MCP server              | Pending  | Model Context Protocol for AI assistants                               |
+| 9. Python client           | Pending  | httpx + Pydantic HTTP wrapper                                          |
+| 10. Deadonfilm integration | Pending  | Refactor deadonfilm to consume debriefer                               |
+| 11. Polish + publish       | Pending  | README, npm publish, PyPI, Docker Hub                                  |
 
 ## Reference Documents
 
