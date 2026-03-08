@@ -23,7 +23,7 @@
     "p-limit": "^6"
   },
   "peerDependencies": {
-    "@anthropic-ai/sdk": "^0.39"
+    "@anthropic-ai/sdk": ">=0.39.0"
   },
   "peerDependenciesMeta": {
     "@anthropic-ai/sdk": {
