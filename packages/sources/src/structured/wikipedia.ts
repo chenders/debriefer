@@ -205,7 +205,7 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
     const resolvedUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(resolvedTitle.replace(/ /g, "_"))}`
 
     // Calculate confidence based on content quality
-    const confidence = this.calculateContentConfidence(combinedText, subject)
+    const confidence = this.calculateContentConfidence(combinedText, subject, sectionTexts.length)
 
     return {
       text: combinedText,
@@ -255,7 +255,11 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
    * Calculate content confidence based on text length and subject name presence.
    * Returns a score between 0.3 and 0.9.
    */
-  private calculateContentConfidence(text: string, subject: ResearchSubject): number {
+  private calculateContentConfidence(
+    text: string,
+    subject: ResearchSubject,
+    sectionCount: number
+  ): number {
     let confidence = 0.4
 
     // Name presence
@@ -277,8 +281,7 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
       return -1 // DELEGATE_TO_BASE_CLASS: base-source.ts:150 replaces with keyword confidence
     }
 
-    // Section count bonus
-    const sectionCount = (text.match(/\[.*?\]/g) ?? []).length
+    // Section count bonus — use actual extracted section count, not regex on text
     if (sectionCount > 1) {
       confidence += Math.min(0.2, sectionCount * 0.05)
     }

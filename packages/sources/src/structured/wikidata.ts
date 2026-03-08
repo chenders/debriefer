@@ -68,7 +68,7 @@ export function getValidLabel(value: string | undefined): string | null {
  */
 export function filterValidLabels(concatenated: string | undefined): string | null {
   if (!concatenated) return null
-  const labels = concatenated.split(", ").filter((label) => isValidLabel(label))
+  const labels = concatenated.split(/\s*,\s*/).filter((label) => isValidLabel(label))
   return labels.length > 0 ? labels.join(", ") : null
 }
 
