@@ -11,6 +11,8 @@
  * (e.g., cause of death P509, education P69, occupation P106).
  */
 
+import { createHash } from "node:crypto"
+
 import {
   BaseResearchSource,
   ReliabilityTier,
@@ -308,8 +310,9 @@ export class WikidataSource extends BaseResearchSource<ResearchSubject> {
    */
   override buildQuery(subject: ResearchSubject): string {
     if (this.queryBuilder !== defaultQueryBuilder) {
-      // Custom queryBuilder: use a truncated version of the actual SPARQL query as cache key
-      return this.queryBuilder(subject).slice(0, 200)
+      // Custom queryBuilder: hash the full SPARQL query for a collision-resistant cache key
+      const query = this.queryBuilder(subject)
+      return createHash("sha256").update(query).digest("hex").slice(0, 16)
     }
     // Default builder: name + validated birth year
     const rawBirthYear = subject.context?.birthYear
@@ -349,7 +352,14 @@ export class WikidataSource extends BaseResearchSource<ResearchSubject> {
           continue
         }
 
-        if (!response.ok) return null
+        if (!response.ok) {
+          // 404 = subject not found, return null. Other errors should propagate
+          // for telemetry recording via BaseResearchSource.lookup()
+          if (response.status === 404) return null
+          throw new Error(
+            `Wikidata SPARQL request failed: ${response.status} ${response.statusText}`
+          )
+        }
 
         return (await response.json()) as SparqlResponse
       } catch (error) {

@@ -273,7 +273,7 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
     // If keywords are configured, delegate to the base class keyword-based
     // confidence calculation instead of using our content heuristics.
     // The base class checks for confidence === -1 as the delegation signal.
-    if (this.options.requiredKeywords) {
+    if (this.options.requiredKeywords && this.options.requiredKeywords.length > 0) {
       return -1 // DELEGATE_TO_BASE_CLASS: base-source.ts:150 replaces with keyword confidence
     }
 

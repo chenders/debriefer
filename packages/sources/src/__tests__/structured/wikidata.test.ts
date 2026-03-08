@@ -566,13 +566,17 @@ describe("WikidataSource", () => {
       expect(source.buildQuery(subject)).toBe("John Wayne")
     })
 
-    it("uses truncated SPARQL query as cache key when custom queryBuilder is provided", () => {
+    it("uses hashed SPARQL query as cache key when custom queryBuilder is provided", () => {
       const customQuery = "SELECT ?x WHERE { ?x ?y ?z } LIMIT 1"
       const source = new WikidataSource({
         queryBuilder: () => customQuery,
       })
       const subject = makeSubject()
-      expect(source.buildQuery(subject)).toBe(customQuery)
+      const key = source.buildQuery(subject)
+      // Should be a 16-char hex hash, not the raw query
+      expect(key).toMatch(/^[a-f0-9]{16}$/)
+      // Same input should produce same hash
+      expect(source.buildQuery(subject)).toBe(key)
     })
 
     it("ignores non-finite birthYear values", () => {
