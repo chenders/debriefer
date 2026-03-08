@@ -20,8 +20,10 @@ export default tseslint.config(
   security.configs.recommended,
 
   // All TypeScript files — shared settings
+  // Glob must match both root-level (`npx eslint packages/...`) and
+  // package-level (`cd packages/core && eslint src/`) invocations
   {
-    files: ["packages/*/src/**/*.ts"],
+    files: ["**/src/**/*.ts"],
     languageOptions: {
       globals: {
         ...globals.node,

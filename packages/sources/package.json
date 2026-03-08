@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "echo No tests yet",
+    "test": "vitest run --passWithNoTests",
     "lint": "eslint src/",
     "type-check": "tsc --noEmit"
   },
