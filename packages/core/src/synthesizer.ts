@@ -51,11 +51,15 @@ export interface ClaudeSynthesizerOptions<TSubject extends ResearchSubject, TOut
   promptBuilder: (subject: TSubject, findings: ScoredFinding[]) => { system: string; user: string }
 
   /**
-   * Parse the raw JSON response into the output type.
-   * Use this for custom validation (e.g., zod parsing, field filtering).
-   * Defaults to returning the parsed JSON as-is.
+   * Parse and validate the raw JSON response into the output type.
+   * Required to ensure type safety at runtime — the AI response is untrusted.
+   *
+   * @example
+   * ```typescript
+   * responseParser: (raw) => myZodSchema.parse(raw)
+   * ```
    */
-  responseParser?: (raw: unknown) => TOutput
+  responseParser: (raw: unknown) => TOutput
 
   /** Anthropic API key. Defaults to ANTHROPIC_API_KEY env var. */
   apiKey?: string
@@ -68,8 +72,12 @@ export interface ClaudeSynthesizerOptions<TSubject extends ResearchSubject, TOut
 }
 
 /**
- * Approximate cost per million tokens by model family.
+ * Approximate cost per million tokens by model family (USD).
  * Used for cost estimation in SynthesisResult.
+ *
+ * These are approximate and may not reflect current Anthropic pricing.
+ * Consumers should verify costs against https://docs.anthropic.com/en/docs/about-claude/models
+ * Falls back to Sonnet pricing for unrecognized model families.
  */
 const MODEL_COSTS: Record<string, { input: number; output: number }> = {
   "claude-sonnet": { input: 3, output: 15 },
@@ -178,10 +186,8 @@ export class ClaudeSynthesizer<TSubject extends ResearchSubject, TOutput> implem
     const cleanJson = stripMarkdownCodeFences(responseText)
     const rawParsed: unknown = JSON.parse(cleanJson)
 
-    // Apply consumer's parser or cast the raw parsed JSON
-    const data = this.options.responseParser
-      ? this.options.responseParser(rawParsed)
-      : (rawParsed as TOutput)
+    // Validate through consumer's parser (required for type safety)
+    const data = this.options.responseParser(rawParsed)
 
     // Calculate cost from token usage
     const inputTokens = response.usage.input_tokens

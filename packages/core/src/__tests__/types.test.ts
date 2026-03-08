@@ -138,7 +138,7 @@ describe("ScoredFinding", () => {
     }
     expect(finding.sourceType).toBe("wikipedia")
     expect(finding.sourceName).toBe("Wikipedia")
-    expect(finding.reliabilityTier).toBe("secondary")
+    expect(finding.reliabilityTier).toBe(ReliabilityTier.SECONDARY_COMPILATION)
     expect(finding.reliabilityScore).toBe(0.85)
     // Inherited from RawFinding
     expect(finding.text).toContain("stomach cancer")

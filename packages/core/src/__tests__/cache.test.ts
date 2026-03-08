@@ -95,4 +95,50 @@ describe("InMemoryCache", () => {
     expect(await cache.get("b")).toBeNull()
     expect(await cache.get("c")).toBeNull()
   })
+
+  describe("maxSize eviction", () => {
+    it("evicts oldest entry when maxSize exceeded", async () => {
+      const bounded = new InMemoryCache({ maxSize: 2 })
+      await bounded.set("a", "1")
+      await bounded.set("b", "2")
+      await bounded.set("c", "3") // should evict "a"
+      expect(bounded.size).toBe(2)
+      expect(await bounded.get("a")).toBeNull()
+      expect(await bounded.get("b")).toBe("2")
+      expect(await bounded.get("c")).toBe("3")
+    })
+
+    it("overwriting existing key does not trigger eviction", async () => {
+      const bounded = new InMemoryCache({ maxSize: 2 })
+      await bounded.set("a", "1")
+      await bounded.set("b", "2")
+      await bounded.set("a", "updated") // overwrite, not new entry
+      expect(bounded.size).toBe(2)
+      expect(await bounded.get("a")).toBe("updated")
+      expect(await bounded.get("b")).toBe("2")
+    })
+
+    it("evicts in FIFO order", async () => {
+      const bounded = new InMemoryCache({ maxSize: 3 })
+      await bounded.set("a", "1")
+      await bounded.set("b", "2")
+      await bounded.set("c", "3")
+      await bounded.set("d", "4") // evicts "a"
+      await bounded.set("e", "5") // evicts "b"
+      expect(await bounded.get("a")).toBeNull()
+      expect(await bounded.get("b")).toBeNull()
+      expect(await bounded.get("c")).toBe("3")
+      expect(await bounded.get("d")).toBe("4")
+      expect(await bounded.get("e")).toBe("5")
+    })
+
+    it("unlimited by default", async () => {
+      const unlimited = new InMemoryCache()
+      for (let i = 0; i < 100; i++) {
+        await unlimited.set(`key-${i}`, `value-${i}`)
+      }
+      expect(unlimited.size).toBe(100)
+      expect(await unlimited.get("key-0")).toBe("value-0")
+    })
+  })
 })

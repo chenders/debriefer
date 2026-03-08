@@ -21,6 +21,7 @@
 import type {
   ResearchSubject,
   ResearchConfig,
+  RawFinding,
   ScoredFinding,
   DebriefResult,
   SourcePhaseGroup,
@@ -28,7 +29,6 @@ import type {
   LifecycleHooks,
   TelemetryProvider,
 } from "./types.js"
-import type { BaseResearchSource } from "./base-source.js"
 import { SourceRateLimiter } from "./rate-limiter.js"
 import { BatchCostTracker } from "./cost-tracker.js"
 import { ParallelBatchRunner } from "./batch-runner.js"
@@ -69,15 +69,14 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
     // Inject infrastructure into all sources
     for (const phase of phases) {
       for (const source of phase.sources) {
-        const src = source as BaseResearchSource<TSubject>
-        if (typeof src.setRateLimiter === "function") {
-          src.setRateLimiter(this.rateLimiter)
+        if ("setRateLimiter" in source && typeof source.setRateLimiter === "function") {
+          source.setRateLimiter(this.rateLimiter)
         }
-        if (typeof src.setCache === "function" && config.cache) {
-          src.setCache(config.cache)
+        if ("setCache" in source && typeof source.setCache === "function" && config.cache) {
+          source.setCache(config.cache)
         }
-        if (typeof src.setTelemetry === "function") {
-          src.setTelemetry(this.telemetry)
+        if ("setTelemetry" in source && typeof source.setTelemetry === "function") {
+          source.setTelemetry(this.telemetry)
         }
       }
     }
@@ -91,10 +90,13 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
    * stopping between phases, then runs synthesis on all collected findings.
    *
    * @param subject - The subject to research
-   * @param signal - Optional abort signal for cancellation
+   * @param options - Optional abort signal and lifecycle hooks
    * @returns Complete debrief result with findings, synthesis, and cost data
    */
-  async debrief(subject: TSubject, signal?: AbortSignal): Promise<DebriefResult<TOutput>> {
+  async debrief(
+    subject: TSubject,
+    options?: { signal?: AbortSignal; hooks?: LifecycleHooks<TSubject, TOutput> }
+  ): Promise<DebriefResult<TOutput>> {
     const startTime = Date.now()
     const allFindings: ScoredFinding[] = []
     let totalCostUsd = 0
@@ -102,71 +104,31 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
     let sourcesSucceeded = 0
     let stoppedAtPhase: number | undefined
 
-    const confidenceThreshold =
-      this.config.confidenceThreshold ?? DEFAULT_CONFIG.confidenceThreshold
-    const reliabilityThreshold =
-      this.config.reliabilityThreshold ?? DEFAULT_CONFIG.reliabilityThreshold
-    const earlyStopThreshold = this.config.earlyStopThreshold ?? DEFAULT_CONFIG.earlyStopThreshold
+    const signal = options?.signal
+    const hooks = options?.hooks
 
     for (const phaseGroup of this.phases) {
       if (signal?.aborted) break
 
-      // Filter to available sources
-      const availableSources = phaseGroup.sources.filter((s) => s.isAvailable())
-      if (availableSources.length === 0) continue
+      const phaseResult = await this.executePhase(subject, phaseGroup, signal, hooks)
+      sourcesAttempted += phaseResult.sourcesAttempted
+      sourcesSucceeded += phaseResult.sourcesSucceeded
+      totalCostUsd += phaseResult.costUsd
+      allFindings.push(...phaseResult.findings)
 
-      // Fire all sources in this phase concurrently
-      const timeoutSignal = AbortSignal.timeout(120_000)
-      const phaseSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
+      hooks?.onPhaseComplete?.(subject, phaseGroup.phase, phaseResult.findings)
 
-      const results = await Promise.allSettled(
-        availableSources.map((source) => {
-          sourcesAttempted++
-          return source.lookup(subject, phaseSignal)
-        })
-      )
-
-      // Collect successful findings
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i]!
-        const source = availableSources[i]!
-        if (result.status === "fulfilled" && result.value) {
-          const finding = result.value
-          totalCostUsd += finding.costUsd
-          sourcesSucceeded++
-
-          allFindings.push({
-            ...finding,
-            sourceType: source.type,
-            sourceName: source.name,
-            reliabilityTier: source.reliabilityTier,
-            reliabilityScore: source.reliabilityScore,
-          })
-        }
-      }
-
-      // Check early stopping — count distinct high-quality source families.
-      // A "family" is a unique sourceType (e.g., "wikipedia", "guardian").
-      // Multiple findings from the same source count as one family.
-      const highQualityFamilies = new Set(
-        allFindings
-          .filter(
-            (f) => f.confidence >= confidenceThreshold && f.reliabilityScore >= reliabilityThreshold
+      const earlyStopReason = this.checkEarlyStop(allFindings, totalCostUsd)
+      if (earlyStopReason) {
+        stoppedAtPhase = phaseGroup.phase
+        hooks?.onEarlyStop?.(subject, phaseGroup.phase, earlyStopReason)
+        if (earlyStopReason === "cost_limit") {
+          hooks?.onCostLimitReached?.(
+            subject,
+            totalCostUsd,
+            this.config.costLimits!.maxCostPerSubject!
           )
-          .map((f) => f.sourceType)
-      )
-
-      if (highQualityFamilies.size >= earlyStopThreshold) {
-        stoppedAtPhase = phaseGroup.phase
-        break
-      }
-
-      // Check per-subject cost limit
-      if (
-        this.config.costLimits?.maxCostPerSubject &&
-        totalCostUsd >= this.config.costLimits.maxCostPerSubject
-      ) {
-        stoppedAtPhase = phaseGroup.phase
+        }
         break
       }
     }
@@ -174,6 +136,7 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
     // Synthesize all findings
     let synthesisResult = undefined
     if (allFindings.length > 0) {
+      hooks?.onSynthesisStart?.(subject, allFindings.length)
       try {
         synthesisResult = await this.synthesizer.synthesize(
           subject,
@@ -181,6 +144,7 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
           this.config.synthesis ?? {}
         )
         totalCostUsd += synthesisResult.costUsd
+        hooks?.onSynthesisComplete?.(subject, synthesisResult)
       } catch (error) {
         this.telemetry.recordError(error instanceof Error ? error : new Error(String(error)), {
           subject: subject.name,
@@ -200,6 +164,99 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
       stoppedAtPhase,
       durationMs: Date.now() - startTime,
     }
+  }
+
+  /**
+   * Execute all available sources in a single phase concurrently.
+   *
+   * Fires onSourceAttempt before each lookup and onSourceComplete after.
+   * Returns the phase's findings, attempt/success counts, and cost.
+   */
+  private async executePhase(
+    subject: TSubject,
+    phaseGroup: SourcePhaseGroup<TSubject>,
+    signal: AbortSignal | undefined,
+    hooks: LifecycleHooks<TSubject, TOutput> | undefined
+  ): Promise<{
+    findings: ScoredFinding[]
+    sourcesAttempted: number
+    sourcesSucceeded: number
+    costUsd: number
+  }> {
+    const availableSources = phaseGroup.sources.filter((s) => s.isAvailable())
+    if (availableSources.length === 0) {
+      return { findings: [], sourcesAttempted: 0, sourcesSucceeded: 0, costUsd: 0 }
+    }
+
+    const timeoutSignal = AbortSignal.timeout(120_000)
+    const phaseSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
+
+    const results = await Promise.allSettled(
+      availableSources.map((source) => {
+        hooks?.onSourceAttempt?.(subject, source.name, phaseGroup.phase)
+        return source.lookup(subject, phaseSignal)
+      })
+    )
+
+    const findings: ScoredFinding[] = []
+    let costUsd = 0
+    let sourcesSucceeded = 0
+
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i]!
+      const source = availableSources[i]!
+      const finding = result.status === "fulfilled" ? (result.value as RawFinding | null) : null
+
+      hooks?.onSourceComplete?.(subject, source.name, finding, finding?.costUsd ?? 0)
+
+      if (finding) {
+        costUsd += finding.costUsd
+        sourcesSucceeded++
+        findings.push({
+          ...finding,
+          sourceType: source.type,
+          sourceName: source.name,
+          reliabilityTier: source.reliabilityTier,
+          reliabilityScore: source.reliabilityScore,
+        })
+      }
+    }
+
+    return { findings, sourcesAttempted: availableSources.length, sourcesSucceeded, costUsd }
+  }
+
+  /**
+   * Check whether early stopping criteria are met.
+   *
+   * Returns a reason string if stopping should occur, or null to continue.
+   */
+  private checkEarlyStop(allFindings: ScoredFinding[], totalCostUsd: number): string | null {
+    const confidenceThreshold =
+      this.config.confidenceThreshold ?? DEFAULT_CONFIG.confidenceThreshold
+    const reliabilityThreshold =
+      this.config.reliabilityThreshold ?? DEFAULT_CONFIG.reliabilityThreshold
+    const earlyStopThreshold = this.config.earlyStopThreshold ?? DEFAULT_CONFIG.earlyStopThreshold
+
+    const highQualityFamilies = new Set(
+      allFindings
+        .filter(
+          (f) => f.confidence >= confidenceThreshold && f.reliabilityScore >= reliabilityThreshold
+        )
+        .map((f) => f.sourceType)
+    )
+
+    if (highQualityFamilies.size >= earlyStopThreshold) {
+      return `${highQualityFamilies.size} high-quality source families met threshold of ${earlyStopThreshold}`
+    }
+
+    if (
+      this.config.costLimits?.maxCostPerSubject &&
+      totalCostUsd >= this.config.costLimits.maxCostPerSubject
+    ) {
+      return "cost_limit"
+    }
+
+    return null
   }
 
   /**
@@ -285,7 +342,7 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
       }
 
       hooks?.onSubjectStart?.(subject, resultMap.size, subjects.length)
-      return this.debrief(subject)
+      return this.debrief(subject, { hooks })
     })
 
     // Ensure results from cost-limited subjects (which still succeed via

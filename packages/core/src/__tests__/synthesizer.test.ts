@@ -31,6 +31,9 @@ function makeFinding(overrides: Partial<ScoredFinding> = {}): ScoredFinding {
   }
 }
 
+// Identity parser for tests where we just want the raw JSON back
+const identityParser = <T>(raw: unknown): T => raw as T
+
 const testSubject: ResearchSubject = {
   id: 1,
   name: "John Wayne",
@@ -68,13 +71,13 @@ describe("ClaudeSynthesizer", () => {
   it("calls Anthropic with correct model and max_tokens", async () => {
     const synthesizer = new ClaudeSynthesizer({
       promptBuilder: promptBuilderSpy,
+      responseParser: identityParser,
       defaultModel: "claude-haiku-3-20250101",
       defaultMaxTokens: 2048,
     })
 
     await synthesizer.synthesize(testSubject, [makeFinding()])
 
-    // Access the mock to verify the call
     const client = (synthesizer as any).client
     expect(client.messages.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -107,6 +110,7 @@ describe("ClaudeSynthesizer", () => {
 
     const synthesizer = new ClaudeSynthesizer({
       promptBuilder: promptBuilderSpy,
+      responseParser: identityParser,
     })
 
     await synthesizer.synthesize(testSubject, findings)
@@ -117,9 +121,10 @@ describe("ClaudeSynthesizer", () => {
     expect(passedFindings[2].reliabilityScore).toBe(0.35)
   })
 
-  it("parses JSON response correctly", async () => {
+  it("parses JSON response through responseParser", async () => {
     const synthesizer = new ClaudeSynthesizer({
       promptBuilder: promptBuilderSpy,
+      responseParser: identityParser,
     })
 
     const result = await synthesizer.synthesize(testSubject, [makeFinding()])
@@ -130,6 +135,7 @@ describe("ClaudeSynthesizer", () => {
   it("calculates cost from token counts", async () => {
     const synthesizer = new ClaudeSynthesizer({
       promptBuilder: promptBuilderSpy,
+      responseParser: identityParser,
       // Default model is Sonnet: input $3/M, output $15/M
     })
 
@@ -142,7 +148,7 @@ describe("ClaudeSynthesizer", () => {
     expect(result.outputTokens).toBe(500)
   })
 
-  it("uses custom responseParser when provided", async () => {
+  it("uses custom responseParser for validation", async () => {
     interface CustomOutput {
       transformed: string
     }
@@ -163,6 +169,7 @@ describe("ClaudeSynthesizer", () => {
   it("uses default model when none specified", async () => {
     const synthesizer = new ClaudeSynthesizer({
       promptBuilder: promptBuilderSpy,
+      responseParser: identityParser,
     })
 
     await synthesizer.synthesize(testSubject, [makeFinding()])
@@ -178,6 +185,7 @@ describe("ClaudeSynthesizer", () => {
   it("uses options.model override", async () => {
     const synthesizer = new ClaudeSynthesizer({
       promptBuilder: promptBuilderSpy,
+      responseParser: identityParser,
       defaultModel: "claude-sonnet-4-20250514",
     })
 

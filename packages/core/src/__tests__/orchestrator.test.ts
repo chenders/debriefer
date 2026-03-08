@@ -458,7 +458,179 @@ describe("ResearchOrchestrator", () => {
       expect(synthesizer.synthesize).not.toHaveBeenCalled()
     })
 
-    // Test 11: Skips unavailable sources
+    // Test 11: debrief fires lifecycle hooks at correct points
+    it("debrief fires lifecycle hooks at correct points", async () => {
+      const source1 = createMockSource({
+        name: "S1",
+        type: "s1",
+        reliabilityTier: ReliabilityTier.TIER_1_NEWS,
+        reliabilityScore: 0.95,
+        finding: makeFinding({ confidence: 0.9, costUsd: 0.002 }),
+      })
+      const source2 = createMockSource({
+        name: "S2",
+        type: "s2",
+        reliabilityTier: ReliabilityTier.TRADE_PRESS,
+        reliabilityScore: 0.9,
+        finding: makeFinding({ confidence: 0.8, costUsd: 0.003 }),
+      })
+
+      const synthesizer = createMockSynthesizer()
+      const orchestrator = new ResearchOrchestrator(
+        [makePhase(0, [source1]), makePhase(1, [source2])],
+        synthesizer,
+        { earlyStopThreshold: 10 }
+      )
+
+      const hooks: LifecycleHooks<ResearchSubject, { result: string }> = {
+        onSourceAttempt: vi.fn(),
+        onSourceComplete: vi.fn(),
+        onPhaseComplete: vi.fn(),
+        onEarlyStop: vi.fn(),
+        onSynthesisStart: vi.fn(),
+        onSynthesisComplete: vi.fn(),
+        onCostLimitReached: vi.fn(),
+      }
+
+      const subject = makeSubject({ id: 1, name: "Hook Test" })
+      await orchestrator.debrief(subject, { hooks })
+
+      // onSourceAttempt: once per source (2 sources across 2 phases)
+      expect(hooks.onSourceAttempt).toHaveBeenCalledTimes(2)
+      expect(hooks.onSourceAttempt).toHaveBeenCalledWith(subject, "S1", 0)
+      expect(hooks.onSourceAttempt).toHaveBeenCalledWith(subject, "S2", 1)
+
+      // onSourceComplete: once per source
+      expect(hooks.onSourceComplete).toHaveBeenCalledTimes(2)
+      expect(hooks.onSourceComplete).toHaveBeenCalledWith(
+        subject,
+        "S1",
+        expect.objectContaining({ confidence: 0.9 }),
+        0.002
+      )
+      expect(hooks.onSourceComplete).toHaveBeenCalledWith(
+        subject,
+        "S2",
+        expect.objectContaining({ confidence: 0.8 }),
+        0.003
+      )
+
+      // onPhaseComplete: once per phase
+      expect(hooks.onPhaseComplete).toHaveBeenCalledTimes(2)
+      expect(hooks.onPhaseComplete).toHaveBeenCalledWith(
+        subject,
+        0,
+        expect.arrayContaining([expect.objectContaining({ sourceType: "s1" })])
+      )
+      expect(hooks.onPhaseComplete).toHaveBeenCalledWith(
+        subject,
+        1,
+        expect.arrayContaining([expect.objectContaining({ sourceType: "s2" })])
+      )
+
+      // onSynthesisStart: once with total finding count
+      expect(hooks.onSynthesisStart).toHaveBeenCalledTimes(1)
+      expect(hooks.onSynthesisStart).toHaveBeenCalledWith(subject, 2)
+
+      // onSynthesisComplete: once with synthesis result
+      expect(hooks.onSynthesisComplete).toHaveBeenCalledTimes(1)
+      expect(hooks.onSynthesisComplete).toHaveBeenCalledWith(
+        subject,
+        expect.objectContaining({ data: { result: "synthesized" }, model: "test-model" })
+      )
+
+      // No early stop or cost limit should have fired
+      expect(hooks.onEarlyStop).not.toHaveBeenCalled()
+      expect(hooks.onCostLimitReached).not.toHaveBeenCalled()
+    })
+
+    // Test 11b: debrief fires onEarlyStop hook when early stopping triggers
+    it("debrief fires onEarlyStop hook when early stopping triggers", async () => {
+      const source1 = createMockSource({
+        name: "S1",
+        type: "s1",
+        reliabilityTier: ReliabilityTier.TIER_1_NEWS,
+        reliabilityScore: 0.95,
+        finding: makeFinding({ confidence: 0.9 }),
+      })
+      const source2 = createMockSource({
+        name: "S2",
+        type: "s2",
+        reliabilityTier: ReliabilityTier.TRADE_PRESS,
+        reliabilityScore: 0.9,
+        finding: makeFinding({ confidence: 0.8 }),
+      })
+      const source3 = createMockSource({
+        name: "S3",
+        type: "s3",
+        reliabilityTier: ReliabilityTier.ARCHIVAL,
+        reliabilityScore: 0.9,
+        finding: makeFinding({ confidence: 0.7 }),
+      })
+      const phase1Source = createMockSource({
+        name: "NeverCalled",
+        type: "never_called",
+      })
+
+      const synthesizer = createMockSynthesizer()
+      const orchestrator = new ResearchOrchestrator(
+        [makePhase(0, [source1, source2, source3]), makePhase(1, [phase1Source])],
+        synthesizer,
+        { earlyStopThreshold: 3, confidenceThreshold: 0.6, reliabilityThreshold: 0.6 }
+      )
+
+      const hooks: LifecycleHooks<ResearchSubject, { result: string }> = {
+        onEarlyStop: vi.fn(),
+        onCostLimitReached: vi.fn(),
+      }
+
+      const subject = makeSubject()
+      await orchestrator.debrief(subject, { hooks })
+
+      expect(hooks.onEarlyStop).toHaveBeenCalledTimes(1)
+      expect(hooks.onEarlyStop).toHaveBeenCalledWith(subject, 0, expect.stringContaining("3"))
+      expect(hooks.onCostLimitReached).not.toHaveBeenCalled()
+    })
+
+    // Test 11c: debrief fires onCostLimitReached hook
+    it("debrief fires onCostLimitReached hook when cost limit hit", async () => {
+      const expensiveSource = createMockSource({
+        name: "Expensive",
+        type: "expensive",
+        finding: makeFinding({ costUsd: 0.5 }),
+        reliabilityTier: ReliabilityTier.UNRELIABLE_UGC,
+        reliabilityScore: 0.35,
+      })
+      const phase1Source = createMockSource({
+        name: "CheapSource",
+        type: "cheap",
+      })
+
+      const synthesizer = createMockSynthesizer()
+      const orchestrator = new ResearchOrchestrator(
+        [makePhase(0, [expensiveSource]), makePhase(1, [phase1Source])],
+        synthesizer,
+        {
+          earlyStopThreshold: 10,
+          costLimits: { maxCostPerSubject: 0.25 },
+        }
+      )
+
+      const hooks: LifecycleHooks<ResearchSubject, { result: string }> = {
+        onCostLimitReached: vi.fn(),
+        onEarlyStop: vi.fn(),
+      }
+
+      const subject = makeSubject()
+      await orchestrator.debrief(subject, { hooks })
+
+      expect(hooks.onEarlyStop).toHaveBeenCalledTimes(1)
+      expect(hooks.onEarlyStop).toHaveBeenCalledWith(subject, 0, "cost_limit")
+      expect(hooks.onCostLimitReached).toHaveBeenCalledTimes(1)
+      expect(hooks.onCostLimitReached).toHaveBeenCalledWith(subject, 0.5, 0.25)
+    })
+
+    // Test 12: Skips unavailable sources
     it("skips unavailable sources — never calls lookup", async () => {
       const unavailableSource = createMockSource({
         name: "Unavailable",

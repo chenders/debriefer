@@ -113,7 +113,7 @@ These are architectural invariants — flag any code that violates them:
 
 - All packages use ESM (`"type": "module"`)
 - All packages extend `tsconfig.base.json`
-- Cross-package deps use `workspace:*` protocol (resolved by npm workspaces)
+- Cross-package deps use `"*"` version (npm workspaces resolves them to local packages automatically)
 - `turbo.json` defines the build dependency graph — `core` builds first
 - `"files": ["dist"]` in every package.json — only ship compiled output
 - Test files go in `src/__tests__/`, not a top-level `test/` directory
