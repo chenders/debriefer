@@ -11,6 +11,8 @@
  * own TOutput type to the orchestrator.
  */
 
+import type { ReliabilityTier } from "./reliability.js"
+
 // ============================================================================
 // Subject — the thing being researched
 // ============================================================================
@@ -82,11 +84,8 @@ export interface ScoredFinding extends RawFinding {
   sourceType: string
   /** Human-readable source name (e.g., "Wikipedia", "Google Search") */
   sourceName: string
-  /**
-   * Reliability tier string from the ReliabilityTier enum.
-   * Stored as string here to avoid circular dependency with reliability.ts.
-   */
-  reliabilityTier: string
+  /** Reliability tier from the ReliabilityTier enum */
+  reliabilityTier: ReliabilityTier
   /**
    * Numeric reliability score (0-1): how trustworthy is this publisher?
    * Based on Wikipedia's Reliable Sources Perennial list (RSP).
@@ -108,8 +107,6 @@ export interface SynthesisOptions {
   maxTokens?: number
   /** System prompt guiding the synthesis */
   systemPrompt?: string
-  /** Response schema for structured output (zod schema or JSON Schema) */
-  responseSchema?: unknown
 }
 
 /**
@@ -162,8 +159,8 @@ export interface MinimalSource<TSubject extends ResearchSubject> {
   readonly name: string
   /** Source type string matching a registry key */
   readonly type: string
-  /** Reliability tier string from ReliabilityTier enum */
-  readonly reliabilityTier: string
+  /** Reliability tier from the ReliabilityTier enum */
+  readonly reliabilityTier: ReliabilityTier
   /** Numeric reliability score (0-1) */
   readonly reliabilityScore: number
   /** Whether this source is free to query */
@@ -239,8 +236,9 @@ export interface DebriefResult<TOutput> {
 export interface ResearchConfig {
   /**
    * Source category flags (e.g., { free: true, news: true, ai: false }).
-   * Categories are domain-specific — the orchestrator uses these to filter
-   * which phases/sources to enable.
+   * Categories are domain-specific — consumer code uses these when constructing
+   * phase groups to decide which sources to include. The orchestrator stores
+   * this config for lifecycle hooks but does not filter sources itself.
    */
   categories?: Record<string, boolean>
   /** Number of subjects to process concurrently in batch mode (default: 5, range: 1-20) */

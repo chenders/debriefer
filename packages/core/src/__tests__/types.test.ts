@@ -6,6 +6,7 @@
  * properties, and that interfaces can be partially implemented.
  */
 import { describe, it, expect } from "vitest"
+import { ReliabilityTier } from "../reliability.js"
 import type {
   ResearchSubject,
   RawFinding,
@@ -137,7 +138,7 @@ describe("ScoredFinding", () => {
       costUsd: 0,
       sourceType: "wikipedia",
       sourceName: "Wikipedia",
-      reliabilityTier: "secondary",
+      reliabilityTier: ReliabilityTier.SECONDARY_COMPILATION,
       reliabilityScore: 0.85,
     }
     expect(finding.sourceType).toBe("wikipedia")
@@ -160,7 +161,7 @@ describe("ScoredFinding", () => {
       metadata: { author: "Jane Doe" },
       sourceType: "guardian",
       sourceName: "The Guardian",
-      reliabilityTier: "tier_1_news",
+      reliabilityTier: ReliabilityTier.TIER_1_NEWS,
       reliabilityScore: 0.95,
     }
     expect(finding.publication).toBe("The Guardian")
@@ -178,7 +179,6 @@ describe("SynthesisOptions", () => {
     expect(options.model).toBeUndefined()
     expect(options.maxTokens).toBeUndefined()
     expect(options.systemPrompt).toBeUndefined()
-    expect(options.responseSchema).toBeUndefined()
   })
 
   it("accepts all fields", () => {
@@ -186,7 +186,6 @@ describe("SynthesisOptions", () => {
       model: "claude-sonnet-4-20250514",
       maxTokens: 4096,
       systemPrompt: "You are a research assistant.",
-      responseSchema: { type: "object", properties: { summary: { type: "string" } } },
     }
     expect(options.model).toBe("claude-sonnet-4-20250514")
     expect(options.maxTokens).toBe(4096)
@@ -263,7 +262,7 @@ describe("MinimalSource", () => {
     const source: MinimalSource<ResearchSubject> = {
       name: "wikipedia",
       type: "wikipedia",
-      reliabilityTier: "secondary",
+      reliabilityTier: ReliabilityTier.SECONDARY_COMPILATION,
       reliabilityScore: 0.85,
       isFree: true,
       estimatedCostPerQuery: 0,
@@ -284,7 +283,7 @@ describe("MinimalSource", () => {
     const source: MinimalSource<ResearchSubject> = {
       name: "obscure-source",
       type: "obscure",
-      reliabilityTier: "unreliable_ugc",
+      reliabilityTier: ReliabilityTier.UNRELIABLE_UGC,
       reliabilityScore: 0.35,
       isFree: true,
       estimatedCostPerQuery: 0,
@@ -309,7 +308,7 @@ describe("SourcePhaseGroup", () => {
     const mockSource: MinimalSource<ResearchSubject> = {
       name: "wikidata",
       type: "wikidata",
-      reliabilityTier: "structured_data",
+      reliabilityTier: ReliabilityTier.STRUCTURED_DATA,
       reliabilityScore: 1.0,
       isFree: true,
       estimatedCostPerQuery: 0,
@@ -359,7 +358,7 @@ describe("DebriefResult", () => {
           costUsd: 0,
           sourceType: "wikipedia",
           sourceName: "Wikipedia",
-          reliabilityTier: "secondary",
+          reliabilityTier: ReliabilityTier.SECONDARY_COMPILATION,
           reliabilityScore: 0.85,
         },
       ],
@@ -795,7 +794,7 @@ describe("type compatibility", () => {
       costUsd: 0,
       sourceType: "test",
       sourceName: "Test",
-      reliabilityTier: "secondary",
+      reliabilityTier: ReliabilityTier.SECONDARY_COMPILATION,
       reliabilityScore: 0.85,
     }
     // ScoredFinding extends RawFinding, so this should work

@@ -5,8 +5,23 @@ interface CacheEntry {
   expiresAt: number | null // null = no expiry
 }
 
+/**
+ * Simple in-memory cache with optional TTL expiration.
+ *
+ * Suitable for development, testing, and small batch jobs. For large batches
+ * (10,000+ subjects), use RedisCache or call `clear()` between batches to
+ * prevent unbounded memory growth — entries are only evicted lazily on read.
+ *
+ * @param maxSize - Optional maximum number of entries. When exceeded, oldest
+ *   entries are evicted (FIFO). Defaults to unlimited.
+ */
 export class InMemoryCache implements CacheProvider {
   private store = new Map<string, CacheEntry>()
+  private maxSize: number
+
+  constructor(options?: { maxSize?: number }) {
+    this.maxSize = options?.maxSize ?? Infinity
+  }
 
   async get(key: string): Promise<string | null> {
     const entry = this.store.get(key)
@@ -19,6 +34,12 @@ export class InMemoryCache implements CacheProvider {
   }
 
   async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
+    // Evict oldest entry if at capacity (FIFO via Map insertion order)
+    if (this.store.size >= this.maxSize && !this.store.has(key)) {
+      const oldest = this.store.keys().next().value
+      if (oldest !== undefined) this.store.delete(oldest)
+    }
+
     this.store.set(key, {
       value,
       expiresAt: ttlSeconds ? Date.now() + ttlSeconds * 1000 : null,

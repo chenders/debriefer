@@ -157,7 +157,9 @@ export class ResearchOrchestrator<
         }
       }
 
-      // Check early stopping — count distinct high-quality source families
+      // Check early stopping — count distinct high-quality source families.
+      // A "family" is a unique sourceType (e.g., "wikipedia", "guardian").
+      // Multiple findings from the same source count as one family.
       const highQualityFamilies = new Set(
         allFindings
           .filter(
@@ -165,7 +167,7 @@ export class ResearchOrchestrator<
               f.confidence >= confidenceThreshold &&
               f.reliabilityScore >= reliabilityThreshold
           )
-          .map((f) => f.reliabilityTier)
+          .map((f) => f.sourceType)
       )
 
       if (highQualityFamilies.size >= earlyStopThreshold) {
@@ -228,11 +230,11 @@ export class ResearchOrchestrator<
   async debriefBatch(
     subjects: TSubject[],
     hooks?: LifecycleHooks<TSubject, TOutput>
-  ): Promise<Map<string, DebriefResult<TOutput>>> {
+  ): Promise<Map<string | number, DebriefResult<TOutput>>> {
     const startTime = Date.now()
     const concurrency =
       this.config.concurrency ?? DEFAULT_CONFIG.concurrency
-    const resultMap = new Map<string, DebriefResult<TOutput>>()
+    const resultMap = new Map<string | number, DebriefResult<TOutput>>()
 
     const costTracker = this.config.costLimits?.maxTotalCost
       ? new BatchCostTracker({
@@ -248,23 +250,40 @@ export class ResearchOrchestrator<
     >({
       concurrency,
       onItemComplete: (subject, result, progress) => {
-        resultMap.set(String(subject.id), result)
+        resultMap.set(subject.id, result)
 
         if (costTracker) {
           costTracker.addSubjectCost(subject.id, result.totalCostUsd)
         }
 
         hooks?.onSubjectComplete?.(subject, result)
+
+        // Calculate running total cost across all completed subjects
+        const runningCost = costTracker?.getTotalCost() ??
+          Array.from(resultMap.values()).reduce((sum, r) => sum + r.totalCostUsd, 0)
+
         hooks?.onBatchProgress?.({
           completed: progress.completed,
           total: progress.total,
-          costUsd:
-            costTracker?.getTotalCost() ?? result.totalCostUsd,
+          costUsd: runningCost,
           elapsedMs: Date.now() - startTime,
         })
       },
       onItemError: (subject, error) => {
-        hooks?.onRunFailed?.(error)
+        // Per-subject errors are not batch failures — the batch continues.
+        // Report via onSubjectComplete with null data.
+        const errorResult: DebriefResult<TOutput> = {
+          subject,
+          data: null,
+          findings: [],
+          totalCostUsd: 0,
+          sourcesAttempted: 0,
+          sourcesSucceeded: 0,
+          durationMs: 0,
+        }
+        resultMap.set(subject.id, errorResult)
+        hooks?.onSubjectComplete?.(subject, errorResult)
+        this.telemetry.recordError(error, { subject: subject.name, phase: "batch" })
       },
     })
 
@@ -289,8 +308,8 @@ export class ResearchOrchestrator<
     // Ensure results from cost-limited subjects (which still succeed via
     // onItemComplete) and any edge cases are captured in the map
     for (const entry of batchResults) {
-      if (entry.result && !resultMap.has(String(entry.item.id))) {
-        resultMap.set(String(entry.item.id), entry.result)
+      if (entry.result && !resultMap.has(entry.item.id)) {
+        resultMap.set(entry.item.id, entry.result)
       }
     }
 

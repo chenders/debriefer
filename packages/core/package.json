@@ -15,16 +15,15 @@
     "test": "vitest run",
     "type-check": "tsc --noEmit"
   },
+  "files": ["dist"],
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39",
-    "p-limit": "^6",
-    "zod": "^3"
+    "p-limit": "^6"
   },
   "peerDependencies": {
-    "ioredis": "^5"
+    "@anthropic-ai/sdk": "^0.39"
   },
   "peerDependenciesMeta": {
-    "ioredis": {
+    "@anthropic-ai/sdk": {
       "optional": true
     }
   }

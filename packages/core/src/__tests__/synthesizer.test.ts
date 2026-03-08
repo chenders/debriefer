@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
+import { ReliabilityTier } from "../reliability.js"
 import type { ScoredFinding, ResearchSubject } from "../types.js"
 
 vi.mock("@anthropic-ai/sdk", () => {
@@ -30,7 +31,7 @@ function makeFinding(overrides: Partial<ScoredFinding> = {}): ScoredFinding {
     costUsd: 0,
     sourceType: "wikipedia",
     sourceName: "Wikipedia",
-    reliabilityTier: "SECONDARY_COMPILATION",
+    reliabilityTier: ReliabilityTier.SECONDARY_COMPILATION,
     reliabilityScore: 0.85,
     ...overrides,
   }

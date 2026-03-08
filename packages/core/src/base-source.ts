@@ -41,6 +41,8 @@ export interface BaseSourceOptions {
   timeoutMs?: number
   /** Whether to ignore cache and make fresh requests */
   ignoreCache?: boolean
+  /** Cache TTL in seconds (default: 86400 = 24 hours) */
+  cacheTtlSeconds?: number
 }
 
 // ============================================================================
@@ -82,6 +84,7 @@ export abstract class BaseResearchSource<TSubject extends ResearchSubject>
       rateLimitMs: 1000,
       timeoutMs: 30000,
       ignoreCache: false,
+      cacheTtlSeconds: 86400,
       ...options,
     }
   }
@@ -163,7 +166,7 @@ export abstract class BaseResearchSource<TSubject extends ResearchSubject>
 
       // Cache successful result
       if (this.cache && result) {
-        await this.cache.set(cacheKey, JSON.stringify(result), 86400) // 24h TTL
+        await this.cache.set(cacheKey, JSON.stringify(result), this.options.cacheTtlSeconds)
       }
 
       return result

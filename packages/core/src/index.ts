@@ -24,7 +24,7 @@ export { SourceRateLimiter } from "./rate-limiter.js"
 export type { RateLimiterStats } from "./rate-limiter.js"
 export { BatchCostTracker } from "./cost-tracker.js"
 export { ParallelBatchRunner } from "./batch-runner.js"
-export type { BatchProgress, ParallelBatchRunnerOptions } from "./batch-runner.js"
+export type { BatchProgress, BatchResult, ParallelBatchRunnerOptions } from "./batch-runner.js"
 export { calculateConfidence } from "./confidence.js"
 
 // Cache implementations
