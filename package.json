@@ -16,6 +16,8 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9",
     "prettier": "^3",
     "turbo": "^2",
