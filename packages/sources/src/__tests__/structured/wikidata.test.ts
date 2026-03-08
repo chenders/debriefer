@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import type { ResearchSubject } from "debriefer"
+import { ReliabilityTier, type ResearchSubject } from "debriefer"
 import {
   WikidataSource,
   wikidata,
@@ -178,7 +178,7 @@ describe("WikidataSource", () => {
       const source = new WikidataSource()
       expect(source.name).toBe("Wikidata")
       expect(source.type).toBe("wikidata")
-      expect(source.reliabilityTier).toBe("structured_data")
+      expect(source.reliabilityTier).toBe(ReliabilityTier.STRUCTURED_DATA)
       expect(source.domain).toBe("query.wikidata.org")
       expect(source.isFree).toBe(true)
       expect(source.estimatedCostPerQuery).toBe(0)
@@ -563,6 +563,21 @@ describe("WikidataSource", () => {
     it("returns just the name when no birthYear context", () => {
       const source = new WikidataSource()
       const subject = makeSubject({ context: undefined })
+      expect(source.buildQuery(subject)).toBe("John Wayne")
+    })
+
+    it("uses truncated SPARQL query as cache key when custom queryBuilder is provided", () => {
+      const customQuery = "SELECT ?x WHERE { ?x ?y ?z } LIMIT 1"
+      const source = new WikidataSource({
+        queryBuilder: () => customQuery,
+      })
+      const subject = makeSubject()
+      expect(source.buildQuery(subject)).toBe(customQuery)
+    })
+
+    it("ignores non-finite birthYear values", () => {
+      const source = new WikidataSource()
+      const subject = makeSubject({ context: { birthYear: NaN } })
       expect(source.buildQuery(subject)).toBe("John Wayne")
     })
   })

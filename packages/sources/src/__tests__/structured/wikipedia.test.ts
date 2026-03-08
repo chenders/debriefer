@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import type { ResearchSubject } from "debriefer"
+import { ReliabilityTier, type ResearchSubject } from "debriefer"
 import { WikipediaSource, wikipedia } from "../../structured/wikipedia.js"
 import type { WikipediaSection } from "../../structured/wikipedia.js"
 
@@ -99,7 +99,7 @@ describe("WikipediaSource", () => {
       const source = new WikipediaSource()
       expect(source.name).toBe("Wikipedia")
       expect(source.type).toBe("wikipedia")
-      expect(source.reliabilityTier).toBe("secondary")
+      expect(source.reliabilityTier).toBe(ReliabilityTier.SECONDARY_COMPILATION)
       expect(source.domain).toBe("en.wikipedia.org")
       expect(source.isFree).toBe(true)
       expect(source.estimatedCostPerQuery).toBe(0)
@@ -599,10 +599,33 @@ describe("WikipediaSource", () => {
   })
 
   describe("buildQuery (for cache key)", () => {
-    it("returns the subject name", () => {
+    it("returns the subject name for default options", () => {
       const source = new WikipediaSource()
       const subject = makeSubject()
       expect(source.buildQuery(subject)).toBe("John Wayne")
+    })
+
+    it("includes sections marker when custom sectionFilter is provided", () => {
+      const source = new WikipediaSource({
+        sectionFilter: (sections) => sections.filter((s) => s.title === "Death"),
+      })
+      const subject = makeSubject()
+      expect(source.buildQuery(subject)).toBe("John Wayne|sections:custom")
+    })
+
+    it("includes no-intro marker when includeIntro is false", () => {
+      const source = new WikipediaSource({ includeIntro: false })
+      const subject = makeSubject()
+      expect(source.buildQuery(subject)).toBe("John Wayne|no-intro")
+    })
+
+    it("includes both markers when both options are set", () => {
+      const source = new WikipediaSource({
+        sectionFilter: (sections) => sections.filter((s) => s.title === "Death"),
+        includeIntro: false,
+      })
+      const subject = makeSubject()
+      expect(source.buildQuery(subject)).toBe("John Wayne|sections:custom|no-intro")
     })
   })
 

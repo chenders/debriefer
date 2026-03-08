@@ -35,23 +35,10 @@ export interface ArticleExtractionResult {
  * @returns Extracted article content and metadata, or null
  */
 export function extractArticleContent(html: string, url?: string): ArticleExtractionResult | null {
+  // Suppress all JSDOM console output (CSS parsing warnings, resource loading errors, etc.)
+  // These are expected and harmless when parsing arbitrary web pages for article extraction.
   const virtualConsole = new VirtualConsole()
-  const handleConsoleError = (error: unknown): void => {
-    let message = ""
-    if (typeof error === "string") {
-      message = error
-    } else if (error instanceof Error) {
-      message = error.message
-    }
-    // Suppress CSS parsing warnings from jsdom (expected and harmless)
-    if (message.includes("Could not parse CSS stylesheet")) {
-      return
-    }
-    // Forward non-CSS jsdom errors so they are not silently swallowed
-    console.error(error)
-  }
-  virtualConsole.on("jsdomError", handleConsoleError)
-  virtualConsole.on("error", handleConsoleError)
+  // No event listeners attached — all errors are silently suppressed
 
   const dom = new JSDOM(html, { url: url || undefined, virtualConsole })
   const reader = new Readability(dom.window.document)

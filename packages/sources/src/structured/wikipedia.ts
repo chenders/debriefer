@@ -28,7 +28,6 @@ import {
 // ============================================================================
 
 const MIN_SECTION_LENGTH = 50
-const DEFAULT_USER_AGENT = "debriefer/0.1.0 (https://github.com/chenders/debriefer)"
 
 // ============================================================================
 // Types
@@ -84,11 +83,6 @@ export interface WikipediaOptions extends BaseSourceOptions {
    * Set to an empty array to disable alternate title attempts.
    */
   disambiguationSuffixes?: string[]
-
-  /**
-   * User-Agent string for Wikipedia API requests.
-   */
-  userAgent?: string
 }
 
 // ============================================================================
@@ -124,7 +118,6 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
   private includeIntro: boolean
   private handleDisambiguation: boolean
   private disambiguationSuffixes: string[]
-  private userAgent: string
 
   constructor(options: WikipediaOptions = {}) {
     super({ rateLimitMs: 500, ...options })
@@ -132,7 +125,6 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
     this.includeIntro = options.includeIntro ?? true
     this.handleDisambiguation = options.handleDisambiguation ?? true
     this.disambiguationSuffixes = options.disambiguationSuffixes ?? ["_(actor)", "_(actress)"]
-    this.userAgent = options.userAgent ?? DEFAULT_USER_AGENT
   }
 
   protected async fetchResult(
@@ -229,22 +221,24 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
 
   /**
    * Build the search query for cache key generation.
+   * Includes option-derived key material so different WikipediaSource instances
+   * with different sectionFilter/includeIntro options don't collide in cache.
    */
   override buildQuery(subject: ResearchSubject): string {
-    return subject.name
+    const parts = [subject.name]
+    if (this.sectionFilter !== defaultSectionFilter) parts.push(`sections:custom`)
+    if (this.includeIntro === false) parts.push("no-intro")
+    return parts.join("|")
   }
 
   /**
    * Fetch a Wikipedia document using wtf_wikipedia.
-   * Returns null if the article doesn't exist or an error occurs.
+   * Returns null if the article doesn't exist. Lets other errors propagate
+   * so BaseResearchSource.lookup() can record them via telemetry.
    */
   private async fetchDocument(title: string): Promise<InstanceType<typeof wtf.Document> | null> {
-    try {
-      const doc = await wtf.fetch(title)
-      return (doc as InstanceType<typeof wtf.Document> | null) ?? null
-    } catch {
-      return null
-    }
+    const doc = await wtf.fetch(title)
+    return (doc as InstanceType<typeof wtf.Document> | null) ?? null
   }
 
   /**

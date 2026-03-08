@@ -126,11 +126,19 @@ export interface WikidataOptions extends BaseSourceOptions {
 function defaultQueryBuilder(subject: ResearchSubject): string {
   const escapedName = escapeSparql(subject.name)
 
-  const birthYear = subject.context?.birthYear as number | undefined
+  const rawBirthYear = subject.context?.birthYear
+  const parsedBirthYear =
+    typeof rawBirthYear === "number" && Number.isFinite(rawBirthYear)
+      ? rawBirthYear
+      : typeof rawBirthYear === "string"
+        ? parseInt(rawBirthYear, 10)
+        : undefined
+  const validBirthYear =
+    parsedBirthYear !== undefined && Number.isFinite(parsedBirthYear) ? parsedBirthYear : undefined
 
-  const birthFilter = birthYear
+  const birthFilter = validBirthYear
     ? `?person wdt:P569 ?birthDate .
-       FILTER(YEAR(?birthDate) = ${birthYear})`
+       FILTER(YEAR(?birthDate) = ${validBirthYear})`
     : ""
 
   return `
@@ -295,10 +303,18 @@ export class WikidataSource extends BaseResearchSource<ResearchSubject> {
 
   /**
    * Build the search query for cache key generation.
-   * Uses the subject name plus birth year context if available.
+   * Uses the actual SPARQL query (truncated) so different queryBuilders
+   * don't collide in cache. Falls back to name + birth year for the default builder.
    */
   override buildQuery(subject: ResearchSubject): string {
-    const birthYear = subject.context?.birthYear as number | undefined
+    if (this.queryBuilder !== defaultQueryBuilder) {
+      // Custom queryBuilder: use a truncated version of the actual SPARQL query as cache key
+      return this.queryBuilder(subject).slice(0, 200)
+    }
+    // Default builder: name + validated birth year
+    const rawBirthYear = subject.context?.birthYear
+    const birthYear =
+      typeof rawBirthYear === "number" && Number.isFinite(rawBirthYear) ? rawBirthYear : undefined
     return birthYear ? `${subject.name}:${birthYear}` : subject.name
   }
 
@@ -319,7 +335,17 @@ export class WikidataSource extends BaseResearchSource<ResearchSubject> {
 
         if ((response.status === 429 || response.status >= 500) && attempt < this.maxRetries) {
           const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt)
-          await new Promise((resolve) => setTimeout(resolve, delay))
+          await new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(resolve, delay)
+            signal.addEventListener(
+              "abort",
+              () => {
+                clearTimeout(timer)
+                reject(signal.reason)
+              },
+              { once: true }
+            )
+          })
           continue
         }
 
@@ -333,7 +359,17 @@ export class WikidataSource extends BaseResearchSource<ResearchSubject> {
 
         if (attempt < this.maxRetries) {
           const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt)
-          await new Promise((resolve) => setTimeout(resolve, delay))
+          await new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(resolve, delay)
+            signal.addEventListener(
+              "abort",
+              () => {
+                clearTimeout(timer)
+                reject(signal.reason)
+              },
+              { once: true }
+            )
+          })
           continue
         }
         throw error
