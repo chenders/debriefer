@@ -1,0 +1,25 @@
+{
+  "name": "debriefer-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@10.9.4",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "eslint": "^9",
+    "prettier": "^3",
+    "turbo": "^2",
+    "typescript": "^5.7",
+    "vitest": "^3"
+  }
+}

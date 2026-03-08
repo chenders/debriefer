@@ -1,0 +1,26 @@
+{
+  "name": "debriefer-server",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "debriefer": "*",
+    "debriefer-sources": "*",
+    "express": "^4",
+    "cors": "^2",
+    "zod": "^3",
+    "js-yaml": "^4"
+  }
+}

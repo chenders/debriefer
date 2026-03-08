@@ -1,0 +1,30 @@
+{
+  "name": "debriefer-sources",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "debriefer": "*",
+    "@mozilla/readability": "^0.5",
+    "jsdom": "^25",
+    "he": "^1",
+    "wtf_wikipedia": "^10",
+    "fast-xml-parser": "^4"
+  },
+  "optionalDependencies": {
+    "playwright-core": "^1.50",
+    "fingerprint-injector": "^2"
+  }
+}
