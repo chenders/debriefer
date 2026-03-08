@@ -220,8 +220,12 @@ function defaultResultParser(
 
 /**
  * Check if two names match, handling common variations.
- * Normalizes to lowercase alphanumeric characters and checks for
- * exact match, substring containment, or last-name match.
+ * Normalizes to lowercase ASCII and checks for exact match, substring
+ * containment, or last-name + first-initial match.
+ *
+ * Note: Normalization strips non-ASCII characters (accents, diacritics),
+ * which works for most Western names but may cause false matches for
+ * names that differ only in diacritics.
  */
 function isNameMatch(name1: string, name2: string): boolean {
   const normalize = (s: string): string => s.toLowerCase().replace(/[^a-z]/g, "")
@@ -231,13 +235,16 @@ function isNameMatch(name1: string, name2: string): boolean {
   if (norm1 === norm2) return true
   if (norm1.includes(norm2) || norm2.includes(norm1)) return true
 
-  // Last name match
+  // Last name + first initial match (avoids "John Smith" matching "Mary Smith")
   const parts1 = name1.toLowerCase().split(/\s+/)
   const parts2 = name2.toLowerCase().split(/\s+/)
+  if (parts1.length < 2 || parts2.length < 2) return false
   const last1 = parts1[parts1.length - 1]
   const last2 = parts2[parts2.length - 1]
+  if (last1 !== last2) return false
 
-  return last1 === last2
+  // Require first initial to match
+  return parts1[0]![0] === parts2[0]![0]
 }
 
 // ============================================================================
@@ -337,6 +344,7 @@ export class WikidataSource extends BaseResearchSource<ResearchSubject> {
         })
 
         if ((response.status === 429 || response.status >= 500) && attempt < this.maxRetries) {
+          if (signal.aborted) throw new DOMException("Aborted", "AbortError")
           const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt)
           await new Promise<void>((resolve, reject) => {
             const timer = setTimeout(resolve, delay)

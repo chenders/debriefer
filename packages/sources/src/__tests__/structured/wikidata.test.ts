@@ -421,9 +421,10 @@ describe("WikidataSource", () => {
       expect(result).not.toBeNull()
     })
 
-    it("matches by last name when full name differs", async () => {
+    it("matches by last name + first initial when full name differs", async () => {
       const source = new WikidataSource()
-      const subject = makeSubject({ name: "Marion Wayne" })
+      // "John Wayne" vs "James Wayne" — same last name + same first initial
+      const subject = makeSubject({ name: "James Wayne" })
 
       mockFetch.mockResolvedValueOnce(
         makeOkResponse(makeSparqlResponse([makeBinding({ personLabel: { value: "John Wayne" } })]))
@@ -432,6 +433,20 @@ describe("WikidataSource", () => {
       const signal = AbortSignal.timeout(5000)
       const result = await source.lookup(subject, signal)
       expect(result).not.toBeNull()
+    })
+
+    it("rejects last-name-only match with different first initial", async () => {
+      const source = new WikidataSource()
+      // "John Wayne" vs "Mary Wayne" — same last name but different first initial
+      const subject = makeSubject({ name: "Mary Wayne" })
+
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse(makeSparqlResponse([makeBinding({ personLabel: { value: "John Wayne" } })]))
+      )
+
+      const signal = AbortSignal.timeout(5000)
+      const result = await source.lookup(subject, signal)
+      expect(result).toBeNull()
     })
   })
 
@@ -495,7 +510,7 @@ describe("WikidataSource", () => {
   })
 
   describe("error handling", () => {
-    it("returns null on HTTP error (non-retryable)", async () => {
+    it("returns null on 404 (subject not found)", async () => {
       const source = new WikidataSource()
       const subject = makeSubject()
 
@@ -506,6 +521,22 @@ describe("WikidataSource", () => {
 
       expect(result).toBeNull()
     })
+
+    it("returns null on non-404 HTTP error (error propagates to base class)", async () => {
+      // Use a short timeout source to avoid waiting for the default 30s
+      const source = new WikidataSource({ timeoutMs: 2000 })
+      const subject = makeSubject()
+
+      mockFetch.mockResolvedValueOnce(makeErrorResponse(403))
+
+      const signal = AbortSignal.timeout(10000)
+      // 403 throws inside fetchWithRetry, caught by BaseResearchSource.lookup()
+      // which records the error via telemetry and returns null
+      const result = await source.lookup(subject, signal)
+
+      expect(result).toBeNull()
+      expect(mockFetch).toHaveBeenCalledTimes(1)
+    }, 15000)
 
     it("returns null on network error after retries", async () => {
       const source = new WikidataSource({ maxRetries: 1 })
