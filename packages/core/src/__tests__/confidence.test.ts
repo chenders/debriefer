@@ -3,13 +3,7 @@ import { calculateConfidence } from "../confidence.js"
 
 describe("calculateConfidence", () => {
   const requiredKeywords = ["died", "death", "passed away"]
-  const bonusKeywords = [
-    "cancer",
-    "heart attack",
-    "accident",
-    "overdose",
-    "suicide",
-  ]
+  const bonusKeywords = ["cancer", "heart attack", "accident", "overdose", "suicide"]
 
   it("returns 0 for empty text", () => {
     expect(calculateConfidence("", requiredKeywords)).toBe(0)
@@ -50,8 +44,7 @@ describe("calculateConfidence", () => {
 
   it("caps at 1.0", () => {
     // Even with all matches, should never exceed 1.0
-    const text =
-      "died death passed away cancer heart attack accident overdose suicide"
+    const text = "died death passed away cancer heart attack accident overdose suicide"
     const result = calculateConfidence(text, requiredKeywords, bonusKeywords)
     expect(result).toBeLessThanOrEqual(1.0)
   })

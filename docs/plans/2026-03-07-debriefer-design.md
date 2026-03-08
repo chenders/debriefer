@@ -136,7 +136,7 @@ interface RawFinding {
   url?: string
   publication?: string
   articleTitle?: string
-  confidence: number       // 0-1: content relevance
+  confidence: number // 0-1: content relevance
   costUsd: number
   metadata?: Record<string, unknown>
 }
@@ -145,7 +145,7 @@ interface ScoredFinding extends RawFinding {
   sourceType: string
   sourceName: string
   reliabilityTier: ReliabilityTier
-  reliabilityScore: number  // 0-1: publisher trustworthiness
+  reliabilityScore: number // 0-1: publisher trustworthiness
 }
 ```
 
@@ -187,10 +187,10 @@ class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
 ```typescript
 interface ResearchConfig {
   categories?: Record<string, boolean>
-  concurrency?: number              // default 5, range 1-20
-  confidenceThreshold?: number      // default 0.6
-  reliabilityThreshold?: number     // default 0.6
-  earlyStopThreshold?: number       // default 3 high-quality source families
+  concurrency?: number // default 5, range 1-20
+  confidenceThreshold?: number // default 0.6
+  reliabilityThreshold?: number // default 0.6
+  earlyStopThreshold?: number // default 3 high-quality source families
   costLimits?: {
     maxCostPerSubject?: number
     maxTotalCost?: number
@@ -236,20 +236,20 @@ interface TelemetryProvider {
 
 Based on Wikipedia's Reliable Sources Perennial list (RSP). Each built-in source declares its tier. Users can override per-source.
 
-| Tier | Score | RSP Equivalent | Examples |
-|------|-------|----------------|----------|
-| STRUCTURED_DATA | 1.0 | N/A | Wikidata, government databases |
-| TIER_1_NEWS | 0.95 | "Generally reliable" | AP, NYT, BBC, Reuters, WaPo |
-| TRADE_PRESS | 0.9 | "Generally reliable" (domain) | Variety, Nature, Lancet |
-| ARCHIVAL | 0.9 | Primary sources | Trove, Europeana, Chronicling America |
-| SECONDARY_COMPILATION | 0.85 | Wikipedia's self-assessment | Wikipedia |
-| SEARCH_AGGREGATOR | 0.7 | Depends on linked sources | Google, Bing, DDG, Brave |
-| ARCHIVE_MIRROR | 0.7 | Mirrors | Internet Archive |
-| MARGINAL_EDITORIAL | 0.65 | "Use with caution" | People Magazine |
-| MARGINAL_MIXED | 0.6 | Mixed editorial + UGC | Legacy.com |
-| AI_MODEL | 0.55 | No RSP equivalent | Claude, GPT, Gemini |
-| UNRELIABLE_FAST | 0.5 | "Generally unreliable" | TMZ |
-| UNRELIABLE_UGC | 0.35 | User-generated content | Find a Grave |
+| Tier                  | Score | RSP Equivalent                | Examples                              |
+| --------------------- | ----- | ----------------------------- | ------------------------------------- |
+| STRUCTURED_DATA       | 1.0   | N/A                           | Wikidata, government databases        |
+| TIER_1_NEWS           | 0.95  | "Generally reliable"          | AP, NYT, BBC, Reuters, WaPo           |
+| TRADE_PRESS           | 0.9   | "Generally reliable" (domain) | Variety, Nature, Lancet               |
+| ARCHIVAL              | 0.9   | Primary sources               | Trove, Europeana, Chronicling America |
+| SECONDARY_COMPILATION | 0.85  | Wikipedia's self-assessment   | Wikipedia                             |
+| SEARCH_AGGREGATOR     | 0.7   | Depends on linked sources     | Google, Bing, DDG, Brave              |
+| ARCHIVE_MIRROR        | 0.7   | Mirrors                       | Internet Archive                      |
+| MARGINAL_EDITORIAL    | 0.65  | "Use with caution"            | People Magazine                       |
+| MARGINAL_MIXED        | 0.6   | Mixed editorial + UGC         | Legacy.com                            |
+| AI_MODEL              | 0.55  | No RSP equivalent             | Claude, GPT, Gemini                   |
+| UNRELIABLE_FAST       | 0.5   | "Generally unreliable"        | TMZ                                   |
+| UNRELIABLE_UGC        | 0.35  | User-generated content        | Find a Grave                          |
 
 New source PRs consult the RSP list to determine tier assignment.
 
@@ -259,15 +259,15 @@ REST API for cross-ecosystem access. Runs standalone or in Docker.
 
 ### Endpoints
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| POST | /api/debrief | Research a single subject |
-| POST | /api/debrief/batch | Start async batch (returns run ID) |
-| GET | /api/runs/:id | Check batch progress |
-| GET | /api/runs/:id/results | Get batch results |
-| POST | /api/runs/:id/cancel | Cancel a batch |
-| GET | /api/sources | List available sources + reliability tiers |
-| GET | /api/health | Health check |
+| Method | Path                  | Purpose                                    |
+| ------ | --------------------- | ------------------------------------------ |
+| POST   | /api/debrief          | Research a single subject                  |
+| POST   | /api/debrief/batch    | Start async batch (returns run ID)         |
+| GET    | /api/runs/:id         | Check batch progress                       |
+| GET    | /api/runs/:id/results | Get batch results                          |
+| POST   | /api/runs/:id/cancel  | Cancel a batch                             |
+| GET    | /api/sources          | List available sources + reliability tiers |
+| GET    | /api/health           | Health check                               |
 
 ### Configuration
 
@@ -340,14 +340,14 @@ Debriefer ships as an MCP (Model Context Protocol) server, allowing any AI assis
 
 ### Tools Exposed
 
-| Tool | Description |
-|------|-------------|
-| `debrief` | Research a subject — returns synthesized findings with reliability scores |
-| `debrief_batch` | Start async batch research, returns run ID |
-| `get_run_status` | Check batch progress |
-| `get_run_results` | Retrieve batch results |
-| `list_sources` | Show available sources, their reliability tiers, and availability |
-| `configure` | Adjust categories, cost limits, thresholds for the session |
+| Tool              | Description                                                               |
+| ----------------- | ------------------------------------------------------------------------- |
+| `debrief`         | Research a subject — returns synthesized findings with reliability scores |
+| `debrief_batch`   | Start async batch research, returns run ID                                |
+| `get_run_status`  | Check batch progress                                                      |
+| `get_run_results` | Retrieve batch results                                                    |
+| `list_sources`    | Show available sources, their reliability tiers, and availability         |
+| `configure`       | Adjust categories, cost limits, thresholds for the session                |
 
 ### Example Usage in Claude Code
 

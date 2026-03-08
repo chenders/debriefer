@@ -173,9 +173,7 @@ describe("ParallelBatchRunner", () => {
     expect(processedItems).toContain(1)
     expect(processedItems).toContain(2)
     // Some later items should have been skipped (result: null, no error)
-    const skipped = results.filter(
-      (r) => r.result === null && r.error === undefined
-    )
+    const skipped = results.filter((r) => r.result === null && r.error === undefined)
     expect(skipped.length).toBeGreaterThan(0)
   })
 
@@ -252,7 +250,7 @@ describe("ParallelBatchRunner", () => {
     })
 
     const results = await runner.run([1], async () => {
-      throw "string error" // eslint-disable-line no-throw-literal
+      throw "string error"
     })
 
     expect(results[0]!.result).toBeNull()

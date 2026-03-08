@@ -16,13 +16,13 @@ Coming soon.
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
-| `debriefer` | Core orchestration engine |
+| Package             | Description                      |
+| ------------------- | -------------------------------- |
+| `debriefer`         | Core orchestration engine        |
 | `debriefer-sources` | 60+ built-in source integrations |
-| `debriefer-cli` | Command-line interface |
-| `debriefer-server` | REST API server |
-| `debriefer-mcp` | Model Context Protocol server |
+| `debriefer-cli`     | Command-line interface           |
+| `debriefer-server`  | REST API server                  |
+| `debriefer-mcp`     | Model Context Protocol server    |
 
 ## Python Client
 

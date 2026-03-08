@@ -19,9 +19,7 @@ export function calculateConfidence(
   const lowerText = text.toLowerCase()
 
   // Check if any required keyword is present
-  const hasRequired = requiredKeywords.some((kw) =>
-    lowerText.includes(kw.toLowerCase())
-  )
+  const hasRequired = requiredKeywords.some((kw) => lowerText.includes(kw.toLowerCase()))
   if (!hasRequired) return 0
 
   // Base confidence from having required keyword
@@ -29,9 +27,7 @@ export function calculateConfidence(
 
   // Bonus from additional keywords (up to +0.5)
   if (bonusKeywords.length > 0) {
-    const matchCount = bonusKeywords.filter((kw) =>
-      lowerText.includes(kw.toLowerCase())
-    ).length
+    const matchCount = bonusKeywords.filter((kw) => lowerText.includes(kw.toLowerCase())).length
     confidence += 0.5 * (matchCount / bonusKeywords.length)
   }
 

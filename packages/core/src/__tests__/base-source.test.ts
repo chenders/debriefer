@@ -86,10 +86,7 @@ class TestSource extends BaseResearchSource<ResearchSubject> {
 
   private fixedResult: RawFinding | null
 
-  constructor(
-    result: RawFinding | null = makeFinding(),
-    options: BaseSourceOptions = {}
-  ) {
+  constructor(result: RawFinding | null = makeFinding(), options: BaseSourceOptions = {}) {
     super(options)
     this.fixedResult = result
   }
@@ -148,9 +145,7 @@ describe("BaseResearchSource", () => {
     const result = await source.lookup(testSubject, abortController.signal)
 
     expect(result).toEqual(cachedFinding)
-    expect(cache.get).toHaveBeenCalledWith(
-      expect.stringContaining("debriefer:test_source:42:")
-    )
+    expect(cache.get).toHaveBeenCalledWith(expect.stringContaining("debriefer:test_source:42:"))
   })
 
   // Test 3: lookup populates cache after successful fetch
@@ -193,10 +188,7 @@ describe("BaseResearchSource", () => {
 
     await source.lookup(testSubject, abortController.signal)
 
-    expect(rateLimiter.acquire).toHaveBeenCalledWith(
-      "test.example.com",
-      500
-    )
+    expect(rateLimiter.acquire).toHaveBeenCalledWith("test.example.com", 500)
   })
 
   // Test 6: telemetry span is started and ended
@@ -358,10 +350,7 @@ describe("BaseResearchSource", () => {
     source.lookup(testSubject, abortController.signal)
 
     // Should use default rateLimitMs of 1000
-    expect(rateLimiter.acquire).toHaveBeenCalledWith(
-      "test.example.com",
-      1000
-    )
+    expect(rateLimiter.acquire).toHaveBeenCalledWith("test.example.com", 1000)
   })
 
   it("span.end is called even when fetchResult throws", async () => {

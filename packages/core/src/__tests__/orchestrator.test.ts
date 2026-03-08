@@ -1,25 +1,21 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi } from "vitest"
 import { ResearchOrchestrator } from "../orchestrator.js"
 import type { BaseResearchSource } from "../base-source.js"
 import { ReliabilityTier } from "../reliability.js"
 import type {
   ResearchSubject,
   RawFinding,
-  ScoredFinding,
   SynthesisResult,
   Synthesizer,
   SourcePhaseGroup,
   LifecycleHooks,
-  DebriefResult,
 } from "../types.js"
 
 // ============================================================================
 // Test Fixtures
 // ============================================================================
 
-const makeSubject = (
-  overrides: Partial<ResearchSubject> = {}
-): ResearchSubject => ({
+const makeSubject = (overrides: Partial<ResearchSubject> = {}): ResearchSubject => ({
   id: 1,
   name: "Test Subject",
   ...overrides,
@@ -60,8 +56,7 @@ function createMockSource(
   } = {}
 ): BaseResearchSource<ResearchSubject> {
   const tier = overrides.reliabilityTier ?? ReliabilityTier.TIER_1_NEWS
-  const finding =
-    overrides.finding !== undefined ? overrides.finding : makeFinding()
+  const finding = overrides.finding !== undefined ? overrides.finding : makeFinding()
 
   const source = {
     name: overrides.name ?? "MockSource",
@@ -162,7 +157,7 @@ describe("ResearchOrchestrator", () => {
       let concurrentCount = 0
       let maxConcurrent = 0
 
-      const makeTimedSource = (name: string) =>
+      const _makeTimedSource = (name: string) =>
         createMockSource({
           name,
           type: name,
@@ -184,15 +179,13 @@ describe("ResearchOrchestrator", () => {
 
       const makeParallelSource = (name: string) => {
         const source = createMockSource({ name, type: name })
-        ;(source.lookup as ReturnType<typeof vi.fn>).mockImplementation(
-          async () => {
-            inFlight++
-            peakInFlight = Math.max(peakInFlight, inFlight)
-            await new Promise((r) => setTimeout(r, 50))
-            inFlight--
-            return makeFinding()
-          }
-        )
+        ;(source.lookup as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+          inFlight++
+          peakInFlight = Math.max(peakInFlight, inFlight)
+          await new Promise((r) => setTimeout(r, 50))
+          inFlight--
+          return makeFinding()
+        })
         return source
       }
 
@@ -201,11 +194,9 @@ describe("ResearchOrchestrator", () => {
       const s3 = makeParallelSource("src3")
 
       const synthesizer = createMockSynthesizer()
-      const orchestrator = new ResearchOrchestrator(
-        [makePhase(0, [s1, s2, s3])],
-        synthesizer,
-        { earlyStopThreshold: 10 }
-      )
+      const orchestrator = new ResearchOrchestrator([makePhase(0, [s1, s2, s3])], synthesizer, {
+        earlyStopThreshold: 10,
+      })
 
       await orchestrator.debrief(makeSubject())
 
@@ -247,11 +238,7 @@ describe("ResearchOrchestrator", () => {
       const result = await orchestrator.debrief(makeSubject())
 
       expect(result.findings).toHaveLength(3)
-      expect(result.findings.map((f) => f.text)).toEqual([
-        "finding 1",
-        "finding 2",
-        "finding 3",
-      ])
+      expect(result.findings.map((f) => f.text)).toEqual(["finding 1", "finding 2", "finding 3"])
     })
 
     // Test 4: Passes all findings to synthesizer
@@ -280,8 +267,7 @@ describe("ResearchOrchestrator", () => {
       await orchestrator.debrief(subject)
 
       expect(synthesizer.synthesize).toHaveBeenCalledTimes(1)
-      const [passedSubject, passedFindings] =
-        synthesizer.synthesize.mock.calls[0]!
+      const [passedSubject, passedFindings] = synthesizer.synthesize.mock.calls[0]!
       expect(passedSubject).toBe(subject)
       expect(passedFindings).toHaveLength(2)
       expect(passedFindings[0]).toHaveProperty("sourceType", "s1")
@@ -294,10 +280,7 @@ describe("ResearchOrchestrator", () => {
         finding: makeFinding({ costUsd: 0.005 }),
       })
       const synthesizer = createMockSynthesizer()
-      const orchestrator = new ResearchOrchestrator(
-        [makePhase(0, [source])],
-        synthesizer
-      )
+      const orchestrator = new ResearchOrchestrator([makePhase(0, [source])], synthesizer)
 
       const subject = makeSubject({ id: 42, name: "John Wayne" })
       const result = await orchestrator.debrief(subject)
@@ -400,7 +383,7 @@ describe("ResearchOrchestrator", () => {
       const expensiveSource = createMockSource({
         name: "Expensive",
         type: "expensive",
-        finding: makeFinding({ costUsd: 0.50 }),
+        finding: makeFinding({ costUsd: 0.5 }),
         reliabilityTier: ReliabilityTier.UNRELIABLE_UGC,
         reliabilityScore: 0.35,
       })
@@ -465,10 +448,7 @@ describe("ResearchOrchestrator", () => {
       })
 
       const synthesizer = createMockSynthesizer()
-      const orchestrator = new ResearchOrchestrator(
-        [makePhase(0, [emptySource])],
-        synthesizer
-      )
+      const orchestrator = new ResearchOrchestrator([makePhase(0, [emptySource])], synthesizer)
 
       const result = await orchestrator.debrief(makeSubject())
 
@@ -511,11 +491,9 @@ describe("ResearchOrchestrator", () => {
     it("processes multiple subjects and returns results in map", async () => {
       const source = createMockSource({ name: "BatchSource", type: "batch" })
       const synthesizer = createMockSynthesizer()
-      const orchestrator = new ResearchOrchestrator(
-        [makePhase(0, [source])],
-        synthesizer,
-        { earlyStopThreshold: 10 }
-      )
+      const orchestrator = new ResearchOrchestrator([makePhase(0, [source])], synthesizer, {
+        earlyStopThreshold: 10,
+      })
 
       const subjects = [
         makeSubject({ id: "s1", name: "Subject 1" }),
@@ -536,11 +514,10 @@ describe("ResearchOrchestrator", () => {
     it("fires lifecycle hooks in correct order", async () => {
       const source = createMockSource({ name: "HookSource", type: "hook" })
       const synthesizer = createMockSynthesizer()
-      const orchestrator = new ResearchOrchestrator(
-        [makePhase(0, [source])],
-        synthesizer,
-        { concurrency: 1, earlyStopThreshold: 10 }
-      )
+      const orchestrator = new ResearchOrchestrator([makePhase(0, [source])], synthesizer, {
+        concurrency: 1,
+        earlyStopThreshold: 10,
+      })
 
       const hooks: LifecycleHooks<ResearchSubject, { result: string }> = {
         onRunStart: vi.fn(),
@@ -550,10 +527,7 @@ describe("ResearchOrchestrator", () => {
         onRunComplete: vi.fn(),
       }
 
-      const subjects = [
-        makeSubject({ id: "a", name: "A" }),
-        makeSubject({ id: "b", name: "B" }),
-      ]
+      const subjects = [makeSubject({ id: "a", name: "A" }), makeSubject({ id: "b", name: "B" })]
 
       await orchestrator.debriefBatch(subjects, hooks)
 
@@ -600,19 +574,15 @@ describe("ResearchOrchestrator", () => {
       const source = createMockSource({
         name: "CostlySource",
         type: "costly",
-        finding: makeFinding({ costUsd: 0.50 }),
+        finding: makeFinding({ costUsd: 0.5 }),
       })
 
       const synthesizer = createMockSynthesizer()
-      const orchestrator = new ResearchOrchestrator(
-        [makePhase(0, [source])],
-        synthesizer,
-        {
-          concurrency: 1,
-          earlyStopThreshold: 10,
-          costLimits: { maxTotalCost: 0.60 },
-        }
-      )
+      const orchestrator = new ResearchOrchestrator([makePhase(0, [source])], synthesizer, {
+        concurrency: 1,
+        earlyStopThreshold: 10,
+        costLimits: { maxTotalCost: 0.6 },
+      })
 
       const subjects = [
         makeSubject({ id: "s1", name: "Subject 1" }),
@@ -629,9 +599,7 @@ describe("ResearchOrchestrator", () => {
 
       // After first subject, total cost exceeds $0.60 limit.
       // Remaining subjects should get empty results.
-      const emptyResults = Array.from(results.values()).filter(
-        (r) => r.data === null
-      )
+      const emptyResults = Array.from(results.values()).filter((r) => r.data === null)
       expect(emptyResults.length).toBeGreaterThanOrEqual(1)
     })
   })
@@ -641,10 +609,7 @@ describe("ResearchOrchestrator", () => {
       const source = createMockSource({ name: "InjSource" })
       const synthesizer = createMockSynthesizer()
 
-      new ResearchOrchestrator(
-        [makePhase(0, [source])],
-        synthesizer
-      )
+      new ResearchOrchestrator([makePhase(0, [source])], synthesizer)
 
       expect(source.setRateLimiter).toHaveBeenCalledTimes(1)
     })
@@ -658,11 +623,7 @@ describe("ResearchOrchestrator", () => {
         delete: vi.fn(),
       }
 
-      new ResearchOrchestrator(
-        [makePhase(0, [source])],
-        synthesizer,
-        { cache }
-      )
+      new ResearchOrchestrator([makePhase(0, [source])], synthesizer, { cache })
 
       expect(source.setCache).toHaveBeenCalledWith(cache)
     })
@@ -671,10 +632,7 @@ describe("ResearchOrchestrator", () => {
       const source = createMockSource({ name: "TelSource" })
       const synthesizer = createMockSynthesizer()
 
-      new ResearchOrchestrator(
-        [makePhase(0, [source])],
-        synthesizer
-      )
+      new ResearchOrchestrator([makePhase(0, [source])], synthesizer)
 
       expect(source.setTelemetry).toHaveBeenCalledTimes(1)
     })
@@ -686,11 +644,9 @@ describe("ResearchOrchestrator", () => {
       const synthesizer = createMockSynthesizer()
       synthesizer.synthesize.mockRejectedValue(new Error("Synthesis failed"))
 
-      const orchestrator = new ResearchOrchestrator(
-        [makePhase(0, [source])],
-        synthesizer,
-        { earlyStopThreshold: 10 }
-      )
+      const orchestrator = new ResearchOrchestrator([makePhase(0, [source])], synthesizer, {
+        earlyStopThreshold: 10,
+      })
 
       const result = await orchestrator.debrief(makeSubject())
 

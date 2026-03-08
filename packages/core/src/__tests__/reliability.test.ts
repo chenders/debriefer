@@ -83,7 +83,7 @@ describe("RELIABILITY_SCORES", () => {
   })
 
   it("all scores are between 0 and 1 inclusive", () => {
-    for (const [tier, score] of Object.entries(RELIABILITY_SCORES)) {
+    for (const [_tier, score] of Object.entries(RELIABILITY_SCORES)) {
       expect(score).toBeGreaterThanOrEqual(0)
       expect(score).toBeLessThanOrEqual(1)
     }

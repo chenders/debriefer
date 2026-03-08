@@ -13,9 +13,12 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
+    "lint": "eslint src/",
     "type-check": "tsc --noEmit"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "p-limit": "^6"
   },

@@ -10,11 +10,11 @@ Focused guidance for GitHub Copilot code review on the Debriefer repository.
 
 1. **NEVER commit directly to main** — all changes go through PRs. Main branch has push protection.
 2. **NEVER add hard dependencies to `packages/core`** — currently only `p-limit`. SDKs go in `peerDependencies` with `optional: true`. Heavy deps go in `packages/sources`.
-2. **NEVER use raw strings for reliability tiers** — always use the `ReliabilityTier` enum from `reliability.ts`.
-3. **NEVER count early-stop families by `reliabilityTier`** — count by `sourceType`. Multiple sources share tiers.
-4. **NEVER fire `onRunFailed` for per-subject errors** — use `onSubjectComplete` with `data: null`. `onRunFailed` is for unrecoverable batch-level failures only.
-5. **NEVER skip tests** — ship tests with code in the same commit.
-6. **Review ALL files thoroughly and surface ALL issues in a single pass.**
+3. **NEVER use raw strings for reliability tiers** — always use the `ReliabilityTier` enum from `reliability.ts`.
+4. **NEVER count early-stop families by `reliabilityTier`** — count by `sourceType`. Multiple sources share tiers.
+5. **NEVER fire `onRunFailed` for per-subject errors** — use `onSubjectComplete` with `data: null`. `onRunFailed` is for unrecoverable batch-level failures only.
+6. **NEVER skip tests** — ship tests with code in the same commit.
+7. **Review ALL files thoroughly and surface ALL issues in a single pass.**
 
 ---
 
@@ -68,11 +68,13 @@ const signal = callerSignal ?? AbortSignal.timeout(30000)
 ## Dependencies Policy
 
 **Core package (`debriefer`)** — minimal footprint:
+
 - Hard deps: `p-limit` only
 - Optional peer: `@anthropic-ai/sdk` (for ClaudeSynthesizer)
 - NO `zod`, NO `ioredis`, NO heavy deps
 
 **Sources package (`debriefer-sources`)** — heavier deps acceptable:
+
 - `@mozilla/readability`, `jsdom`, `he`, `wtf_wikipedia`
 - `playwright-core` as optional dep
 

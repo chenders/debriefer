@@ -42,19 +42,13 @@ export function stripMarkdownCodeFences(text: string): string {
  * @typeParam TSubject - The research subject type (extends ResearchSubject)
  * @typeParam TOutput - The structured output type produced by synthesis
  */
-export interface ClaudeSynthesizerOptions<
-  TSubject extends ResearchSubject,
-  TOutput,
-> {
+export interface ClaudeSynthesizerOptions<TSubject extends ResearchSubject, TOutput> {
   /**
    * Build the system prompt and user message from the subject and findings.
    * This is where all domain knowledge lives -- the synthesizer itself is
    * domain-agnostic.
    */
-  promptBuilder: (
-    subject: TSubject,
-    findings: ScoredFinding[]
-  ) => { system: string; user: string }
+  promptBuilder: (subject: TSubject, findings: ScoredFinding[]) => { system: string; user: string }
 
   /**
    * Parse the raw JSON response into the output type.
@@ -122,11 +116,10 @@ function getModelCosts(model: string): { input: number; output: number } {
  * })
  * ```
  */
-export class ClaudeSynthesizer<
-  TSubject extends ResearchSubject,
-  TOutput,
-> implements Synthesizer<TSubject, TOutput>
-{
+export class ClaudeSynthesizer<TSubject extends ResearchSubject, TOutput> implements Synthesizer<
+  TSubject,
+  TOutput
+> {
   private client: Anthropic
   private options: ClaudeSynthesizerOptions<TSubject, TOutput>
 
@@ -153,24 +146,15 @@ export class ClaudeSynthesizer<
     findings: ScoredFinding[],
     options: SynthesisOptions = {}
   ): Promise<SynthesisResult<TOutput>> {
-    const model =
-      options.model ??
-      this.options.defaultModel ??
-      "claude-sonnet-4-20250514"
-    const maxTokens =
-      options.maxTokens ?? this.options.defaultMaxTokens ?? 4096
+    const model = options.model ?? this.options.defaultModel ?? "claude-sonnet-4-20250514"
+    const maxTokens = options.maxTokens ?? this.options.defaultMaxTokens ?? 4096
 
     // Sort findings by reliability score (highest first) so the prompt
     // builder receives the most trustworthy sources at the top
-    const sortedFindings = [...findings].sort(
-      (a, b) => b.reliabilityScore - a.reliabilityScore
-    )
+    const sortedFindings = [...findings].sort((a, b) => b.reliabilityScore - a.reliabilityScore)
 
     // Build prompt via consumer-provided builder
-    const { system, user } = this.options.promptBuilder(
-      subject,
-      sortedFindings
-    )
+    const { system, user } = this.options.promptBuilder(subject, sortedFindings)
 
     // Call Claude API
     const response = await this.client.messages.create({
@@ -182,9 +166,7 @@ export class ClaudeSynthesizer<
 
     // Extract text content from response blocks
     const responseText = response.content
-      .filter(
-        (block): block is Anthropic.TextBlock => block.type === "text"
-      )
+      .filter((block): block is Anthropic.TextBlock => block.type === "text")
       .map((block) => block.text)
       .join("")
 
@@ -206,8 +188,7 @@ export class ClaudeSynthesizer<
     const outputTokens = response.usage.output_tokens
     const costs = getModelCosts(model)
     const costUsd =
-      (inputTokens * costs.input) / 1_000_000 +
-      (outputTokens * costs.output) / 1_000_000
+      (inputTokens * costs.input) / 1_000_000 + (outputTokens * costs.output) / 1_000_000
 
     return {
       data,
@@ -227,9 +208,10 @@ export class ClaudeSynthesizer<
  *
  * @typeParam TSubject - The research subject type
  */
-export class NoopSynthesizer<TSubject extends ResearchSubject>
-  implements Synthesizer<TSubject, ScoredFinding[]>
-{
+export class NoopSynthesizer<TSubject extends ResearchSubject> implements Synthesizer<
+  TSubject,
+  ScoredFinding[]
+> {
   /**
    * Returns the findings array unchanged with zero cost.
    */

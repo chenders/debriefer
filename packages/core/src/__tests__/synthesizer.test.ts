@@ -7,9 +7,7 @@ vi.mock("@anthropic-ai/sdk", () => {
     default: class MockAnthropic {
       messages = {
         create: vi.fn().mockResolvedValue({
-          content: [
-            { type: "text", text: '```json\n{"result": "test"}\n```' },
-          ],
+          content: [{ type: "text", text: '```json\n{"result": "test"}\n```' }],
           usage: { input_tokens: 1000, output_tokens: 500 },
         }),
       }
@@ -18,11 +16,7 @@ vi.mock("@anthropic-ai/sdk", () => {
   }
 })
 
-import {
-  stripMarkdownCodeFences,
-  ClaudeSynthesizer,
-  NoopSynthesizer,
-} from "../synthesizer.js"
+import { stripMarkdownCodeFences, ClaudeSynthesizer, NoopSynthesizer } from "../synthesizer.js"
 
 function makeFinding(overrides: Partial<ScoredFinding> = {}): ScoredFinding {
   return {
@@ -81,7 +75,6 @@ describe("ClaudeSynthesizer", () => {
     await synthesizer.synthesize(testSubject, [makeFinding()])
 
     // Access the mock to verify the call
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const client = (synthesizer as any).client
     expect(client.messages.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -174,7 +167,6 @@ describe("ClaudeSynthesizer", () => {
 
     await synthesizer.synthesize(testSubject, [makeFinding()])
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const client = (synthesizer as any).client
     expect(client.messages.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -193,7 +185,6 @@ describe("ClaudeSynthesizer", () => {
       model: "claude-opus-4-5-20251101",
     })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const client = (synthesizer as any).client
     expect(client.messages.create).toHaveBeenCalledWith(
       expect.objectContaining({

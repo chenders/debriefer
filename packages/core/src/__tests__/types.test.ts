@@ -19,17 +19,12 @@ import type {
   DebriefResult,
   ResearchConfig,
   CacheProvider,
-  TelemetrySpan,
   TelemetryProvider,
   BatchProgressStats,
   BatchStats,
   LifecycleHooks,
 } from "../types.js"
-import {
-  CostLimitExceededError,
-  SourceTimeoutError,
-  SourceAccessBlockedError,
-} from "../types.js"
+import { CostLimitExceededError, SourceTimeoutError, SourceAccessBlockedError } from "../types.js"
 
 // ============================================================================
 // ResearchSubject
@@ -291,10 +286,7 @@ describe("MinimalSource", () => {
       isAvailable: () => true,
       lookup: async () => null,
     }
-    const result = await source.lookup(
-      { id: 1, name: "Nobody" },
-      AbortSignal.timeout(5000)
-    )
+    const result = await source.lookup({ id: 1, name: "Nobody" }, AbortSignal.timeout(5000))
     expect(result).toBeNull()
   })
 })
@@ -579,7 +571,7 @@ describe("BatchStats", () => {
     const stats: BatchStats = {
       completed: 10,
       total: 10,
-      costUsd: 0.50,
+      costUsd: 0.5,
       elapsedMs: 30000,
       succeeded: 8,
       failed: 2,
@@ -636,11 +628,9 @@ describe("LifecycleHooks", () => {
       onEarlyStop: (s, phase, reason) => events.push(`early-stop:${phase}:${reason}`),
       onSynthesisStart: (s, count) => events.push(`synthesis-start:${count}`),
       onSynthesisComplete: (s, result) => events.push(`synthesis-complete:$${result.costUsd}`),
-      onSubjectComplete: (s, result) =>
-        events.push(`subject-complete:${result.totalCostUsd}`),
+      onSubjectComplete: (s, result) => events.push(`subject-complete:${result.totalCostUsd}`),
       onBatchProgress: (stats) => events.push(`progress:${stats.completed}/${stats.total}`),
-      onCostLimitReached: (s, cost, limit) =>
-        events.push(`cost-limit:${cost}/${limit}`),
+      onCostLimitReached: (s, cost, limit) => events.push(`cost-limit:${cost}/${limit}`),
       onRunComplete: (stats) => events.push(`run-complete:${stats.succeeded}`),
       onRunFailed: (error) => events.push(`run-failed:${error.message}`),
     }
@@ -653,22 +643,28 @@ describe("LifecycleHooks", () => {
     hooks.onPhaseComplete!({ id: 1, name: "Test" }, 1, [])
     hooks.onEarlyStop!({ id: 1, name: "Test" }, 2, "3+ families")
     hooks.onSynthesisStart!({ id: 1, name: "Test" }, 5)
-    hooks.onSynthesisComplete!({ id: 1, name: "Test" }, {
-      data: null,
-      costUsd: 0.02,
-      inputTokens: 1000,
-      outputTokens: 200,
-      model: "test",
-    })
-    hooks.onSubjectComplete!({ id: 1, name: "Test" }, {
-      subject: { id: 1, name: "Test" },
-      data: null,
-      findings: [],
-      totalCostUsd: 0.02,
-      sourcesAttempted: 5,
-      sourcesSucceeded: 3,
-      durationMs: 1000,
-    })
+    hooks.onSynthesisComplete!(
+      { id: 1, name: "Test" },
+      {
+        data: null,
+        costUsd: 0.02,
+        inputTokens: 1000,
+        outputTokens: 200,
+        model: "test",
+      }
+    )
+    hooks.onSubjectComplete!(
+      { id: 1, name: "Test" },
+      {
+        subject: { id: 1, name: "Test" },
+        data: null,
+        findings: [],
+        totalCostUsd: 0.02,
+        sourcesAttempted: 5,
+        sourcesSucceeded: 3,
+        durationMs: 1000,
+      }
+    )
     hooks.onBatchProgress!({ completed: 5, total: 10, costUsd: 0.1, elapsedMs: 5000 })
     hooks.onCostLimitReached!({ id: 1, name: "Test" }, 1.5, 1.0)
     hooks.onRunComplete!({
@@ -702,9 +698,7 @@ describe("CostLimitExceededError", () => {
   it("has correct name and message", () => {
     const error = new CostLimitExceededError("actor-123", 1.5, 1.0)
     expect(error.name).toBe("CostLimitExceededError")
-    expect(error.message).toBe(
-      "Cost limit exceeded for subject actor-123: $1.5000 > $1.0000"
-    )
+    expect(error.message).toBe("Cost limit exceeded for subject actor-123: $1.5000 > $1.0000")
   })
 
   it("exposes subjectId, costUsd, and limit properties", () => {

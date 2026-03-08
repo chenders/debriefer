@@ -26,7 +26,6 @@ import type {
   SourcePhaseGroup,
   Synthesizer,
   LifecycleHooks,
-  BatchStats,
   TelemetryProvider,
 } from "./types.js"
 import type { BaseResearchSource } from "./base-source.js"
@@ -49,10 +48,7 @@ const DEFAULT_CONFIG = {
  * @typeParam TSubject - The research subject type (extends ResearchSubject)
  * @typeParam TOutput - The structured output type produced by synthesis
  */
-export class ResearchOrchestrator<
-  TSubject extends ResearchSubject,
-  TOutput,
-> {
+export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
   private phases: SourcePhaseGroup<TSubject>[]
   private synthesizer: Synthesizer<TSubject, TOutput>
   private config: ResearchConfig
@@ -98,10 +94,7 @@ export class ResearchOrchestrator<
    * @param signal - Optional abort signal for cancellation
    * @returns Complete debrief result with findings, synthesis, and cost data
    */
-  async debrief(
-    subject: TSubject,
-    signal?: AbortSignal
-  ): Promise<DebriefResult<TOutput>> {
+  async debrief(subject: TSubject, signal?: AbortSignal): Promise<DebriefResult<TOutput>> {
     const startTime = Date.now()
     const allFindings: ScoredFinding[] = []
     let totalCostUsd = 0
@@ -113,23 +106,18 @@ export class ResearchOrchestrator<
       this.config.confidenceThreshold ?? DEFAULT_CONFIG.confidenceThreshold
     const reliabilityThreshold =
       this.config.reliabilityThreshold ?? DEFAULT_CONFIG.reliabilityThreshold
-    const earlyStopThreshold =
-      this.config.earlyStopThreshold ?? DEFAULT_CONFIG.earlyStopThreshold
+    const earlyStopThreshold = this.config.earlyStopThreshold ?? DEFAULT_CONFIG.earlyStopThreshold
 
     for (const phaseGroup of this.phases) {
       if (signal?.aborted) break
 
       // Filter to available sources
-      const availableSources = phaseGroup.sources.filter((s) =>
-        s.isAvailable()
-      )
+      const availableSources = phaseGroup.sources.filter((s) => s.isAvailable())
       if (availableSources.length === 0) continue
 
       // Fire all sources in this phase concurrently
       const timeoutSignal = AbortSignal.timeout(120_000)
-      const phaseSignal = signal
-        ? AbortSignal.any([signal, timeoutSignal])
-        : timeoutSignal
+      const phaseSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
 
       const results = await Promise.allSettled(
         availableSources.map((source) => {
@@ -163,9 +151,7 @@ export class ResearchOrchestrator<
       const highQualityFamilies = new Set(
         allFindings
           .filter(
-            (f) =>
-              f.confidence >= confidenceThreshold &&
-              f.reliabilityScore >= reliabilityThreshold
+            (f) => f.confidence >= confidenceThreshold && f.reliabilityScore >= reliabilityThreshold
           )
           .map((f) => f.sourceType)
       )
@@ -196,10 +182,10 @@ export class ResearchOrchestrator<
         )
         totalCostUsd += synthesisResult.costUsd
       } catch (error) {
-        this.telemetry.recordError(
-          error instanceof Error ? error : new Error(String(error)),
-          { subject: subject.name, phase: "synthesis" }
-        )
+        this.telemetry.recordError(error instanceof Error ? error : new Error(String(error)), {
+          subject: subject.name,
+          phase: "synthesis",
+        })
       }
     }
 
@@ -232,8 +218,7 @@ export class ResearchOrchestrator<
     hooks?: LifecycleHooks<TSubject, TOutput>
   ): Promise<Map<string | number, DebriefResult<TOutput>>> {
     const startTime = Date.now()
-    const concurrency =
-      this.config.concurrency ?? DEFAULT_CONFIG.concurrency
+    const concurrency = this.config.concurrency ?? DEFAULT_CONFIG.concurrency
     const resultMap = new Map<string | number, DebriefResult<TOutput>>()
 
     const costTracker = this.config.costLimits?.maxTotalCost
@@ -244,10 +229,7 @@ export class ResearchOrchestrator<
 
     hooks?.onRunStart?.(subjects.length, this.config)
 
-    const runner = new ParallelBatchRunner<
-      TSubject,
-      DebriefResult<TOutput>
-    >({
+    const runner = new ParallelBatchRunner<TSubject, DebriefResult<TOutput>>({
       concurrency,
       onItemComplete: (subject, result, progress) => {
         resultMap.set(subject.id, result)
@@ -259,7 +241,8 @@ export class ResearchOrchestrator<
         hooks?.onSubjectComplete?.(subject, result)
 
         // Calculate running total cost across all completed subjects
-        const runningCost = costTracker?.getTotalCost() ??
+        const runningCost =
+          costTracker?.getTotalCost() ??
           Array.from(resultMap.values()).reduce((sum, r) => sum + r.totalCostUsd, 0)
 
         hooks?.onBatchProgress?.({
@@ -315,14 +298,9 @@ export class ResearchOrchestrator<
 
     const totalCost =
       costTracker?.getTotalCost() ??
-      Array.from(resultMap.values()).reduce(
-        (sum, r) => sum + r.totalCostUsd,
-        0
-      )
+      Array.from(resultMap.values()).reduce((sum, r) => sum + r.totalCostUsd, 0)
 
-    const succeeded = Array.from(resultMap.values()).filter(
-      (r) => r.data !== null
-    ).length
+    const succeeded = Array.from(resultMap.values()).filter((r) => r.data !== null).length
 
     hooks?.onRunComplete?.({
       completed: resultMap.size,
@@ -331,14 +309,11 @@ export class ResearchOrchestrator<
       elapsedMs: Date.now() - startTime,
       succeeded,
       failed: resultMap.size - succeeded,
-      avgCostPerSubject:
-        resultMap.size > 0 ? totalCost / resultMap.size : 0,
+      avgCostPerSubject: resultMap.size > 0 ? totalCost / resultMap.size : 0,
       avgDurationMs:
         resultMap.size > 0
-          ? Array.from(resultMap.values()).reduce(
-              (sum, r) => sum + r.durationMs,
-              0
-            ) / resultMap.size
+          ? Array.from(resultMap.values()).reduce((sum, r) => sum + r.durationMs, 0) /
+            resultMap.size
           : 0,
     })
 

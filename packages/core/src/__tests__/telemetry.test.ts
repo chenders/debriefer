@@ -28,33 +28,23 @@ describe("ConsoleTelemetry", () => {
     const error = new Error("connection failed")
     const context = { source: "nytimes" }
     telemetry.recordError(error, context)
-    expect(errorSpy).toHaveBeenCalledWith(
-      "[debriefer] error: connection failed",
-      context
-    )
+    expect(errorSpy).toHaveBeenCalledWith("[debriefer] error: connection failed", context)
   })
 
   it("logs errors without context", () => {
     const error = new Error("timeout")
     telemetry.recordError(error)
-    expect(errorSpy).toHaveBeenCalledWith(
-      "[debriefer] error: timeout",
-      undefined
-    )
+    expect(errorSpy).toHaveBeenCalledWith("[debriefer] error: timeout", undefined)
   })
 
   it("startSpan logs start and returns span with end()", () => {
     vi.useFakeTimers()
     const span = telemetry.startSpan("wikipedia.lookup")
-    expect(logSpy).toHaveBeenCalledWith(
-      "[debriefer] span:start wikipedia.lookup"
-    )
+    expect(logSpy).toHaveBeenCalledWith("[debriefer] span:start wikipedia.lookup")
 
     vi.advanceTimersByTime(150)
     span.end()
-    expect(logSpy).toHaveBeenCalledWith(
-      "[debriefer] span:end wikipedia.lookup (150ms)"
-    )
+    expect(logSpy).toHaveBeenCalledWith("[debriefer] span:end wikipedia.lookup (150ms)")
     vi.useRealTimers()
   })
 
