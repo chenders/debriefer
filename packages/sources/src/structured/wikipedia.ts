@@ -129,6 +129,9 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
 
   protected async fetchResult(
     subject: ResearchSubject,
+    // Note: wtf_wikipedia.fetch() does not accept an AbortSignal.
+    // The base class timeout/abort still applies to the overall lookup()
+    // call, but the underlying HTTP request cannot be cancelled mid-flight.
     _signal: AbortSignal
   ): Promise<RawFinding | null> {
     const baseTitle = subject.name.replace(/ /g, "_")
@@ -267,12 +270,11 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
       confidence += 0.1
     }
 
-    // If keywords are configured, use the base class keyword confidence
-    // Otherwise, give a moderate boost for having multiple sections
+    // If keywords are configured, delegate to the base class keyword-based
+    // confidence calculation instead of using our content heuristics.
+    // The base class checks for confidence === -1 as the delegation signal.
     if (this.options.requiredKeywords) {
-      // Let the base class handle keyword-based confidence
-      // Return -1 to signal that
-      return -1
+      return -1 // DELEGATE_TO_BASE_CLASS: base-source.ts:150 replaces with keyword confidence
     }
 
     // Section count bonus

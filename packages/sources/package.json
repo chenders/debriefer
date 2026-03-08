@@ -22,7 +22,6 @@
   "dependencies": {
     "@mozilla/readability": "^0.5",
     "debriefer": "*",
-    "fast-xml-parser": "^4",
     "he": "^1",
     "jsdom": "^25",
     "wtf_wikipedia": "^10"

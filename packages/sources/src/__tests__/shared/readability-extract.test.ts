@@ -78,6 +78,11 @@ describe("extractArticleContent", () => {
     const result = extractArticleContent(html)
     expect(result).not.toBeNull()
     expect(result!.text).toContain("important events")
+    // Readability may or may not extract the byline depending on heuristics,
+    // but the article content should always be extracted
+    if (result!.author) {
+      expect(result!.author).toContain("Jane Reporter")
+    }
   })
 
   it("uses url parameter for resolving relative links", () => {
