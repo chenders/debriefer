@@ -58,19 +58,17 @@ All sources are instantiated and filtered by `isAvailable()`. Unavailable source
 
 ### JSON (for piping)
 
-Single JSON object:
+Outputs the raw `DebriefResult` object from the orchestrator:
 
 ```json
 {
-  "subject": { "id": 1, "name": "John Wayne" },
+  "subject": { "id": "John Wayne", "name": "John Wayne" },
+  "data": "Synthesized summary..." ,
   "findings": [...],
-  "synthesis": "...",
-  "metadata": {
-    "sourcesUsed": [...],
-    "sourcesSkipped": [...],
-    "totalCostUsd": 0.02,
-    "durationMs": 4500
-  }
+  "totalCostUsd": 0.02,
+  "sourcesAttempted": 5,
+  "sourcesSucceeded": 3,
+  "durationMs": 4500
 }
 ```
 

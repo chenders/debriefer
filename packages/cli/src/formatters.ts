@@ -120,7 +120,7 @@ export function formatSourceList(
   const lines: string[] = []
 
   // Header
-  const header = category ? `Sources in category: ${category}` : "All available sources"
+  const header = category ? `Sources in category: ${category}` : "All sources"
   lines.push(header)
   lines.push("")
 

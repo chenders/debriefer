@@ -265,7 +265,7 @@ describe("formatSourceList", () => {
     const output = formatSourceList(sources)
 
     // Header
-    expect(output).toContain("All available sources")
+    expect(output).toContain("All sources")
 
     // Column headers
     expect(output).toContain("Name")
@@ -297,7 +297,7 @@ describe("formatSourceList", () => {
     const output = formatSourceList(sources, "structured")
 
     expect(output).toContain("structured")
-    expect(output).not.toContain("All available sources")
+    expect(output).not.toContain("All sources")
   })
 
   it("shows correct available count in footer", () => {

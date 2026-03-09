@@ -138,12 +138,15 @@ async function runDebrief(name: string, options: DebriefOptions): Promise<void> 
       process.exitCode = 1
       return
     }
+    const jsonSuffix =
+      '\nRespond ONLY with a valid JSON object: { "summary": "your synthesized summary" }'
+    const defaultPrompt =
+      "You are a research assistant. Synthesize the following findings into a clear, factual summary."
+
     synthesizer = new ClaudeSynthesizer<ResearchSubject, string>({
       promptBuilder: (subject, findings) => ({
-        system:
-          options.prompt ??
-          "You are a research assistant. Synthesize the following findings into a clear, factual summary. " +
-            'Respond ONLY with a valid JSON object: { "summary": "your synthesized summary" }',
+        // Always append JSON requirement — ClaudeSynthesizer JSON.parse()s the response
+        system: (options.prompt ?? defaultPrompt) + jsonSuffix,
         user:
           `Subject: ${subject.name}\n\nFindings:\n${findings.map((f) => `[${f.sourceName}] ${f.text}`).join("\n\n")}\n\n` +
           'Respond with JSON: { "summary": "..." }',
