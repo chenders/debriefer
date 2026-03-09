@@ -270,9 +270,9 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
       hostname.startsWith("169.254.") || // Link-local / cloud metadata (169.254.169.254)
       hostname === "0.0.0.0" ||
       hostname.endsWith(".local") ||
-      hostname.startsWith("fc") || // IPv6 unique local (fc00::/7)
-      hostname.startsWith("fd") || // IPv6 unique local (fc00::/7)
-      hostname.startsWith("fe80") || // IPv6 link-local (fe80::/10)
+      (hostname.includes(":") && hostname.startsWith("fc")) || // IPv6 unique local (fc00::/7)
+      (hostname.includes(":") && hostname.startsWith("fd")) || // IPv6 unique local (fc00::/7)
+      (hostname.includes(":") && hostname.startsWith("fe80")) || // IPv6 link-local (fe80::/10)
       this.isPrivate172(hostname)
     ) {
       return true
