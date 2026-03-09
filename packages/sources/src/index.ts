@@ -30,3 +30,28 @@ export type {
 
 export { WikipediaSource, wikipedia } from "./structured/wikipedia.js"
 export type { WikipediaOptions, WikipediaSection, SectionFilter } from "./structured/wikipedia.js"
+
+// Shared utilities — fetch and search
+export { fetchPage } from "./shared/fetch-page.js"
+export type { FetchPageOptions, FetchPageResult } from "./shared/fetch-page.js"
+export {
+  searchDuckDuckGo,
+  isDuckDuckGoCaptcha,
+  extractUrlsFromDuckDuckGoHtml,
+  cleanDuckDuckGoUrl,
+} from "./shared/duckduckgo-search.js"
+export type { DuckDuckGoSearchOptions, SearchResult } from "./shared/duckduckgo-search.js"
+
+// Web search base (for building custom search sources)
+export { WebSearchBase } from "./web-search/base.js"
+export type { WebSearchOptions, LinkSelectionOptions, WebSearchResult } from "./web-search/base.js"
+
+// Web search sources
+export { GoogleSearchSource, googleSearch } from "./web-search/google.js"
+export type { GoogleSearchOptions } from "./web-search/google.js"
+export { BingSearchSource, bingSearch } from "./web-search/bing.js"
+export type { BingSearchOptions } from "./web-search/bing.js"
+export { BraveSearchSource, braveSearch } from "./web-search/brave.js"
+export type { BraveSearchOptions } from "./web-search/brave.js"
+export { DuckDuckGoSearchSource, duckduckgoSearch } from "./web-search/duckduckgo.js"
+export type { DuckDuckGoSourceOptions } from "./web-search/duckduckgo.js"

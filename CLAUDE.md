@@ -62,6 +62,23 @@ npm run type-check     # tsc --noEmit
 npx vitest run src/__tests__/orchestrator.test.ts  # single test file
 ```
 
+### Pre-Push Verification
+
+**Before pushing any branch, always run:**
+
+```bash
+npx turbo test lint type-check        # all packages
+npx prettier --check .                # formatting (root-level, catches docs too)
+```
+
+CI runs Format Check (`prettier --check .`), Lint, Build, Test, Type Check, and Dependency Audit. All six must pass before merging.
+
+**Common CI failures to avoid:**
+
+- **Format Check**: Prettier runs at root level (`prettier --check .`) and checks ALL files including `docs/plans/*.md`, `CLAUDE.md`, etc. — not just `src/`. Always run `npx prettier --write .` before committing.
+- **Lint**: ESLint catches issues like empty interfaces (`@typescript-eslint/no-empty-object-type`). Use `type Foo = Bar` instead of `interface Foo extends Bar {}` when adding no members.
+- **Subagent output**: Subagents don't run prettier or lint. After cherry-picking or merging subagent work, always run `npx prettier --write` on their files and `npx turbo lint` before committing.
+
 ## Architecture
 
 ### Core Package (`packages/core/` — "debriefer")
