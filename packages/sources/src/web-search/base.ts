@@ -256,6 +256,7 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
 
   /**
    * Check if a hostname matches a domain (exact or subdomain match).
+   * Normalizes domain to lowercase since URL.hostname is always lowercase.
    *
    * "www.example.com" matches "example.com"
    * "sub.example.com" matches "example.com"
@@ -263,6 +264,7 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
    * "notexample.com" does NOT match "example.com"
    */
   private hostnameMatchesDomain(hostname: string, domain: string): boolean {
-    return hostname === domain || hostname.endsWith("." + domain)
+    const d = domain.toLowerCase()
+    return hostname === d || hostname.endsWith("." + d)
   }
 }

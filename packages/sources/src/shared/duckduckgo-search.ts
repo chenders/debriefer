@@ -251,7 +251,13 @@ export async function searchDuckDuckGo(options: DuckDuckGoSearchOptions): Promis
 
   let response: Response
   try {
-    response = await fetch(searchUrl, { signal })
+    response = await fetch(searchUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+      signal,
+    })
   } catch (error) {
     // Re-throw abort/timeout so BaseResearchSource.lookup() can record telemetry
     if (
