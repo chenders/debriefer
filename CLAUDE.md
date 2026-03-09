@@ -75,7 +75,13 @@ CI runs Format Check (`prettier --check .`), Lint, Build, Test, Type Check, and 
 
 ### Re-requesting Copilot Review
 
-Copilot re-review cannot be triggered via CLI/API — it requires clicking the re-request button in the GitHub PR UI. After pushing fixes, tell the user to click the button and wait for the review before proceeding.
+After pushing fixes for Copilot review comments, re-request a review:
+
+```bash
+gh api repos/chenders/debriefer/pulls/{PR_NUMBER}/requested_reviewers -X POST -f 'reviewers[]=copilot-pull-request-reviewer[bot]'
+```
+
+Then poll for the new review to appear before proceeding.
 
 **Common CI failures to avoid:**
 
