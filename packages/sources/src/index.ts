@@ -80,6 +80,7 @@ export {
   allMusic,
   people,
   biographyCom,
+  legacy,
 } from "./news/sources.js"
 
 // News sources — API based
@@ -87,3 +88,23 @@ export { GuardianSource, guardian } from "./news/guardian.js"
 export type { GuardianOptions } from "./news/guardian.js"
 export { NYTimesSource, nytimes } from "./news/nytimes.js"
 export type { NYTimesOptions } from "./news/nytimes.js"
+
+// Book sources
+export { GoogleBooksSource, googleBooks } from "./books/google-books.js"
+export type { GoogleBooksOptions } from "./books/google-books.js"
+export { OpenLibrarySource, openLibrary } from "./books/open-library.js"
+export type { OpenLibraryOptions } from "./books/open-library.js"
+
+// Archive sources
+export { ChroniclingAmericaSource, chroniclingAmerica } from "./archives/chronicling-america.js"
+export type { ChroniclingAmericaOptions } from "./archives/chronicling-america.js"
+export { TroveSource, trove } from "./archives/trove.js"
+export type { TroveOptions } from "./archives/trove.js"
+export { EuropeanaSource, europeana } from "./archives/europeana.js"
+export type { EuropeanaOptions } from "./archives/europeana.js"
+export { InternetArchiveSource, internetArchive } from "./archives/internet-archive.js"
+export type { InternetArchiveOptions } from "./archives/internet-archive.js"
+
+// Obituary sources
+export { FindAGraveSource, findAGrave } from "./obituary/find-a-grave.js"
+export type { FindAGraveOptions } from "./obituary/find-a-grave.js"
