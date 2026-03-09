@@ -53,10 +53,13 @@ import {
 
 export type SourceFactory = () => BaseResearchSource<ResearchSubject>
 
+/** Valid source category names. */
+export type SourceCategory = "structured" | "news" | "search" | "books" | "archives" | "obituary"
+
 /**
  * Maps category names to arrays of source factory functions.
  */
-export const SOURCE_CATEGORIES: Record<string, SourceFactory[]> = {
+export const SOURCE_CATEGORIES: Record<SourceCategory, SourceFactory[]> = {
   structured: [wikidata, wikipedia],
   news: [
     apNews,
@@ -94,10 +97,10 @@ export const SOURCE_CATEGORIES: Record<string, SourceFactory[]> = {
  * Unknown category names are silently ignored.
  */
 export function createSources(categories?: string[]): BaseResearchSource<ResearchSubject>[] {
-  const selected = categories ?? Object.keys(SOURCE_CATEGORIES)
+  const selected = categories ?? (Object.keys(SOURCE_CATEGORIES) as SourceCategory[])
   return selected.flatMap((category) => {
-    const factories = SOURCE_CATEGORIES[category]
+    const factories = SOURCE_CATEGORIES[category as SourceCategory]
     if (!factories) return []
-    return factories.map((factory) => factory())
+    return factories.map((factory: SourceFactory) => factory())
   })
 }
