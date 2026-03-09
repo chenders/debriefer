@@ -42,7 +42,9 @@ export function createApp(config?: ServerConfig): express.Express {
   app.use(
     (err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
       console.error(err)
-      res.status(500).json({ error: "Internal server error" })
+      // Honor status from body-parser SyntaxError (e.g., malformed JSON → 400)
+      const status = "status" in err && typeof err.status === "number" ? err.status : 500
+      res.status(status).json({ error: status < 500 ? err.message : "Internal server error" })
     }
   )
 

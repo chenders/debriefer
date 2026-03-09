@@ -56,10 +56,10 @@ export type SourceFactory = () => BaseResearchSource<ResearchSubject>
 
 /**
  * Maps category names to arrays of source factory functions.
- * This is the single source of truth for both the category type
- * and the VALID_CATEGORIES list — derived, never duplicated.
+ * This is the single source of truth — SourceCategory and VALID_CATEGORIES
+ * are both derived from this object's keys via `keyof typeof`.
  */
-export const SOURCE_CATEGORIES: Record<string, SourceFactory[]> = {
+const SOURCE_CATEGORIES_DEF = {
   structured: [wikidata, wikipedia],
   news: [
     apNews,
@@ -89,10 +89,13 @@ export const SOURCE_CATEGORIES: Record<string, SourceFactory[]> = {
   books: [googleBooks, openLibrary],
   archives: [chroniclingAmerica, trove, europeana, internetArchive],
   obituary: [legacy, findAGrave],
-}
+} satisfies Record<string, SourceFactory[]>
 
-/** Valid source category names, derived from SOURCE_CATEGORIES. */
-export type SourceCategory = "structured" | "news" | "search" | "books" | "archives" | "obituary"
+/** Valid source category names — derived from SOURCE_CATEGORIES keys. */
+export type SourceCategory = keyof typeof SOURCE_CATEGORIES_DEF
+
+/** Public reference to the category map. */
+export const SOURCE_CATEGORIES: Record<SourceCategory, SourceFactory[]> = SOURCE_CATEGORIES_DEF
 
 /** Runtime list of valid categories — derived from SOURCE_CATEGORIES keys. */
 export const VALID_CATEGORIES = Object.keys(SOURCE_CATEGORIES) as SourceCategory[]
@@ -108,10 +111,11 @@ export function createSourcesWithCategory(
   const selected = categories ?? VALID_CATEGORIES
   return selected.flatMap((category) => {
     if (!Object.hasOwn(SOURCE_CATEGORIES, category)) return []
-    const factories = SOURCE_CATEGORIES[category]
+    const validCategory = category as SourceCategory
+    const factories = SOURCE_CATEGORIES[validCategory]
     return factories.map((factory: SourceFactory) => ({
       source: factory(),
-      category: category as SourceCategory,
+      category: validCategory,
     }))
   })
 }

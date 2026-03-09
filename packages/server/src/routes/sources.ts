@@ -13,7 +13,11 @@ export const sourcesRouter = Router()
 
 sourcesRouter.get("/sources", (req, res) => {
   const categoryParam = req.query.category
-  const categories = typeof categoryParam === "string" ? [categoryParam] : undefined
+  const categories = Array.isArray(categoryParam)
+    ? categoryParam.filter((c): c is string => typeof c === "string")
+    : typeof categoryParam === "string"
+      ? [categoryParam]
+      : undefined
 
   const tagged = createSourcesWithCategory(categories)
   const data = tagged.map(({ source, category }) => ({

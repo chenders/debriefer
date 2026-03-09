@@ -86,10 +86,15 @@ export function createDebriefRouter(config: ServerConfig): Router {
               'Respond with JSON: { "summary": "..." }',
           }),
           responseParser: (data: unknown): string => {
-            if (data && typeof data === "object" && "summary" in data) {
-              return String((data as { summary: unknown }).summary)
+            if (
+              data &&
+              typeof data === "object" &&
+              "summary" in data &&
+              typeof (data as { summary: unknown }).summary === "string"
+            ) {
+              return (data as { summary: string }).summary
             }
-            return String(data)
+            throw new Error("Synthesis response missing required 'summary' string field")
           },
           apiKey: config.anthropicApiKey,
         })
