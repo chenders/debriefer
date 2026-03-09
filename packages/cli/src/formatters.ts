@@ -38,9 +38,23 @@ export function formatDebriefResult<TOutput>(result: DebriefResult<TOutput>): st
 
   lines.push("")
 
-  // Data section
-  if (result.data === null) {
+  // Data section — when data is null but findings exist, show findings instead of "no findings"
+  if (result.data === null && result.findings.length === 0) {
     lines.push("No findings collected.")
+  } else if (result.data === null && result.findings.length > 0) {
+    lines.push("Synthesis unavailable. Showing raw findings:")
+    lines.push("")
+    for (const finding of result.findings) {
+      lines.push(`  Source: ${finding.sourceName}`)
+      lines.push(`  Tier: ${finding.reliabilityTier}  Confidence: ${finding.confidence.toFixed(2)}`)
+      if (finding.url) {
+        lines.push(`  URL: ${finding.url}`)
+      }
+      const truncatedText =
+        finding.text.length > 300 ? finding.text.slice(0, 300) + "..." : finding.text
+      lines.push(`  ${truncatedText}`)
+      lines.push("")
+    }
   } else if (typeof result.data === "string") {
     lines.push("--- Synthesis ---")
     lines.push(result.data)

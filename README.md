@@ -51,9 +51,9 @@ No API keys required — Wikipedia, Wikidata, and Open Library are free and open
 
 ## How It Works
 
-Debriefer runs research in **phases**, starting with free and fast sources (Wikipedia, Wikidata, open archives) before moving to API-gated sources (news APIs, search engines). Each phase runs its sources concurrently with per-domain rate limiting.
+Debriefer runs research in **phases** that you define. You decide which sources go in which phase — typically free sources first, paid sources later. Each phase runs its sources concurrently with per-domain rate limiting. The CLI does this automatically (free phase 1, paid phase 2), and library users construct their own `SourcePhaseGroup[]`.
 
-**Early stopping** kicks in when enough distinct source families return high-quality findings. If Wikipedia, AP News, and the Library of Congress all agree, there's no reason to burn through your search API quota. The threshold is configurable.
+**Early stopping** kicks in when enough distinct source families return high-quality findings. If Wikipedia, AP News, and the Library of Congress all agree, there's no reason to burn through your search API quota. The threshold is configurable, and cost limits are checked between phases.
 
 Quality is measured on **two independent axes**:
 

@@ -129,20 +129,36 @@ async function runDebrief(name: string, options: DebriefOptions): Promise<void> 
       promptBuilder: (subject, findings) => ({
         system:
           options.prompt ??
-          "You are a research assistant. Synthesize the following findings into a clear, factual summary.",
-        user: `Subject: ${subject.name}\n\nFindings:\n${findings.map((f) => `[${f.sourceName}] ${f.text}`).join("\n\n")}`,
+          "You are a research assistant. Synthesize the following findings into a clear, factual summary. " +
+            'Respond ONLY with a valid JSON object: { "summary": "your synthesized summary" }',
+        user:
+          `Subject: ${subject.name}\n\nFindings:\n${findings.map((f) => `[${f.sourceName}] ${f.text}`).join("\n\n")}\n\n` +
+          'Respond with JSON: { "summary": "..." }',
       }),
-      responseParser: (text) => String(text),
+      responseParser: (data: unknown): string => {
+        if (data && typeof data === "object" && "summary" in data) {
+          return String((data as { summary: unknown }).summary)
+        }
+        return String(data)
+      },
       apiKey,
     })
   } else {
     synthesizer = new NoopSynthesizer<ResearchSubject>()
   }
 
-  // 6. Build single phase with all available sources
-  const phases: SourcePhaseGroup<ResearchSubject>[] = [
-    { phase: 1, name: "All Sources", sources: availableSources },
-  ]
+  // 6. Split available sources into free (phase 1) and paid (phase 2)
+  // This makes --budget effective: cost limits are checked between phases
+  const freeSources = availableSources.filter((s) => s.isFree)
+  const paidSources = availableSources.filter((s) => !s.isFree)
+
+  const phases: SourcePhaseGroup<ResearchSubject>[] = []
+  if (freeSources.length > 0) {
+    phases.push({ phase: 1, name: "Free Sources", sources: freeSources })
+  }
+  if (paidSources.length > 0) {
+    phases.push({ phase: 2, name: "Paid Sources", sources: paidSources })
+  }
 
   // 7. Build config
   const config: ResearchConfig = {

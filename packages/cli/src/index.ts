@@ -8,6 +8,7 @@
  * auto-parses process.argv.
  */
 
+import path from "node:path"
 import { Command } from "commander"
 import { buildDebriefCommand } from "./commands/debrief.js"
 import { buildSourcesCommand } from "./commands/sources.js"
@@ -28,12 +29,8 @@ export function buildProgram(): Command {
 }
 
 // Auto-parse when executed directly (not when imported in tests)
-const executedScript = process.argv[1]
-if (
-  executedScript &&
-  (executedScript.endsWith("/debriefer") ||
-    executedScript.endsWith("/index.js") ||
-    executedScript.endsWith("/index.ts"))
-) {
+// Uses path.basename() for cross-platform support (Windows backslashes)
+const scriptBase = process.argv[1] ? path.basename(process.argv[1]) : ""
+if (scriptBase === "debriefer" || scriptBase === "index.js" || scriptBase === "index.ts") {
   buildProgram().parse()
 }
