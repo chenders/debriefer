@@ -108,7 +108,7 @@ async function runDebrief(name: string, options: DebriefOptions): Promise<void> 
   const availableSources = allSources.filter((s) => s.isAvailable())
   const skippedCount = allSources.length - availableSources.length
 
-  // 3. Check for available sources
+  // 4. Check for available sources
   if (availableSources.length === 0) {
     console.error(
       "No sources available. Check that required API keys are configured " +
@@ -118,14 +118,14 @@ async function runDebrief(name: string, options: DebriefOptions): Promise<void> 
     return
   }
 
-  // 4. Verbose: show source counts
+  // 5. Verbose: show source counts
   if (options.verbose) {
     console.error(
       `Sources: ${availableSources.length} available, ${skippedCount} skipped (missing API keys)`
     )
   }
 
-  // 5. Build synthesizer
+  // 6. Build synthesizer
   let synthesizer: Synthesizer<ResearchSubject, unknown>
 
   if (options.synthesis) {
@@ -163,7 +163,7 @@ async function runDebrief(name: string, options: DebriefOptions): Promise<void> 
     synthesizer = new NoopSynthesizer<ResearchSubject>()
   }
 
-  // 6. Split available sources into free (phase 1) and paid (phase 2)
+  // 7. Split available sources into free (phase 1) and paid (phase 2)
   // This makes --budget effective: cost limits are checked between phases
   const freeSources = availableSources.filter((s) => s.isFree)
   const paidSources = availableSources.filter((s) => !s.isFree)
@@ -176,7 +176,7 @@ async function runDebrief(name: string, options: DebriefOptions): Promise<void> 
     phases.push({ phase: 2, name: "Paid Sources", sources: paidSources })
   }
 
-  // 7. Build config
+  // 8. Build config
   const config: ResearchConfig = {
     costLimits: {
       maxCostPerSubject: options.budget,
@@ -187,7 +187,7 @@ async function runDebrief(name: string, options: DebriefOptions): Promise<void> 
     },
   }
 
-  // 8. Build lifecycle hooks (verbose only)
+  // 9. Build lifecycle hooks (verbose only)
   const hooks: LifecycleHooks<ResearchSubject, unknown> = {}
   if (options.verbose) {
     hooks.onSourceComplete = (
@@ -201,16 +201,16 @@ async function runDebrief(name: string, options: DebriefOptions): Promise<void> 
     }
   }
 
-  // 9. Create orchestrator
+  // 10. Create orchestrator
   const orchestrator = new ResearchOrchestrator(phases, synthesizer, config)
 
-  // 10. Create subject
+  // 11. Create subject
   const subject: ResearchSubject = { id: name, name }
 
-  // 11. Run debrief
+  // 12. Run debrief
   const result = await orchestrator.debrief(subject, { hooks })
 
-  // 12. Output results
+  // 13. Output results
   if (options.format === "json") {
     // eslint-disable-next-line no-console -- CLI: stdout is the intended output channel
     console.log(JSON.stringify(result, null, 2))
