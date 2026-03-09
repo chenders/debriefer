@@ -24,7 +24,7 @@ export function createApp(config?: ServerConfig): express.Express {
   const app = express()
 
   // Global middleware
-  app.use(cors())
+  app.use(cors(resolvedConfig.corsOrigin ? { origin: resolvedConfig.corsOrigin } : undefined))
   app.use(express.json())
   app.use(createAuthMiddleware(resolvedConfig.apiKeys))
 

@@ -47,6 +47,11 @@ describe("loadConfig defaults", () => {
     const config = loadConfig()
     expect(config.anthropicApiKey).toBeUndefined()
   })
+
+  it("returns undefined corsOrigin by default", () => {
+    const config = loadConfig()
+    expect(config.corsOrigin).toBeUndefined()
+  })
 })
 
 // ============================================================================
@@ -62,6 +67,24 @@ describe("PORT env var", () => {
 
   it("falls back to default on invalid PORT", () => {
     vi.stubEnv("PORT", "not-a-number")
+    const config = loadConfig()
+    expect(config.port).toBe(8090)
+  })
+
+  it("falls back to default on negative PORT", () => {
+    vi.stubEnv("PORT", "-1")
+    const config = loadConfig()
+    expect(config.port).toBe(8090)
+  })
+
+  it("falls back to default on PORT > 65535", () => {
+    vi.stubEnv("PORT", "99999")
+    const config = loadConfig()
+    expect(config.port).toBe(8090)
+  })
+
+  it("falls back to default on PORT = 0", () => {
+    vi.stubEnv("PORT", "0")
     const config = loadConfig()
     expect(config.port).toBe(8090)
   })
@@ -148,5 +171,17 @@ describe("ANTHROPIC_API_KEY env var", () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "sk-ant-12345")
     const config = loadConfig()
     expect(config.anthropicApiKey).toBe("sk-ant-12345")
+  })
+})
+
+// ============================================================================
+// CORS_ORIGIN
+// ============================================================================
+
+describe("CORS_ORIGIN env var", () => {
+  it("reads cors origin from environment", () => {
+    vi.stubEnv("CORS_ORIGIN", "https://example.com")
+    const config = loadConfig()
+    expect(config.corsOrigin).toBe("https://example.com")
   })
 })

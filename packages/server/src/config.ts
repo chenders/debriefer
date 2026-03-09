@@ -12,6 +12,7 @@ export interface ServerConfig {
   defaultBudget: number
   defaultModel: string
   anthropicApiKey: string | undefined
+  corsOrigin: string | undefined
 }
 
 /**
@@ -24,7 +25,7 @@ export interface ServerConfig {
  * - ANTHROPIC_API_KEY: string or undefined
  */
 export function loadConfig(): ServerConfig {
-  const port = safeParseInt(process.env.PORT, 8090)
+  const port = safeParsePort(process.env.PORT, 8090)
   const apiKeys = (process.env.DEBRIEFER_API_KEYS ?? "")
     .split(",")
     .map((k) => k.trim())
@@ -32,6 +33,7 @@ export function loadConfig(): ServerConfig {
   const defaultBudget = safeParseFloat(process.env.DEFAULT_BUDGET, 1.0)
   const defaultModel = process.env.DEFAULT_MODEL || "claude-sonnet-4-20250514"
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY || undefined
+  const corsOrigin = process.env.CORS_ORIGIN || undefined
 
   return {
     port,
@@ -40,14 +42,15 @@ export function loadConfig(): ServerConfig {
     defaultBudget,
     defaultModel,
     anthropicApiKey,
+    corsOrigin,
   }
 }
 
-/** parseInt with NaN fallback. */
-function safeParseInt(value: string | undefined, fallback: number): number {
+/** parseInt with NaN fallback. Values outside 1–65535 fall back to the default. */
+function safeParsePort(value: string | undefined, fallback: number): number {
   if (value === undefined) return fallback
   const parsed = parseInt(value, 10)
-  return Number.isNaN(parsed) ? fallback : parsed
+  return Number.isNaN(parsed) || parsed < 1 || parsed > 65535 ? fallback : parsed
 }
 
 /** parseFloat with NaN fallback. Values ≤ 0 fall back to the default. */

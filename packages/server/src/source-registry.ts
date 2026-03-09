@@ -54,22 +54,12 @@ import {
 
 export type SourceFactory = () => BaseResearchSource<ResearchSubject>
 
-/** Valid source category names. */
-export const VALID_CATEGORIES = [
-  "structured",
-  "news",
-  "search",
-  "books",
-  "archives",
-  "obituary",
-] as const
-
-export type SourceCategory = (typeof VALID_CATEGORIES)[number]
-
 /**
  * Maps category names to arrays of source factory functions.
+ * This is the single source of truth for both the category type
+ * and the VALID_CATEGORIES list — derived, never duplicated.
  */
-export const SOURCE_CATEGORIES: Record<SourceCategory, SourceFactory[]> = {
+export const SOURCE_CATEGORIES: Record<string, SourceFactory[]> = {
   structured: [wikidata, wikipedia],
   news: [
     apNews,
@@ -101,6 +91,12 @@ export const SOURCE_CATEGORIES: Record<SourceCategory, SourceFactory[]> = {
   obituary: [legacy, findAGrave],
 }
 
+/** Valid source category names, derived from SOURCE_CATEGORIES. */
+export type SourceCategory = "structured" | "news" | "search" | "books" | "archives" | "obituary"
+
+/** Runtime list of valid categories — derived from SOURCE_CATEGORIES keys. */
+export const VALID_CATEGORIES = Object.keys(SOURCE_CATEGORIES) as SourceCategory[]
+
 /**
  * Creates source instances for the given categories, each paired with
  * its category name. If no categories are specified, creates sources
@@ -109,10 +105,10 @@ export const SOURCE_CATEGORIES: Record<SourceCategory, SourceFactory[]> = {
 export function createSourcesWithCategory(
   categories?: string[]
 ): { source: BaseResearchSource<ResearchSubject>; category: SourceCategory }[] {
-  const selected = categories ?? (Object.keys(SOURCE_CATEGORIES) as SourceCategory[])
+  const selected = categories ?? VALID_CATEGORIES
   return selected.flatMap((category) => {
     if (!Object.hasOwn(SOURCE_CATEGORIES, category)) return []
-    const factories = SOURCE_CATEGORIES[category as SourceCategory]
+    const factories = SOURCE_CATEGORIES[category]
     return factories.map((factory: SourceFactory) => ({
       source: factory(),
       category: category as SourceCategory,

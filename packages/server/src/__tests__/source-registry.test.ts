@@ -6,7 +6,11 @@
  */
 
 import { describe, it, expect } from "vitest"
-import { SOURCE_CATEGORIES, createSourcesWithCategory } from "../source-registry.js"
+import {
+  SOURCE_CATEGORIES,
+  VALID_CATEGORIES,
+  createSourcesWithCategory,
+} from "../source-registry.js"
 
 // ============================================================================
 // SOURCE_CATEGORIES structure
@@ -20,6 +24,10 @@ describe("SOURCE_CATEGORIES", () => {
   it("contains expected category names", () => {
     const expected = ["structured", "news", "search", "books", "archives", "obituary"]
     expect(Object.keys(SOURCE_CATEGORIES).sort()).toEqual(expected.sort())
+  })
+
+  it("VALID_CATEGORIES matches SOURCE_CATEGORIES keys", () => {
+    expect(VALID_CATEGORIES.sort()).toEqual(Object.keys(SOURCE_CATEGORIES).sort())
   })
 
   it("every category has at least one factory", () => {

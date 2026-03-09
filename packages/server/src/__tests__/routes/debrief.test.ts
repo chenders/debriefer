@@ -48,6 +48,7 @@ const baseConfig: ServerConfig = {
   defaultBudget: 1.0,
   defaultModel: "claude-sonnet-4-20250514",
   anthropicApiKey: undefined,
+  corsOrigin: undefined,
 }
 
 function createApp(config: ServerConfig = baseConfig): express.Express {
