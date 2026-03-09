@@ -130,10 +130,12 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
 
     // 5. Fetch and extract content from each page
     const extractedPages: Array<{ url: string; title: string; text: string }> = []
+    let linksAttempted = 0
 
     for (const { result } of linksToFollow) {
       if (signal.aborted) break
 
+      linksAttempted++
       const pageResult = await fetchPage({ url: result.url, signal })
 
       if (pageResult.fetchMethod === "none" || !pageResult.content) {
@@ -183,7 +185,7 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
       url: extractedPages[0].url,
       metadata: {
         searchEngine: this.name,
-        linksFollowed: linksToFollow.length,
+        linksFollowed: linksAttempted,
         pagesExtracted: extractedPages.length,
         urls: extractedPages.map((p) => p.url),
       },
