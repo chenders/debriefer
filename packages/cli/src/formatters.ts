@@ -8,6 +8,17 @@
 import type { DebriefResult, ScoredFinding, ResearchSubject, BaseResearchSource } from "debriefer"
 
 // ============================================================================
+// Type guards
+// ============================================================================
+
+/** Runtime check that an array contains ScoredFinding-shaped objects. */
+function isScoredFindingArray(data: unknown[]): data is ScoredFinding[] {
+  if (data.length === 0) return false
+  const first = data[0] as Record<string, unknown>
+  return typeof first.sourceName === "string" && typeof first.text === "string"
+}
+
+// ============================================================================
 // formatDebriefResult
 // ============================================================================
 
@@ -58,9 +69,9 @@ export function formatDebriefResult<TOutput>(result: DebriefResult<TOutput>): st
   } else if (typeof result.data === "string") {
     lines.push("--- Synthesis ---")
     lines.push(result.data)
-  } else if (Array.isArray(result.data)) {
+  } else if (Array.isArray(result.data) && isScoredFindingArray(result.data)) {
     lines.push(`--- Findings (${result.data.length}) ---`)
-    for (const finding of result.data as ScoredFinding[]) {
+    for (const finding of result.data) {
       lines.push("")
       lines.push(`  Source: ${finding.sourceName}`)
       lines.push(`  Tier: ${finding.reliabilityTier}  Confidence: ${finding.confidence.toFixed(2)}`)

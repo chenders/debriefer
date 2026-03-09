@@ -196,6 +196,24 @@ describe("formatDebriefResult", () => {
     expect(output).toContain("0/3")
   })
 
+  it("shows raw findings when data is null but findings exist (synthesis failed)", () => {
+    const result: DebriefResult<string> = {
+      subject: makeSubject(),
+      data: null,
+      findings: [makeScoredFinding()],
+      totalCostUsd: 0,
+      sourcesAttempted: 2,
+      sourcesSucceeded: 1,
+      durationMs: 800,
+    }
+
+    const output = formatDebriefResult(result)
+
+    expect(output).toContain("Synthesis unavailable")
+    expect(output).toContain("Wikipedia")
+    expect(output).not.toContain("No findings collected.")
+  })
+
   // ============================================================================
   // formatDebriefResult — structured (object) data
   // ============================================================================

@@ -16,7 +16,7 @@ import type {
   Synthesizer,
   RawFinding,
 } from "debriefer"
-import { createSources } from "../source-registry.js"
+import { createSources, SOURCE_CATEGORIES } from "../source-registry.js"
 import { formatDebriefResult } from "../formatters.js"
 
 // ============================================================================
@@ -90,7 +90,17 @@ async function runDebrief(name: string, options: DebriefOptions): Promise<void> 
     ? options.categories.split(",").map((c) => c.trim())
     : undefined
 
-  // 2. Create sources and filter to available
+  // 2. Warn about unknown categories
+  if (categories) {
+    const known = Object.keys(SOURCE_CATEGORIES)
+    for (const cat of categories) {
+      if (!known.includes(cat)) {
+        console.error(`Warning: unknown category "${cat}" (available: ${known.join(", ")})`)
+      }
+    }
+  }
+
+  // 3. Create sources and filter to available
   const allSources = createSources(categories)
   const availableSources = allSources.filter((s) => s.isAvailable())
   const skippedCount = allSources.length - availableSources.length
@@ -189,7 +199,7 @@ async function runDebrief(name: string, options: DebriefOptions): Promise<void> 
   const orchestrator = new ResearchOrchestrator(phases, synthesizer, config)
 
   // 10. Create subject
-  const subject: ResearchSubject = { id: 1, name }
+  const subject: ResearchSubject = { id: name, name }
 
   // 11. Run debrief
   const result = await orchestrator.debrief(subject, { hooks })

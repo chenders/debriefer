@@ -12,32 +12,32 @@ import type { SourcePhaseGroup, ResearchSubject } from "debriefer"
 // Module mock — must be before any import of the module under test
 // ============================================================================
 
-const mockDebrief = vi.fn()
+const MOCK_RESULT = {
+  subject: { id: "John Wayne", name: "John Wayne" },
+  data: "John Wayne was an American actor.",
+  findings: [
+    {
+      text: "Test finding",
+      confidence: 0.8,
+      costUsd: 0,
+      sourceType: "wikipedia",
+      sourceName: "Wikipedia",
+      reliabilityTier: "secondary",
+      reliabilityScore: 0.85,
+    },
+  ],
+  totalCostUsd: 0.001,
+  sourcesAttempted: 5,
+  sourcesSucceeded: 1,
+  durationMs: 2500,
+}
 
 vi.mock("debriefer", async (importOriginal) => {
   const actual = await importOriginal<typeof import("debriefer")>()
   return {
     ...actual,
     ResearchOrchestrator: vi.fn().mockImplementation(() => ({
-      debrief: mockDebrief.mockResolvedValue({
-        subject: { id: 1, name: "John Wayne" },
-        data: "John Wayne was an American actor.",
-        findings: [
-          {
-            text: "Test finding",
-            confidence: 0.8,
-            costUsd: 0,
-            sourceType: "wikipedia",
-            sourceName: "Wikipedia",
-            reliabilityTier: actual.ReliabilityTier.SECONDARY_COMPILATION,
-            reliabilityScore: 0.85,
-          },
-        ],
-        totalCostUsd: 0.001,
-        sourcesAttempted: 5,
-        sourcesSucceeded: 1,
-        durationMs: 2500,
-      }),
+      debrief: vi.fn().mockResolvedValue(MOCK_RESULT),
     })),
     ClaudeSynthesizer: vi.fn().mockImplementation(() => ({})),
     NoopSynthesizer: vi.fn().mockImplementation(() => ({})),
@@ -51,21 +51,21 @@ import { ResearchOrchestrator, NoopSynthesizer } from "debriefer"
 // Setup
 // ============================================================================
 
-let logSpy: ReturnType<typeof vi.spyOn>
-let errorSpy: ReturnType<typeof vi.spyOn>
-
 beforeEach(() => {
-  vi.clearAllMocks()
+  // Reset call counts but preserve mock implementations from vi.mock()
+  vi.mocked(ResearchOrchestrator).mockClear()
+  vi.mocked(NoopSynthesizer).mockClear()
 })
 
 afterEach(() => {
-  logSpy?.mockRestore()
-  errorSpy?.mockRestore()
+  // Restore console spies but NOT module mocks (vi.mock implementations must persist)
+  vi.unstubAllGlobals()
+  process.exitCode = undefined
 })
 
 function captureLog(): string[] {
   const calls: string[] = []
-  logSpy = vi.spyOn(globalThis.console, "log").mockImplementation((...args: unknown[]) => {
+  vi.spyOn(globalThis.console, "log").mockImplementation((...args: unknown[]) => {
     calls.push(args.map(String).join(" "))
   })
   return calls
@@ -73,7 +73,7 @@ function captureLog(): string[] {
 
 function captureError(): string[] {
   const calls: string[] = []
-  errorSpy = vi.spyOn(globalThis.console, "error").mockImplementation((...args: unknown[]) => {
+  vi.spyOn(globalThis.console, "error").mockImplementation((...args: unknown[]) => {
     calls.push(args.map(String).join(" "))
   })
   return calls
@@ -148,5 +148,53 @@ describe("debrief command — category filtering", () => {
     for (const source of phases[0].sources) {
       expect(["wikipedia", "wikidata"]).toContain(source.type)
     }
+  })
+})
+
+// ============================================================================
+// Error paths
+// ============================================================================
+
+describe("debrief command — error handling", () => {
+  it("sets exitCode 1 when no sources are available (unknown category)", async () => {
+    captureLog()
+    const errors = captureError()
+    const cmd = buildDebriefCommand()
+    await cmd.parseAsync(["Test", "--no-synthesis", "--categories", "nonexistent"], {
+      from: "user",
+    })
+
+    expect(process.exitCode).toBe(1)
+    expect(errors.join("\n")).toContain("No sources available")
+  })
+
+  it("warns about unknown category names", async () => {
+    captureLog()
+    const errors = captureError()
+    const cmd = buildDebriefCommand()
+    // Both "bogus" and "fake" are unknown — no sources will be available, so
+    // the command exits early before hitting the orchestrator
+    await cmd.parseAsync(["Test", "--no-synthesis", "--categories", "bogus,fake"], {
+      from: "user",
+    })
+
+    expect(errors.join("\n")).toContain('unknown category "bogus"')
+    expect(errors.join("\n")).toContain('unknown category "fake"')
+  })
+
+  it("sets exitCode 1 when ANTHROPIC_API_KEY is missing for synthesis", async () => {
+    const originalKey = process.env.ANTHROPIC_API_KEY
+    delete process.env.ANTHROPIC_API_KEY
+
+    captureLog()
+    const errors = captureError()
+    const cmd = buildDebriefCommand()
+    await cmd.parseAsync(["Test"], { from: "user" })
+
+    expect(process.exitCode).toBe(1)
+    expect(errors.join("\n")).toContain("ANTHROPIC_API_KEY")
+
+    // Restore
+    if (originalKey) process.env.ANTHROPIC_API_KEY = originalKey
   })
 })
