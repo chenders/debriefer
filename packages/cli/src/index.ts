@@ -8,10 +8,14 @@
  * auto-parses process.argv.
  */
 
+import { createRequire } from "node:module"
 import path from "node:path"
 import { Command } from "commander"
 import { buildDebriefCommand } from "./commands/debrief.js"
 import { buildSourcesCommand } from "./commands/sources.js"
+
+const require = createRequire(import.meta.url)
+const { version } = require("../package.json") as { version: string }
 
 /**
  * Builds the top-level Commander program with all registered subcommands.
@@ -20,7 +24,7 @@ export function buildProgram(): Command {
   const program = new Command()
     .name("debriefer")
     .description("Multi-source research orchestration engine")
-    .version("0.1.0")
+    .version(version)
 
   program.addCommand(buildDebriefCommand())
   program.addCommand(buildSourcesCommand())

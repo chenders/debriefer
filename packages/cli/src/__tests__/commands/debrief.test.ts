@@ -57,15 +57,20 @@ beforeEach(() => {
   vi.mocked(NoopSynthesizer).mockClear()
 })
 
+let logSpy: ReturnType<typeof vi.spyOn> | undefined
+let errorSpy: ReturnType<typeof vi.spyOn> | undefined
+
 afterEach(() => {
-  // Restore console spies but NOT module mocks (vi.mock implementations must persist)
-  vi.unstubAllGlobals()
+  logSpy?.mockRestore()
+  errorSpy?.mockRestore()
+  logSpy = undefined
+  errorSpy = undefined
   process.exitCode = undefined
 })
 
 function captureLog(): string[] {
   const calls: string[] = []
-  vi.spyOn(globalThis.console, "log").mockImplementation((...args: unknown[]) => {
+  logSpy = vi.spyOn(globalThis.console, "log").mockImplementation((...args: unknown[]) => {
     calls.push(args.map(String).join(" "))
   })
   return calls
@@ -73,7 +78,7 @@ function captureLog(): string[] {
 
 function captureError(): string[] {
   const calls: string[] = []
-  vi.spyOn(globalThis.console, "error").mockImplementation((...args: unknown[]) => {
+  errorSpy = vi.spyOn(globalThis.console, "error").mockImplementation((...args: unknown[]) => {
     calls.push(args.map(String).join(" "))
   })
   return calls

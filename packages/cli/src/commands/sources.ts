@@ -7,21 +7,29 @@
  */
 
 import { Command } from "commander"
-import { createSources, SOURCE_CATEGORIES, type SourceCategory } from "../source-registry.js"
+import type { BaseResearchSource, ResearchSubject } from "debriefer"
+import { SOURCE_CATEGORIES, type SourceCategory } from "../source-registry.js"
 import { formatSourceList } from "../formatters.js"
 
 /**
- * Build a reverse map from source type to category name.
- * Instantiates each factory once to read its type.
+ * Create sources with category metadata attached, avoiding double instantiation.
+ * Returns { source, category } pairs from the given categories (or all).
  */
-function buildTypeToCategoryMap(): Map<string, SourceCategory> {
-  const map = new Map<string, SourceCategory>()
-  for (const [category, factories] of Object.entries(SOURCE_CATEGORIES)) {
+function createSourcesWithCategory(
+  categories?: string[]
+): { source: BaseResearchSource<ResearchSubject>; category: SourceCategory }[] {
+  const cats = categories ?? Object.keys(SOURCE_CATEGORIES)
+  const results: { source: BaseResearchSource<ResearchSubject>; category: SourceCategory }[] = []
+
+  for (const cat of cats) {
+    const factories = SOURCE_CATEGORIES[cat as SourceCategory]
+    if (!factories) continue
     for (const factory of factories) {
-      map.set(factory().type, category as SourceCategory)
+      results.push({ source: factory(), category: cat as SourceCategory })
     }
   }
-  return map
+
+  return results
 }
 
 /**
@@ -39,16 +47,14 @@ export function buildSourcesCommand(): Command {
     .option("--format <fmt>", "Output format: text or json", "text")
     .action((options: { category?: string; format: string }) => {
       const categories = options.category ? [options.category] : undefined
-      const sources = createSources(categories)
+      const tagged = createSourcesWithCategory(categories)
+      const sources = tagged.map((t) => t.source)
 
       if (options.format === "json") {
-        // When a category filter is set, all sources share that category.
-        // Otherwise build a reverse map (one extra instantiation set).
-        const categoryMap = options.category ? null : buildTypeToCategoryMap()
-        const data = sources.map((source) => ({
+        const data = tagged.map(({ source, category }) => ({
           name: source.name,
           type: source.type,
-          category: options.category ?? categoryMap?.get(source.type) ?? "unknown",
+          category,
           reliabilityTier: source.reliabilityTier,
           reliabilityScore: source.reliabilityScore,
           domain: source.domain,

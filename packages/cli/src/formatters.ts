@@ -11,11 +11,13 @@ import type { DebriefResult, ScoredFinding, ResearchSubject, BaseResearchSource 
 // Type guards
 // ============================================================================
 
-/** Runtime check that an array contains ScoredFinding-shaped objects. */
+/** Runtime check that an array contains ScoredFinding-shaped objects (or is empty). */
 function isScoredFindingArray(data: unknown[]): data is ScoredFinding[] {
-  if (data.length === 0) return false
-  const first = data[0] as Record<string, unknown>
-  return typeof first.sourceName === "string" && typeof first.text === "string"
+  if (data.length === 0) return true
+  const first = data[0]
+  if (first == null || typeof first !== "object") return false
+  const rec = first as Record<string, unknown>
+  return typeof rec.sourceName === "string" && typeof rec.text === "string"
 }
 
 // ============================================================================
