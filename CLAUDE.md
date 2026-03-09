@@ -68,10 +68,10 @@ npx vitest run src/__tests__/orchestrator.test.ts  # single test file
 
 ```bash
 npx turbo test lint type-check        # all packages
-npx prettier --check "packages/*/src/**/*.ts"  # formatting
+npx prettier --check .                # formatting (root-level, catches docs too)
 ```
 
-CI runs Format Check, Lint, Build, Test, Type Check, and Dependency Audit. Lint and Format failures are the most common — always verify locally before pushing. When subagents write code, run `npx prettier --write` on their output before committing.
+CI runs Format Check (`prettier --check .`), Lint, Build, Test, Type Check, and Dependency Audit. Lint and Format failures are the most common — always verify locally before pushing. When subagents write code, run `npx prettier --write` on their output before committing. Remember prettier runs at root level and checks all files including docs/plans/\*.md.
 
 ## Architecture
 

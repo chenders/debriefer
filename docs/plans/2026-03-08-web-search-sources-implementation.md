@@ -17,6 +17,7 @@
 ## Task 1: Shared fetch-page utility
 
 **Files:**
+
 - Create: `packages/sources/src/shared/fetch-page.ts`
 - Test: `packages/sources/src/__tests__/shared/fetch-page.test.ts`
 
@@ -122,7 +123,8 @@ describe("fetchPage", () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      text: async () => '<html><body><div class="captcha">Please verify you are human</div></body></html>',
+      text: async () =>
+        '<html><body><div class="captcha">Please verify you are human</div></body></html>',
     })
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -263,8 +265,7 @@ const SOFT_BLOCK_SIZE_THRESHOLD = 50_000
 const BROWSER_HEADERS: Record<string, string> = {
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-  Accept:
-    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
   "Accept-Language": "en-US,en;q=0.9",
   Connection: "keep-alive",
   "Upgrade-Insecure-Requests": "1",
@@ -316,13 +317,7 @@ function isBlocked(status: number, body?: string): boolean {
  * 2. archive.org Wayback Machine (if direct is blocked and archiveFallback enabled)
  */
 export async function fetchPage(options: FetchPageOptions): Promise<FetchPageResult> {
-  const {
-    url,
-    signal,
-    timeoutMs = 15000,
-    userAgent,
-    archiveFallback = true,
-  } = options
+  const { url, signal, timeoutMs = 15000, userAgent, archiveFallback = true } = options
 
   const headers: Record<string, string> = {
     ...BROWSER_HEADERS,
@@ -407,6 +402,7 @@ git commit -m "feat(sources): add fetch-page utility with archive.org fallback"
 ## Task 2: Shared DuckDuckGo search utility
 
 **Files:**
+
 - Create: `packages/sources/src/shared/duckduckgo-search.ts`
 - Test: `packages/sources/src/__tests__/shared/duckduckgo-search.test.ts`
 
@@ -476,10 +472,7 @@ describe("extractUrlsFromDuckDuckGoHtml", () => {
   }
 
   it("extracts URLs from result__url elements", () => {
-    const html = makeHtml([
-      { url: "https://example.com/1" },
-      { url: "https://example.com/2" },
-    ])
+    const html = makeHtml([{ url: "https://example.com/1" }, { url: "https://example.com/2" }])
     const results = extractUrlsFromDuckDuckGoHtml(html)
     expect(results).toHaveLength(2)
     expect(results[0].url).toBe("https://example.com/1")
@@ -676,10 +669,7 @@ export function cleanDuckDuckGoUrl(url: string): string {
  * Extract search results from DuckDuckGo HTML.
  * Parses result__url, result__a (title), and result__snippet elements.
  */
-export function extractUrlsFromDuckDuckGoHtml(
-  html: string,
-  domainFilter?: string
-): SearchResult[] {
+export function extractUrlsFromDuckDuckGoHtml(html: string, domainFilter?: string): SearchResult[] {
   const results: SearchResult[] = []
 
   // Extract result blocks — each has a URL, title, and snippet
@@ -738,16 +728,8 @@ export function extractUrlsFromDuckDuckGoHtml(
  * @param options - Search options
  * @returns Array of search results (may be empty)
  */
-export async function searchDuckDuckGo(
-  options: DuckDuckGoSearchOptions
-): Promise<SearchResult[]> {
-  const {
-    query,
-    domainFilter,
-    maxResults = 10,
-    signal,
-    timeoutMs = 15000,
-  } = options
+export async function searchDuckDuckGo(options: DuckDuckGoSearchOptions): Promise<SearchResult[]> {
+  const { query, domainFilter, maxResults = 10, signal, timeoutMs = 15000 } = options
 
   const fullQuery = domainFilter ? `site:${domainFilter} ${query}` : query
   const url = `${DUCKDUCKGO_HTML_URL}?q=${encodeURIComponent(fullQuery)}`
@@ -794,6 +776,7 @@ git commit -m "feat(sources): add DuckDuckGo HTML search utility"
 ## Task 3: WebSearchBase abstract class
 
 **Files:**
+
 - Create: `packages/sources/src/web-search/base.ts`
 - Test: `packages/sources/src/__tests__/web-search/base.test.ts`
 
@@ -907,9 +890,7 @@ describe("WebSearchBase", () => {
 
     it("returns null when all pages fail extraction", async () => {
       const source = new TestSearchSource()
-      source.searchResults = [
-        { url: "https://example.com/1", title: "Page", snippet: "Text" },
-      ]
+      source.searchResults = [{ url: "https://example.com/1", title: "Page", snippet: "Text" }]
 
       mockFetchPage.mockResolvedValue({
         content: "<html></html>",
@@ -926,9 +907,7 @@ describe("WebSearchBase", () => {
 
     it("returns null when all fetched pages are below minContentLength", async () => {
       const source = new TestSearchSource({ minContentLength: 500 })
-      source.searchResults = [
-        { url: "https://example.com/1", title: "Page", snippet: "Text" },
-      ]
+      source.searchResults = [{ url: "https://example.com/1", title: "Page", snippet: "Text" }]
 
       mockFetchPage.mockResolvedValue({
         content: "<html><body>Short</body></html>",
@@ -989,7 +968,10 @@ describe("WebSearchBase", () => {
       })
       mockExtractArticle.mockReturnValue({
         text: "Enough content here to pass the minimum length filter for this test case.",
-        title: null, author: null, excerpt: null, siteName: null,
+        title: null,
+        author: null,
+        excerpt: null,
+        siteName: null,
       })
 
       const signal = AbortSignal.timeout(5000)
@@ -1016,7 +998,10 @@ describe("WebSearchBase", () => {
       })
       mockExtractArticle.mockReturnValue({
         text: "Enough content to pass the length check for the biography page test.",
-        title: null, author: null, excerpt: null, siteName: null,
+        title: null,
+        author: null,
+        excerpt: null,
+        siteName: null,
       })
 
       const signal = AbortSignal.timeout(5000)
@@ -1042,7 +1027,10 @@ describe("WebSearchBase", () => {
       })
       mockExtractArticle.mockReturnValue({
         text: "Profile content with enough text to pass the minimum length filter check.",
-        title: null, author: null, excerpt: null, siteName: null,
+        title: null,
+        author: null,
+        excerpt: null,
+        siteName: null,
       })
 
       const signal = AbortSignal.timeout(5000)
@@ -1068,7 +1056,10 @@ describe("WebSearchBase", () => {
       })
       mockExtractArticle.mockReturnValue({
         text: "Article content with enough text to pass the minimum length filter test.",
-        title: null, author: null, excerpt: null, siteName: null,
+        title: null,
+        author: null,
+        excerpt: null,
+        siteName: null,
       })
 
       const signal = AbortSignal.timeout(5000)
@@ -1118,9 +1109,7 @@ describe("WebSearchBase", () => {
   describe("metadata", () => {
     it("includes searchEngine, linksFollowed, pagesExtracted, and urls", async () => {
       const source = new TestSearchSource()
-      source.searchResults = [
-        { url: "https://example.com/1", title: "Page", snippet: "" },
-      ]
+      source.searchResults = [{ url: "https://example.com/1", title: "Page", snippet: "" }]
 
       mockFetchPage.mockResolvedValue({
         content: "<html><body>Content</body></html>",
@@ -1229,10 +1218,7 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
    * Subclasses implement this — call their search API and return results.
    * The query is already built from the subject name.
    */
-  protected abstract performSearch(
-    query: string,
-    signal: AbortSignal
-  ): Promise<WebSearchResult[]>
+  protected abstract performSearch(query: string, signal: AbortSignal): Promise<WebSearchResult[]>
 
   /**
    * Full pipeline: search → score links → fetch → extract → combine.
@@ -1317,9 +1303,7 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
     const filtered = results.filter((r) => {
       try {
         const hostname = new URL(r.url).hostname
-        return !blockedDomains.some(
-          (d) => hostname === d || hostname.endsWith("." + d)
-        )
+        return !blockedDomains.some((d) => hostname === d || hostname.endsWith("." + d))
       } catch {
         return true
       }
@@ -1385,6 +1369,7 @@ git commit -m "feat(sources): add WebSearchBase abstract class with link-followi
 ## Task 4: Google Search source
 
 **Files:**
+
 - Create: `packages/sources/src/web-search/google.ts`
 - Test: `packages/sources/src/__tests__/web-search/google.test.ts`
 
@@ -1562,10 +1547,7 @@ export class GoogleSearchSource extends WebSearchBase {
     return Boolean(this.apiKey && this.cx)
   }
 
-  protected async performSearch(
-    query: string,
-    signal: AbortSignal
-  ): Promise<WebSearchResult[]> {
+  protected async performSearch(query: string, signal: AbortSignal): Promise<WebSearchResult[]> {
     if (!this.apiKey || !this.cx) return []
 
     const url = new URL(GOOGLE_CSE_URL)
@@ -1616,6 +1598,7 @@ git commit -m "feat(sources): add Google Custom Search source"
 ## Task 5: Bing Search source
 
 **Files:**
+
 - Create: `packages/sources/src/web-search/bing.ts`
 - Test: `packages/sources/src/__tests__/web-search/bing.test.ts`
 
@@ -1776,10 +1759,7 @@ export class BingSearchSource extends WebSearchBase {
     return Boolean(this.apiKey)
   }
 
-  protected async performSearch(
-    query: string,
-    signal: AbortSignal
-  ): Promise<WebSearchResult[]> {
+  protected async performSearch(query: string, signal: AbortSignal): Promise<WebSearchResult[]> {
     if (!this.apiKey) return []
 
     const url = `${BING_SEARCH_URL}?q=${encodeURIComponent(query)}&count=${this.maxResults}&mkt=en-US&responseFilter=Webpages,News`
@@ -1843,6 +1823,7 @@ git commit -m "feat(sources): add Bing Web Search source"
 ## Task 6: Brave Search source
 
 **Files:**
+
 - Create: `packages/sources/src/web-search/brave.ts`
 - Test: `packages/sources/src/__tests__/web-search/brave.test.ts`
 
@@ -1999,10 +1980,7 @@ export class BraveSearchSource extends WebSearchBase {
     return Boolean(this.apiKey)
   }
 
-  protected async performSearch(
-    query: string,
-    signal: AbortSignal
-  ): Promise<WebSearchResult[]> {
+  protected async performSearch(query: string, signal: AbortSignal): Promise<WebSearchResult[]> {
     if (!this.apiKey) return []
 
     const url = `${BRAVE_SEARCH_URL}?q=${encodeURIComponent(query)}&count=${this.maxResults}&search_lang=en`
@@ -2065,6 +2043,7 @@ git commit -m "feat(sources): add Brave Search source"
 ## Task 7: DuckDuckGo Search source
 
 **Files:**
+
 - Create: `packages/sources/src/web-search/duckduckgo.ts`
 - Test: `packages/sources/src/__tests__/web-search/duckduckgo.test.ts`
 
@@ -2175,10 +2154,7 @@ export class DuckDuckGoSearchSource extends WebSearchBase {
     super({ rateLimitMs: 1000, ...options })
   }
 
-  protected async performSearch(
-    query: string,
-    signal: AbortSignal
-  ): Promise<WebSearchResult[]> {
+  protected async performSearch(query: string, signal: AbortSignal): Promise<WebSearchResult[]> {
     return searchDuckDuckGo({ query, signal })
   }
 }
@@ -2205,6 +2181,7 @@ git commit -m "feat(sources): add DuckDuckGo search source"
 ## Task 8: Update exports and run full test suite
 
 **Files:**
+
 - Modify: `packages/sources/src/index.ts`
 
 **Step 1: Update index.ts with new exports**
@@ -2215,7 +2192,12 @@ Add the following exports to `packages/sources/src/index.ts`:
 // Shared utilities — fetch and search
 export { fetchPage } from "./shared/fetch-page.js"
 export type { FetchPageOptions, FetchPageResult } from "./shared/fetch-page.js"
-export { searchDuckDuckGo, isDuckDuckGoCaptcha, extractUrlsFromDuckDuckGoHtml, cleanDuckDuckGoUrl } from "./shared/duckduckgo-search.js"
+export {
+  searchDuckDuckGo,
+  isDuckDuckGoCaptcha,
+  extractUrlsFromDuckDuckGoHtml,
+  cleanDuckDuckGoUrl,
+} from "./shared/duckduckgo-search.js"
 export type { DuckDuckGoSearchOptions, SearchResult } from "./shared/duckduckgo-search.js"
 
 // Web search base (for building custom search sources)

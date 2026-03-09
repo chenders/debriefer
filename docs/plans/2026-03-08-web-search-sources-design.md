@@ -36,14 +36,14 @@ Fetches a URL with browser-like headers and optional archive.org fallback on blo
 export interface FetchPageOptions {
   url: string
   signal?: AbortSignal
-  timeoutMs?: number        // default: 15000
-  userAgent?: string        // default: browser-like UA
+  timeoutMs?: number // default: 15000
+  userAgent?: string // default: browser-like UA
   archiveFallback?: boolean // default: true
 }
 
 export interface FetchPageResult {
-  content: string           // raw HTML
-  url: string               // may differ from input (archive URL)
+  content: string // raw HTML
+  url: string // may differ from input (archive URL)
   fetchMethod: "direct" | "archive.org" | "none"
   error?: string
 }
@@ -52,10 +52,12 @@ export async function fetchPage(options: FetchPageOptions): Promise<FetchPageRes
 ```
 
 **Block detection:**
+
 - Hard blocks: HTTP 401, 403, 429, 451
 - Soft blocks: pattern matching in body (<50KB) for "captcha", "access denied", "cloudflare", "bot detection", "unusual traffic", etc.
 
 **Differences from deadonfilm:**
+
 - No archive.is fallback (requires browser/CAPTCHA solving)
 - No Playwright dependency
 - Fetch-only, suitable for a library
@@ -67,10 +69,10 @@ Free, zero-config search via DDG HTML endpoint. Used directly by DuckDuckGoSearc
 ```typescript
 export interface DuckDuckGoSearchOptions {
   query: string
-  domainFilter?: string          // site: filter
-  maxResults?: number            // default: 10
+  domainFilter?: string // site: filter
+  maxResults?: number // default: 10
   signal?: AbortSignal
-  timeoutMs?: number             // default: 15000
+  timeoutMs?: number // default: 15000
 }
 
 export interface SearchResult {
@@ -79,9 +81,7 @@ export interface SearchResult {
   snippet: string
 }
 
-export async function searchDuckDuckGo(
-  options: DuckDuckGoSearchOptions
-): Promise<SearchResult[]>
+export async function searchDuckDuckGo(options: DuckDuckGoSearchOptions): Promise<SearchResult[]>
 ```
 
 Parses DDG HTML response, handles URL redirect decoding (`uddg=` param), detects CAPTCHA (`anomaly-modal`). Returns empty array on error.
@@ -94,22 +94,19 @@ Template method pattern. Subclasses implement `performSearch()`, base handles th
 
 ```typescript
 export interface LinkSelectionOptions {
-  domainScores?: Record<string, number>                    // domain → 0-100 score
-  boostKeywords?: { keyword: string; boost: number }[]     // title/snippet boosters
+  domainScores?: Record<string, number> // domain → 0-100 score
+  boostKeywords?: { keyword: string; boost: number }[] // title/snippet boosters
   penaltyKeywords?: { keyword: string; penalty: number }[] // title/snippet penalties
-  blockedDomains?: string[]                                // never follow
+  blockedDomains?: string[] // never follow
 }
 
 export interface WebSearchOptions extends BaseSourceOptions, LinkSelectionOptions {
-  maxLinksToFollow?: number   // default: 3
-  minContentLength?: number  // default: 200 chars
+  maxLinksToFollow?: number // default: 3
+  minContentLength?: number // default: 200 chars
 }
 
 export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> {
-  protected abstract performSearch(
-    query: string,
-    signal: AbortSignal
-  ): Promise<WebSearchResult[]>
+  protected abstract performSearch(query: string, signal: AbortSignal): Promise<WebSearchResult[]>
 
   protected async fetchResult(subject, signal): Promise<RawFinding | null>
   // Pipeline:
@@ -126,6 +123,7 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
 ```
 
 **Key decisions:**
+
 - Confidence delegation via `-1` — consumers provide `requiredKeywords`/`bonusKeywords`
 - No AI cleaning stage (domain-specific, adds cost)
 - No career filtering (biography-specific)
@@ -173,30 +171,43 @@ All four follow the same pattern: extend WebSearchBase, declare metadata, implem
 ```typescript
 // Shared utilities
 export { fetchPage, type FetchPageOptions, type FetchPageResult } from "./shared/fetch-page.js"
-export { searchDuckDuckGo, type DuckDuckGoSearchOptions, type SearchResult } from "./shared/duckduckgo-search.js"
+export {
+  searchDuckDuckGo,
+  type DuckDuckGoSearchOptions,
+  type SearchResult,
+} from "./shared/duckduckgo-search.js"
 
 // Web search base (for custom search sources)
-export { WebSearchBase, type WebSearchOptions, type LinkSelectionOptions, type WebSearchResult } from "./web-search/base.js"
+export {
+  WebSearchBase,
+  type WebSearchOptions,
+  type LinkSelectionOptions,
+  type WebSearchResult,
+} from "./web-search/base.js"
 
 // Sources + factories
 export { GoogleSearchSource, googleSearch, type GoogleSearchOptions } from "./web-search/google.js"
 export { BingSearchSource, bingSearch, type BingSearchOptions } from "./web-search/bing.js"
 export { BraveSearchSource, braveSearch, type BraveSearchOptions } from "./web-search/brave.js"
-export { DuckDuckGoSearchSource, duckduckgoSearch, type DuckDuckGoSearchOptions as DuckDuckGoSourceOptions } from "./web-search/duckduckgo.js"
+export {
+  DuckDuckGoSearchSource,
+  duckduckgoSearch,
+  type DuckDuckGoSearchOptions as DuckDuckGoSourceOptions,
+} from "./web-search/duckduckgo.js"
 ```
 
 ## Testing
 
 All tests mock `fetch` — no real API calls.
 
-| File | Tests | Key scenarios |
-|------|-------|---------------|
-| `shared/fetch-page.test.ts` | ~10 | Direct success, block detection (403/429/soft patterns), archive.org fallback, timeout, abort |
-| `shared/duckduckgo-search.test.ts` | ~8 | HTML parsing, URL decoding, domain filter, CAPTCHA detection, empty results |
-| `web-search/base.test.ts` | ~12 | Full pipeline, link scoring, maxLinksToFollow, minContentLength, empty results, extraction failures |
-| `web-search/google.test.ts` | ~6 | API format, response parsing, isAvailable, errors |
-| `web-search/bing.test.ts` | ~6 | API format, web+news dedup, auth header |
-| `web-search/brave.test.ts` | ~6 | API format, web+news dedup, auth header |
-| `web-search/duckduckgo.test.ts` | ~4 | Delegates to shared, wraps results |
+| File                               | Tests | Key scenarios                                                                                       |
+| ---------------------------------- | ----- | --------------------------------------------------------------------------------------------------- |
+| `shared/fetch-page.test.ts`        | ~10   | Direct success, block detection (403/429/soft patterns), archive.org fallback, timeout, abort       |
+| `shared/duckduckgo-search.test.ts` | ~8    | HTML parsing, URL decoding, domain filter, CAPTCHA detection, empty results                         |
+| `web-search/base.test.ts`          | ~12   | Full pipeline, link scoring, maxLinksToFollow, minContentLength, empty results, extraction failures |
+| `web-search/google.test.ts`        | ~6    | API format, response parsing, isAvailable, errors                                                   |
+| `web-search/bing.test.ts`          | ~6    | API format, web+news dedup, auth header                                                             |
+| `web-search/brave.test.ts`         | ~6    | API format, web+news dedup, auth header                                                             |
+| `web-search/duckduckgo.test.ts`    | ~4    | Delegates to shared, wraps results                                                                  |
 
 **Total:** ~50 tests across 7 files
