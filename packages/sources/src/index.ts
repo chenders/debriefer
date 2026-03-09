@@ -80,6 +80,7 @@ export {
   allMusic,
   people,
   biographyCom,
+  legacy,
 } from "./news/sources.js"
 
 // News sources — API based

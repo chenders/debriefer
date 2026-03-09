@@ -1,5 +1,5 @@
 /**
- * Factory functions for 20 news and reference site-search sources.
+ * Factory functions for 21 site-search sources (news, reference, obituary).
  *
  * Each factory creates a SiteSearchSource configured for a specific
  * news or reference site, with appropriate reliability tier, path
@@ -339,6 +339,26 @@ export function biographyCom(options?: BaseSourceOptions): SiteSearchSource {
       reliabilityTier: ReliabilityTier.SECONDARY_COMPILATION,
       rateLimitMs: 1500,
       avoidPaths: ["/lists/", "/news/", "/video/", "/gallery/"],
+    },
+    options
+  )
+}
+
+// ============================================================================
+// MARGINAL_MIXED (0.6)
+// ============================================================================
+
+/** Legacy.com — obituary and memorial aggregator. */
+export function legacy(options?: BaseSourceOptions): SiteSearchSource {
+  return new SiteSearchSource(
+    {
+      name: "Legacy.com",
+      type: "legacy",
+      domain: "legacy.com",
+      reliabilityTier: ReliabilityTier.MARGINAL_MIXED,
+      rateLimitMs: 2000,
+      preferredPaths: ["/obituaries/"],
+      queryTerms: "obituary",
     },
     options
   )
