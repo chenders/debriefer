@@ -36,5 +36,5 @@ export function buildProgram(): Command {
 // Uses path.basename() for cross-platform support (Windows backslashes)
 const scriptBase = process.argv[1] ? path.basename(process.argv[1]) : ""
 if (scriptBase === "debriefer" || scriptBase === "index.js" || scriptBase === "index.ts") {
-  buildProgram().parse()
+  buildProgram().parseAsync()
 }

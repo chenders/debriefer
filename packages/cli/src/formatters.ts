@@ -17,7 +17,12 @@ function isScoredFindingArray(data: unknown[]): data is ScoredFinding[] {
   const first = data[0]
   if (first == null || typeof first !== "object") return false
   const rec = first as Record<string, unknown>
-  return typeof rec.sourceName === "string" && typeof rec.text === "string"
+  return (
+    typeof rec.sourceName === "string" &&
+    typeof rec.text === "string" &&
+    typeof rec.reliabilityTier === "string" &&
+    typeof rec.confidence === "number"
+  )
 }
 
 // ============================================================================
