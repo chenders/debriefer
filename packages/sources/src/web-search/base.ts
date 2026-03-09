@@ -263,8 +263,8 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
     const hostname = parsed.hostname
     if (
       hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname === "[::1]" ||
+      hostname.startsWith("127.") || // 127.0.0.0/8 loopback
+      hostname === "::1" || // IPv6 loopback (URL parser strips brackets)
       hostname.startsWith("10.") ||
       hostname.startsWith("192.168.") ||
       hostname === "0.0.0.0" ||

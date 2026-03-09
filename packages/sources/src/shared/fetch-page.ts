@@ -140,7 +140,7 @@ async function fetchFromArchive(
       const content = await response.text()
       return {
         content,
-        url: aUrl,
+        url: response.url || aUrl,
         fetchMethod: "archive.org",
       }
     }
