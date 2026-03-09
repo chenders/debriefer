@@ -1,5 +1,5 @@
 /**
- * Factory functions for 19 news and reference site-search sources.
+ * Factory functions for 20 news and reference site-search sources.
  *
  * Each factory creates a SiteSearchSource configured for a specific
  * news or reference site, with appropriate reliability tier, path

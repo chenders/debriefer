@@ -138,7 +138,7 @@ describe("NYTimesSource", () => {
         "https://api.nytimes.com/svc/search/v2/articlesearch.json"
       )
       expect(parsed.searchParams.get("api-key")).toBe("my-api-key")
-      expect(parsed.searchParams.get("q")).toBe('"John Wayne" biography OR profile OR interview')
+      expect(parsed.searchParams.get("q")).toBe('"John Wayne" (biography OR profile OR interview)')
       expect(parsed.searchParams.get("sort")).toBe("relevance")
       expect(parsed.searchParams.get("fq")).toBe('document_type:("article")')
     })

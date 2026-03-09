@@ -236,7 +236,13 @@ export class SiteSearchSource extends BaseResearchSource<ResearchSubject> {
         title: extracted.title,
         author: extracted.author,
         siteName: extracted.siteName,
-        domain: this.config.domain,
+        domain: (() => {
+          try {
+            return new URL(actualUrl).hostname
+          } catch {
+            return this.config.domain
+          }
+        })(),
       },
     }
   }

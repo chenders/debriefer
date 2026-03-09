@@ -60,7 +60,7 @@ export class NYTimesSource extends BaseResearchSource<ResearchSubject> {
   ): Promise<RawFinding | null> {
     if (!this.apiKey) return null
 
-    const query = `"${subject.name}" biography OR profile OR interview`
+    const query = `"${subject.name}" (biography OR profile OR interview)`
 
     const url = new URL(NYT_API_URL)
     url.searchParams.set("api-key", this.apiKey)
@@ -76,13 +76,13 @@ export class NYTimesSource extends BaseResearchSource<ResearchSubject> {
 
     const data = (await response.json()) as {
       status: string
-      response: {
-        docs: Array<{
-          web_url: string
-          headline: { main: string }
-          lead_paragraph: string
-          abstract: string
-          snippet: string
+      response?: {
+        docs?: Array<{
+          web_url?: string
+          headline?: { main?: string }
+          lead_paragraph?: string
+          abstract?: string
+          snippet?: string
         }>
       }
     }
@@ -106,26 +106,26 @@ export class NYTimesSource extends BaseResearchSource<ResearchSubject> {
       text: sanitized,
       confidence: 0.7,
       costUsd: 0,
-      url: doc.web_url,
+      url: doc.web_url ?? "",
       publication: "The New York Times",
       metadata: {
-        title: doc.headline.main,
+        title: doc.headline?.main ?? "",
       },
     }
   }
 
   private findBestArticle(
     docs: Array<{
-      web_url: string
-      headline: { main: string }
-      lead_paragraph: string
-      abstract: string
-      snippet: string
+      web_url?: string
+      headline?: { main?: string }
+      lead_paragraph?: string
+      abstract?: string
+      snippet?: string
     }>
   ): (typeof docs)[number] | undefined {
     // First: match by headline
     for (const doc of docs) {
-      const title = doc.headline.main.toLowerCase()
+      const title = (doc.headline?.main ?? "").toLowerCase()
       if (BIO_KEYWORDS.some((kw) => title.includes(kw))) {
         return doc
       }
@@ -133,7 +133,7 @@ export class NYTimesSource extends BaseResearchSource<ResearchSubject> {
 
     // Second: match by abstract/snippet
     for (const doc of docs) {
-      const body = `${doc.abstract || ""} ${doc.snippet || ""}`.toLowerCase()
+      const body = `${doc.abstract ?? ""} ${doc.snippet ?? ""}`.toLowerCase()
       if (BIO_KEYWORDS.some((kw) => body.includes(kw))) {
         return doc
       }
