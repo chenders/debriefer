@@ -181,11 +181,13 @@ export function extractUrlsFromDuckDuckGoHtml(html: string, domainFilter?: strin
     const title = titles[i]?.title ?? ""
     const snippet = snippets[i] ?? ""
 
-    // Filter by domain using hostname parsing to prevent substring spoofing
+    // Filter by domain using hostname parsing to prevent substring spoofing.
+    // Normalize to lowercase since URL.hostname is always lowercase.
     if (domainFilter) {
+      const normalizedFilter = domainFilter.toLowerCase().trim()
       try {
         const hostname = new URL(url).hostname
-        if (hostname !== domainFilter && !hostname.endsWith("." + domainFilter)) {
+        if (hostname !== normalizedFilter && !hostname.endsWith("." + normalizedFilter)) {
           continue
         }
       } catch {

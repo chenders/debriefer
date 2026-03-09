@@ -138,7 +138,10 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
         continue
       }
 
-      const extracted = extractArticleContent(pageResult.content, result.url)
+      // Use the actual fetched URL (may be archive.org URL if fallback was used)
+      const actualUrl = pageResult.url || result.url
+
+      const extracted = extractArticleContent(pageResult.content, actualUrl)
       if (!extracted) {
         continue
       }
@@ -149,7 +152,7 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
       }
 
       extractedPages.push({
-        url: result.url,
+        url: actualUrl,
         title: extracted.title ?? result.title ?? result.url,
         text: extracted.text,
       })
