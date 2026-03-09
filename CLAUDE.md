@@ -71,7 +71,13 @@ npx turbo test lint type-check        # all packages
 npx prettier --check .                # formatting (root-level, catches docs too)
 ```
 
-CI runs Format Check (`prettier --check .`), Lint, Build, Test, Type Check, and Dependency Audit. Lint and Format failures are the most common — always verify locally before pushing. When subagents write code, run `npx prettier --write` on their output before committing. Remember prettier runs at root level and checks all files including docs/plans/\*.md.
+CI runs Format Check (`prettier --check .`), Lint, Build, Test, Type Check, and Dependency Audit. All six must pass before merging.
+
+**Common CI failures to avoid:**
+
+- **Format Check**: Prettier runs at root level (`prettier --check .`) and checks ALL files including `docs/plans/*.md`, `CLAUDE.md`, etc. — not just `src/`. Always run `npx prettier --write .` before committing.
+- **Lint**: ESLint catches issues like empty interfaces (`@typescript-eslint/no-empty-object-type`). Use `type Foo = Bar` instead of `interface Foo extends Bar {}` when adding no members.
+- **Subagent output**: Subagents don't run prettier or lint. After cherry-picking or merging subagent work, always run `npx prettier --write` on their files and `npx turbo lint` before committing.
 
 ## Architecture
 
