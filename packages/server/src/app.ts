@@ -34,9 +34,16 @@ export function createApp(): express.Express {
   app.use("/api", createDebriefRouter(config))
 
   // 404 fallback
-  app.use((_req, res) => {
+  app.use((_req: express.Request, res: express.Response) => {
     res.status(404).json({ error: "Not found" })
   })
+
+  // Global error handler (4-arg signature tells Express this is error middleware)
+  app.use(
+    (err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      res.status(500).json({ error: "Internal server error", message: err.message })
+    }
+  )
 
   return app
 }
