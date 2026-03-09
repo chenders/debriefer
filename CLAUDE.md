@@ -62,6 +62,17 @@ npm run type-check     # tsc --noEmit
 npx vitest run src/__tests__/orchestrator.test.ts  # single test file
 ```
 
+### Pre-Push Verification
+
+**Before pushing any branch, always run:**
+
+```bash
+npx turbo test lint type-check        # all packages
+npx prettier --check "packages/*/src/**/*.ts"  # formatting
+```
+
+CI runs Format Check, Lint, Build, Test, Type Check, and Dependency Audit. Lint and Format failures are the most common — always verify locally before pushing. When subagents write code, run `npx prettier --write` on their output before committing.
+
 ## Architecture
 
 ### Core Package (`packages/core/` — "debriefer")
