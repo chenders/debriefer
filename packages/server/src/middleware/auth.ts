@@ -36,8 +36,8 @@ export function createAuthMiddleware(
       return
     }
 
-    const token = header.slice("Bearer ".length)
-    if (!validKeys.has(token)) {
+    const token = header.slice("Bearer ".length).trim()
+    if (!token || !validKeys.has(token)) {
       res.status(401).json({ error: "Unauthorized" })
       return
     }

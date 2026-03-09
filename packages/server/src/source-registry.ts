@@ -99,14 +99,14 @@ export const SOURCE_CATEGORIES: Record<SourceCategory, SourceFactory[]> = {
  */
 export function createSourcesWithCategory(
   categories?: string[]
-): { source: BaseResearchSource<ResearchSubject>; category: string }[] {
+): { source: BaseResearchSource<ResearchSubject>; category: SourceCategory }[] {
   const selected = categories ?? (Object.keys(SOURCE_CATEGORIES) as SourceCategory[])
   return selected.flatMap((category) => {
     if (!Object.hasOwn(SOURCE_CATEGORIES, category)) return []
     const factories = SOURCE_CATEGORIES[category as SourceCategory]
     return factories.map((factory: SourceFactory) => ({
       source: factory(),
-      category,
+      category: category as SourceCategory,
     }))
   })
 }

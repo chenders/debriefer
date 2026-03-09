@@ -25,7 +25,10 @@ export interface ServerConfig {
  */
 export function loadConfig(): ServerConfig {
   const port = safeParseInt(process.env.PORT, 8090)
-  const apiKeys = (process.env.DEBRIEFER_API_KEYS ?? "").split(",").filter((k) => k.length > 0)
+  const apiKeys = (process.env.DEBRIEFER_API_KEYS ?? "")
+    .split(",")
+    .map((k) => k.trim())
+    .filter((k) => k.length > 0)
   const defaultBudget = safeParseFloat(process.env.DEFAULT_BUDGET, 1.0)
   const defaultModel = process.env.DEFAULT_MODEL || "claude-sonnet-4-20250514"
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY || undefined

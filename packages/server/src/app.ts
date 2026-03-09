@@ -7,7 +7,7 @@
 
 import express from "express"
 import cors from "cors"
-import { loadConfig } from "./config.js"
+import { loadConfig, type ServerConfig } from "./config.js"
 import { createAuthMiddleware } from "./middleware/auth.js"
 import { healthRouter } from "./routes/health.js"
 import { sourcesRouter } from "./routes/sources.js"
@@ -19,19 +19,19 @@ import { createDebriefRouter } from "./routes/debrief.js"
  * Reads configuration from environment variables via `loadConfig()`,
  * then wires up CORS, JSON parsing, auth, API routes, and a 404 fallback.
  */
-export function createApp(): express.Express {
-  const config = loadConfig()
+export function createApp(config?: ServerConfig): express.Express {
+  const resolvedConfig = config ?? loadConfig()
   const app = express()
 
   // Global middleware
   app.use(cors())
   app.use(express.json())
-  app.use(createAuthMiddleware(config.apiKeys))
+  app.use(createAuthMiddleware(resolvedConfig.apiKeys))
 
   // API routes
   app.use("/api", healthRouter)
   app.use("/api", sourcesRouter)
-  app.use("/api", createDebriefRouter(config))
+  app.use("/api", createDebriefRouter(resolvedConfig))
 
   // 404 fallback
   app.use((_req: express.Request, res: express.Response) => {
