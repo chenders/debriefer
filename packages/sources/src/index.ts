@@ -40,18 +40,11 @@ export {
   extractUrlsFromDuckDuckGoHtml,
   cleanDuckDuckGoUrl,
 } from "./shared/duckduckgo-search.js"
-export type {
-  DuckDuckGoSearchOptions,
-  SearchResult,
-} from "./shared/duckduckgo-search.js"
+export type { DuckDuckGoSearchOptions, SearchResult } from "./shared/duckduckgo-search.js"
 
 // Web search base (for building custom search sources)
 export { WebSearchBase } from "./web-search/base.js"
-export type {
-  WebSearchOptions,
-  LinkSelectionOptions,
-  WebSearchResult,
-} from "./web-search/base.js"
+export type { WebSearchOptions, LinkSelectionOptions, WebSearchResult } from "./web-search/base.js"
 
 // Web search sources
 export { GoogleSearchSource, googleSearch } from "./web-search/google.js"

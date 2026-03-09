@@ -94,10 +94,7 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
    * @param signal - Abort signal for cancellation
    * @returns Array of search results (URL, title, snippet)
    */
-  protected abstract performSearch(
-    query: string,
-    signal: AbortSignal
-  ): Promise<WebSearchResult[]>
+  protected abstract performSearch(query: string, signal: AbortSignal): Promise<WebSearchResult[]>
 
   /**
    * Full search pipeline: search → score → fetch → extract → combine.
@@ -119,9 +116,7 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
     }
 
     // 2. Filter blocked domains
-    const filtered = searchResults.filter(
-      (r) => !this.isDomainBlocked(r.url)
-    )
+    const filtered = searchResults.filter((r) => !this.isDomainBlocked(r.url))
 
     if (filtered.length === 0) {
       return null
@@ -247,9 +242,7 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
       return false
     }
 
-    return this.blockedDomains.some((domain) =>
-      this.hostnameMatchesDomain(hostname, domain)
-    )
+    return this.blockedDomains.some((domain) => this.hostnameMatchesDomain(hostname, domain))
   }
 
   /**

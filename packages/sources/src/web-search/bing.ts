@@ -4,7 +4,7 @@ import { WebSearchBase, type WebSearchOptions, type WebSearchResult } from "./ba
 const BING_SEARCH_URL = "https://api.bing.microsoft.com/v7.0/search"
 
 export interface BingSearchOptions extends WebSearchOptions {
-  apiKey?: string    // default: process.env.BING_SEARCH_API_KEY
+  apiKey?: string // default: process.env.BING_SEARCH_API_KEY
   maxResults?: number // default: 20
 }
 

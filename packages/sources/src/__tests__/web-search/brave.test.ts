@@ -53,9 +53,7 @@ function mockFetchOk(body: object): void {
 }
 
 function mockFetchError(status: number, statusText: string): void {
-  vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-    new Response(null, { status, statusText })
-  )
+  vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(null, { status, statusText }))
 }
 
 beforeEach(() => {
@@ -123,9 +121,11 @@ describe("BraveSearchSource", () => {
     it("sends correct URL, query params, X-Subscription-Token header, and Accept header", async () => {
       const source = new BraveSearchSource({ apiKey: "my-api-key", maxResults: 10 })
 
-      mockFetchOk(makeBraveResponse({
-        web: [{ title: "Result", url: "https://example.com", description: "A result" }],
-      }))
+      mockFetchOk(
+        makeBraveResponse({
+          web: [{ title: "Result", url: "https://example.com", description: "A result" }],
+        })
+      )
 
       const signal = AbortSignal.timeout(5000)
       await source.lookup({ id: 1, name: "test query" }, signal)
@@ -165,16 +165,30 @@ describe("BraveSearchSource", () => {
 
       const duplicateUrl = "https://example.com/shared"
 
-      mockFetchOk(makeBraveResponse({
-        web: [
-          { title: "Web Result 1", url: "https://example.com/web1", description: "Web snippet 1" },
-          { title: "Web Duplicate", url: duplicateUrl, description: "Web version of duplicate" },
-        ],
-        news: [
-          { title: "News Duplicate", url: duplicateUrl, description: "News version of duplicate" },
-          { title: "News Result 1", url: "https://example.com/news1", description: "News snippet 1" },
-        ],
-      }))
+      mockFetchOk(
+        makeBraveResponse({
+          web: [
+            {
+              title: "Web Result 1",
+              url: "https://example.com/web1",
+              description: "Web snippet 1",
+            },
+            { title: "Web Duplicate", url: duplicateUrl, description: "Web version of duplicate" },
+          ],
+          news: [
+            {
+              title: "News Duplicate",
+              url: duplicateUrl,
+              description: "News version of duplicate",
+            },
+            {
+              title: "News Result 1",
+              url: "https://example.com/news1",
+              description: "News snippet 1",
+            },
+          ],
+        })
+      )
 
       const results = await source.testPerformSearch("test", AbortSignal.timeout(5000))
 
@@ -208,11 +222,11 @@ describe("BraveSearchSource", () => {
 
       const source = new TestBraveSource({ apiKey: "test-key" })
 
-      mockFetchOk(makeBraveResponse({
-        web: [
-          { title: "Only Web", url: "https://example.com/web", description: "Web only" },
-        ],
-      }))
+      mockFetchOk(
+        makeBraveResponse({
+          web: [{ title: "Only Web", url: "https://example.com/web", description: "Web only" }],
+        })
+      )
 
       const results = await source.testPerformSearch("test", AbortSignal.timeout(5000))
 
@@ -229,11 +243,11 @@ describe("BraveSearchSource", () => {
 
       const source = new TestBraveSource({ apiKey: "test-key" })
 
-      mockFetchOk(makeBraveResponse({
-        news: [
-          { title: "Only News", url: "https://example.com/news", description: "News only" },
-        ],
-      }))
+      mockFetchOk(
+        makeBraveResponse({
+          news: [{ title: "Only News", url: "https://example.com/news", description: "News only" }],
+        })
+      )
 
       const results = await source.testPerformSearch("test", AbortSignal.timeout(5000))
 
@@ -270,10 +284,7 @@ describe("BraveSearchSource", () => {
       mockFetchError(403, "Forbidden")
 
       // BaseResearchSource.lookup() catches errors from fetchResult and returns null
-      const result = await source.lookup(
-        { id: 1, name: "test query" },
-        AbortSignal.timeout(5000)
-      )
+      const result = await source.lookup({ id: 1, name: "test query" }, AbortSignal.timeout(5000))
 
       expect(result).toBeNull()
     })
@@ -289,9 +300,9 @@ describe("BraveSearchSource", () => {
 
       mockFetchError(429, "Too Many Requests")
 
-      await expect(
-        source.testPerformSearch("test", AbortSignal.timeout(5000))
-      ).rejects.toThrow("Brave Search error: HTTP 429 Too Many Requests")
+      await expect(source.testPerformSearch("test", AbortSignal.timeout(5000))).rejects.toThrow(
+        "Brave Search error: HTTP 429 Too Many Requests"
+      )
     })
   })
 

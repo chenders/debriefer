@@ -53,9 +53,7 @@ function mockFetchOk(body: object): void {
 }
 
 function mockFetchError(status: number, statusText: string): void {
-  vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-    new Response(null, { status, statusText })
-  )
+  vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(null, { status, statusText }))
 }
 
 beforeEach(() => {
@@ -123,9 +121,11 @@ describe("BingSearchSource", () => {
     it("sends correct URL, query params, and Ocp-Apim-Subscription-Key header", async () => {
       const source = new BingSearchSource({ apiKey: "my-api-key", maxResults: 10 })
 
-      mockFetchOk(makeBingResponse({
-        webPages: [{ name: "Result", url: "https://example.com", snippet: "A result" }],
-      }))
+      mockFetchOk(
+        makeBingResponse({
+          webPages: [{ name: "Result", url: "https://example.com", snippet: "A result" }],
+        })
+      )
 
       const signal = AbortSignal.timeout(5000)
       // Access performSearch via lookup which calls fetchResult which calls performSearch
@@ -161,16 +161,26 @@ describe("BingSearchSource", () => {
 
       const duplicateUrl = "https://example.com/shared"
 
-      mockFetchOk(makeBingResponse({
-        webPages: [
-          { name: "Web Result 1", url: "https://example.com/web1", snippet: "Web snippet 1" },
-          { name: "Web Result Dup", url: duplicateUrl, snippet: "Web duplicate snippet" },
-        ],
-        news: [
-          { name: "News Result Dup", url: duplicateUrl, description: "News duplicate description" },
-          { name: "News Result 1", url: "https://example.com/news1", description: "News description 1" },
-        ],
-      }))
+      mockFetchOk(
+        makeBingResponse({
+          webPages: [
+            { name: "Web Result 1", url: "https://example.com/web1", snippet: "Web snippet 1" },
+            { name: "Web Result Dup", url: duplicateUrl, snippet: "Web duplicate snippet" },
+          ],
+          news: [
+            {
+              name: "News Result Dup",
+              url: duplicateUrl,
+              description: "News duplicate description",
+            },
+            {
+              name: "News Result 1",
+              url: "https://example.com/news1",
+              description: "News description 1",
+            },
+          ],
+        })
+      )
 
       // We test performSearch indirectly through lookup. Since fetchPage and
       // extractArticleContent are mocked to return nothing, the pipeline will
@@ -197,16 +207,22 @@ describe("BingSearchSource", () => {
 
       const duplicateUrl = "https://example.com/shared"
 
-      mockFetchOk(makeBingResponse({
-        webPages: [
-          { name: "Web Result 1", url: "https://example.com/web1", snippet: "Web snippet 1" },
-          { name: "Web Duplicate", url: duplicateUrl, snippet: "Web version of duplicate" },
-        ],
-        news: [
-          { name: "News Duplicate", url: duplicateUrl, description: "News version of duplicate" },
-          { name: "News Result 1", url: "https://example.com/news1", description: "News snippet" },
-        ],
-      }))
+      mockFetchOk(
+        makeBingResponse({
+          webPages: [
+            { name: "Web Result 1", url: "https://example.com/web1", snippet: "Web snippet 1" },
+            { name: "Web Duplicate", url: duplicateUrl, snippet: "Web version of duplicate" },
+          ],
+          news: [
+            { name: "News Duplicate", url: duplicateUrl, description: "News version of duplicate" },
+            {
+              name: "News Result 1",
+              url: "https://example.com/news1",
+              description: "News snippet",
+            },
+          ],
+        })
+      )
 
       const results = await source.testPerformSearch("test", AbortSignal.timeout(5000))
 
@@ -240,11 +256,11 @@ describe("BingSearchSource", () => {
 
       const source = new TestBingSource({ apiKey: "test-key" })
 
-      mockFetchOk(makeBingResponse({
-        webPages: [
-          { name: "Only Web", url: "https://example.com/web", snippet: "Web only" },
-        ],
-      }))
+      mockFetchOk(
+        makeBingResponse({
+          webPages: [{ name: "Only Web", url: "https://example.com/web", snippet: "Web only" }],
+        })
+      )
 
       const results = await source.testPerformSearch("test", AbortSignal.timeout(5000))
 
@@ -261,11 +277,11 @@ describe("BingSearchSource", () => {
 
       const source = new TestBingSource({ apiKey: "test-key" })
 
-      mockFetchOk(makeBingResponse({
-        news: [
-          { name: "Only News", url: "https://example.com/news", description: "News only" },
-        ],
-      }))
+      mockFetchOk(
+        makeBingResponse({
+          news: [{ name: "Only News", url: "https://example.com/news", description: "News only" }],
+        })
+      )
 
       const results = await source.testPerformSearch("test", AbortSignal.timeout(5000))
 
@@ -302,10 +318,7 @@ describe("BingSearchSource", () => {
       mockFetchError(403, "Forbidden")
 
       // BaseResearchSource.lookup() catches errors from fetchResult and returns null
-      const result = await source.lookup(
-        { id: 1, name: "test query" },
-        AbortSignal.timeout(5000)
-      )
+      const result = await source.lookup({ id: 1, name: "test query" }, AbortSignal.timeout(5000))
 
       expect(result).toBeNull()
     })
@@ -321,9 +334,9 @@ describe("BingSearchSource", () => {
 
       mockFetchError(429, "Too Many Requests")
 
-      await expect(
-        source.testPerformSearch("test", AbortSignal.timeout(5000))
-      ).rejects.toThrow("Bing Search error: HTTP 429 Too Many Requests")
+      await expect(source.testPerformSearch("test", AbortSignal.timeout(5000))).rejects.toThrow(
+        "Bing Search error: HTTP 429 Too Many Requests"
+      )
     })
   })
 

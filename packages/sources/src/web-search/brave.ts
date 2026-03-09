@@ -4,7 +4,7 @@ import { WebSearchBase, type WebSearchOptions, type WebSearchResult } from "./ba
 const BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search"
 
 export interface BraveSearchOptions extends WebSearchOptions {
-  apiKey?: string    // default: process.env.BRAVE_SEARCH_API_KEY
+  apiKey?: string // default: process.env.BRAVE_SEARCH_API_KEY
   maxResults?: number // default: 20
 }
 

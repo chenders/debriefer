@@ -141,18 +141,13 @@ describe("GoogleSearchSource", () => {
       // Since fetchPage and extractArticleContent are mocked to return nothing,
       // the result will be null — but we can still verify the fetch call.
       const signal = AbortSignal.timeout(5000)
-      await source.lookup(
-        { id: 1, name: "John Wayne" },
-        signal
-      )
+      await source.lookup({ id: 1, name: "John Wayne" }, signal)
 
       const fetchMock = vi.mocked(globalThis.fetch)
       expect(fetchMock).toHaveBeenCalledTimes(1)
 
       const callUrl = new URL(fetchMock.mock.calls[0][0] as string)
-      expect(callUrl.origin + callUrl.pathname).toBe(
-        "https://www.googleapis.com/customsearch/v1"
-      )
+      expect(callUrl.origin + callUrl.pathname).toBe("https://www.googleapis.com/customsearch/v1")
       expect(callUrl.searchParams.get("key")).toBe("test-key")
       expect(callUrl.searchParams.get("cx")).toBe("test-cx")
       expect(callUrl.searchParams.get("q")).toBe("John Wayne")
@@ -169,10 +164,7 @@ describe("GoogleSearchSource", () => {
 
       const source = new GoogleSearchSource(VALID_OPTIONS)
 
-      await source.lookup(
-        { id: 1, name: "Jane Doe" },
-        AbortSignal.timeout(5000)
-      )
+      await source.lookup({ id: 1, name: "Jane Doe" }, AbortSignal.timeout(5000))
 
       const fetchMock = vi.mocked(globalThis.fetch)
       const callUrl = new URL(fetchMock.mock.calls[0][0] as string)
@@ -190,10 +182,7 @@ describe("GoogleSearchSource", () => {
 
       const source = new GoogleSearchSource(VALID_OPTIONS)
 
-      const result = await source.lookup(
-        { id: 1, name: "John Wayne" },
-        AbortSignal.timeout(5000)
-      )
+      const result = await source.lookup({ id: 1, name: "John Wayne" }, AbortSignal.timeout(5000))
 
       // BaseResearchSource.lookup() catches errors and returns null
       expect(result).toBeNull()
@@ -240,10 +229,7 @@ describe("GoogleSearchSource", () => {
     it("returns null without calling fetch when credentials are missing", async () => {
       const source = new GoogleSearchSource()
 
-      const result = await source.lookup(
-        { id: 1, name: "John Wayne" },
-        AbortSignal.timeout(5000)
-      )
+      const result = await source.lookup({ id: 1, name: "John Wayne" }, AbortSignal.timeout(5000))
 
       expect(result).toBeNull()
       expect(globalThis.fetch).not.toHaveBeenCalled()

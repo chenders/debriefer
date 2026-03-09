@@ -219,9 +219,7 @@ describe("WebSearchBase", () => {
   describe("all pages below minContentLength", () => {
     it("returns null when all extracted content is too short", async () => {
       const source = new TestSearchSource({ minContentLength: 200 })
-      source.searchResults = [
-        makeSearchResult({ url: "https://example.com/short" }),
-      ]
+      source.searchResults = [makeSearchResult({ url: "https://example.com/short" })]
 
       setupPageExtraction([
         {
@@ -492,9 +490,7 @@ describe("WebSearchBase", () => {
   describe("confidence delegation", () => {
     it("returns confidence of -1 to delegate to base class keyword scoring", async () => {
       const source = new TestSearchSource()
-      source.searchResults = [
-        makeSearchResult({ url: "https://example.com/page" }),
-      ]
+      source.searchResults = [makeSearchResult({ url: "https://example.com/page" })]
 
       setupPageExtraction([
         {

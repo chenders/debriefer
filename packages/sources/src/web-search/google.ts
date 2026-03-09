@@ -4,8 +4,8 @@ import { WebSearchBase, type WebSearchOptions, type WebSearchResult } from "./ba
 const GOOGLE_CSE_URL = "https://www.googleapis.com/customsearch/v1"
 
 export interface GoogleSearchOptions extends WebSearchOptions {
-  apiKey?: string    // default: process.env.GOOGLE_SEARCH_API_KEY
-  cx?: string        // default: process.env.GOOGLE_SEARCH_CX
+  apiKey?: string // default: process.env.GOOGLE_SEARCH_API_KEY
+  cx?: string // default: process.env.GOOGLE_SEARCH_CX
   maxResults?: number // default: 10
 }
 

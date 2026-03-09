@@ -180,7 +180,8 @@ describe("fetchPage", () => {
     })
 
     it("detects 'access denied' in body and falls back", async () => {
-      const blockedBody = "<html><body><h1>Access Denied</h1><p>You do not have permission.</p></body></html>"
+      const blockedBody =
+        "<html><body><h1>Access Denied</h1><p>You do not have permission.</p></body></html>"
 
       mockFetch
         .mockResolvedValueOnce(makeOkResponse(blockedBody))
@@ -193,7 +194,7 @@ describe("fetchPage", () => {
 
     it("detects cloudflare challenge and falls back", async () => {
       const cfBody =
-        '<html><head><title>Just a moment...</title></head><body>DDoS protection by Cloudflare</body></html>'
+        "<html><head><title>Just a moment...</title></head><body>DDoS protection by Cloudflare</body></html>"
 
       mockFetch
         .mockResolvedValueOnce(makeOkResponse(cfBody))

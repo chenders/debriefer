@@ -132,10 +132,7 @@ export function cleanDuckDuckGoUrl(url: string): string {
  * @param domainFilter - Optional domain to filter results by
  * @returns Array of extracted search results
  */
-export function extractUrlsFromDuckDuckGoHtml(
-  html: string,
-  domainFilter?: string
-): SearchResult[] {
+export function extractUrlsFromDuckDuckGoHtml(html: string, domainFilter?: string): SearchResult[] {
   // Extract result__url hrefs
   const urlPattern = /class="result__url"\s+href="([^"]+)"/g
   const resultUrls: string[] = []
@@ -232,9 +229,7 @@ function buildSignal(callerSignal?: AbortSignal, timeoutMs?: number): AbortSigna
  * @param options - Search options including query, domain filter, and limits
  * @returns Array of search results (empty on failure)
  */
-export async function searchDuckDuckGo(
-  options: DuckDuckGoSearchOptions
-): Promise<SearchResult[]> {
+export async function searchDuckDuckGo(options: DuckDuckGoSearchOptions): Promise<SearchResult[]> {
   const {
     query,
     domainFilter,

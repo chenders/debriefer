@@ -2,9 +2,7 @@ import { ReliabilityTier } from "debriefer"
 import { WebSearchBase, type WebSearchOptions, type WebSearchResult } from "./base.js"
 import { searchDuckDuckGo } from "../shared/duckduckgo-search.js"
 
-export interface DuckDuckGoSearchOptions extends WebSearchOptions {
-  // No additional options — no API key needed
-}
+export type DuckDuckGoSearchOptions = WebSearchOptions
 
 export class DuckDuckGoSearchSource extends WebSearchBase {
   readonly name = "DuckDuckGo"

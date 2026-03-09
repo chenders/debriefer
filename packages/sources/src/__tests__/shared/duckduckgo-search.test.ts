@@ -64,7 +64,8 @@ describe("isDuckDuckGoCaptcha", () => {
   })
 
   it("detects 'bots use DuckDuckGo too' as CAPTCHA", () => {
-    const html = "<html><body><p>It seems like bots use DuckDuckGo too. Please try again.</p></body></html>"
+    const html =
+      "<html><body><p>It seems like bots use DuckDuckGo too. Please try again.</p></body></html>"
     expect(isDuckDuckGoCaptcha(html)).toBe(true)
   })
 
