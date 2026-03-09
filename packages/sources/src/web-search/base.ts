@@ -267,9 +267,9 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
       hostname === "[::1]" ||
       hostname.startsWith("10.") ||
       hostname.startsWith("192.168.") ||
-      hostname.startsWith("172.") ||
       hostname === "0.0.0.0" ||
-      hostname.endsWith(".local")
+      hostname.endsWith(".local") ||
+      this.isPrivate172(hostname)
     ) {
       return true
     }
@@ -289,5 +289,12 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
   private hostnameMatchesDomain(hostname: string, domain: string): boolean {
     const d = domain.toLowerCase()
     return hostname === d || hostname.endsWith("." + d)
+  }
+
+  /** Check if hostname is in the 172.16.0.0–172.31.255.255 private range (RFC 1918). */
+  private isPrivate172(hostname: string): boolean {
+    if (!hostname.startsWith("172.")) return false
+    const secondOctet = parseInt(hostname.split(".")[1], 10)
+    return secondOctet >= 16 && secondOctet <= 31
   }
 }
