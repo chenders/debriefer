@@ -150,13 +150,6 @@ describe("SiteSearchSource", () => {
       expect(source.isFree).toBe(true)
       expect(source.estimatedCostPerQuery).toBe(0)
     })
-
-    it("uses custom rateLimitMs from config", () => {
-      const source = new SiteSearchSource(makeConfig({ rateLimitMs: 2000 }))
-      // Access the protected options through lookup behavior (rate limit is internal)
-      // We verify it's set by checking the source was constructed without error
-      expect(source.name).toBe("AP News")
-    })
   })
 
   // ==========================================================================

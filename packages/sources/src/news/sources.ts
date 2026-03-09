@@ -189,7 +189,7 @@ export function pbs(options?: BaseSourceOptions): SiteSearchSource {
   )
 }
 
-/** Encyclopaedia Britannica — general-purpose reference encyclopaedia. */
+/** Britannica — general-purpose reference encyclopaedia. */
 export function britannica(options?: BaseSourceOptions): SiteSearchSource {
   return new SiteSearchSource(
     {

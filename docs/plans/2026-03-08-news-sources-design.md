@@ -6,7 +6,7 @@
 
 ## Overview
 
-Add 21 news and reference sources. 20 follow an identical pattern (DDG `site:` search → fetch → extract) and are handled by a single configurable `SiteSearchSource` class. 2 use proprietary APIs (Guardian, NYT) and get their own classes.
+Add 22 news and reference sources. 20 follow an identical pattern (DDG `site:` search → fetch → extract) and are handled by a single configurable `SiteSearchSource` class. 2 use proprietary APIs (Guardian, NYT) and get their own classes.
 
 **Files to create:** 4 source files + 3 test files
 **Estimated tests:** ~31
@@ -17,14 +17,14 @@ Add 21 news and reference sources. 20 follow an identical pattern (DDG `site:` s
 ```
 news/
   site-search-source.ts    — SiteSearchSource class + pickBestUrl helper
-  sources.ts               — 19 factory functions + config registry
+  sources.ts               — 20 factory functions
   guardian.ts              — GuardianSource (direct API)
   nytimes.ts               — NYTimesSource (direct API)
 ```
 
 ## SiteSearchSource — Configurable search-based source
 
-Single class handling 19 sources via config:
+Single class handling 20 sources via config:
 
 ```typescript
 export interface SiteSearchConfig {
@@ -51,7 +51,7 @@ export interface SiteSearchConfig {
 6. Sanitize via `sanitizeSourceText()`
 7. Return with `confidence: -1` (delegate to base keyword scoring)
 
-All 19 sources are free (no API keys), use DDG search, and differ only in config.
+All 20 sources are free (no API keys), use DDG search, and differ only in config.
 
 ## API-Based Sources
 
