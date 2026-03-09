@@ -75,14 +75,7 @@ CI runs Format Check (`prettier --check .`), Lint, Build, Test, Type Check, and 
 
 ### Re-requesting Copilot Review
 
-After pushing fixes for Copilot review comments, re-request a review:
-
-```bash
-PR_NODE_ID=$(gh api repos/chenders/debriefer/pulls/{PR_NUMBER} --jq '.node_id')
-gh api graphql -f query="mutation { requestReviews(input: {pullRequestId: \"$PR_NODE_ID\", userIds: [\"U_kgDOCng4CA\"]}) { pullRequest { id } } }"
-```
-
-This triggers the Copilot pull request reviewer via the GraphQL `requestReviews` mutation.
+Copilot re-review cannot be triggered via CLI/API — it requires clicking the re-request button in the GitHub PR UI. After pushing fixes, tell the user to click the button and wait for the review before proceeding.
 
 **Common CI failures to avoid:**
 
