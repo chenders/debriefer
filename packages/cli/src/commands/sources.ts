@@ -22,8 +22,8 @@ function createSourcesWithCategory(
   const results: { source: BaseResearchSource<ResearchSubject>; category: SourceCategory }[] = []
 
   for (const cat of cats) {
+    if (!Object.hasOwn(SOURCE_CATEGORIES, cat)) continue
     const factories = SOURCE_CATEGORIES[cat as SourceCategory]
-    if (!factories) continue
     for (const factory of factories) {
       results.push({ source: factory(), category: cat as SourceCategory })
     }
