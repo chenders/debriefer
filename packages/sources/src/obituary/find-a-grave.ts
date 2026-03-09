@@ -26,8 +26,6 @@ import { sanitizeSourceText } from "../shared/sanitize-text.js"
 const SEARCH_BASE_URL = "https://www.findagrave.com/memorial/search"
 const MEMORIAL_URL_PATTERN = /\/memorial\/(\d+)\//g
 const MIN_BIO_LENGTH = 100
-const DEFAULT_USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 const BIO_REGEX = /<div[^>]*id="bio"[^>]*>([\s\S]*?)<\/div>/i
 
 // ============================================================================
@@ -76,20 +74,17 @@ export class FindAGraveSource extends BaseResearchSource<ResearchSubject> {
     // Step 2: Search for memorials
     const searchUrl = `${SEARCH_BASE_URL}?firstname=${encodeURIComponent(firstName)}&lastname=${encodeURIComponent(lastName)}&orderby=r`
 
-    const searchResponse = await fetch(searchUrl, {
-      headers: {
-        "User-Agent": DEFAULT_USER_AGENT,
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-      },
+    const searchPage = await fetchPage({
+      url: searchUrl,
       signal,
+      archiveFallback: false,
     })
 
-    if (!searchResponse.ok) {
+    if (searchPage.fetchMethod === "none" || !searchPage.content) {
       return null
     }
 
-    const searchHtml = await searchResponse.text()
+    const searchHtml = searchPage.content
 
     // Step 3: Extract memorial URLs
     const memorialUrls: string[] = []

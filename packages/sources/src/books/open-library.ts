@@ -26,8 +26,7 @@ const OPEN_LIBRARY_SEARCH_URL = "https://openlibrary.org/search.json"
 // Types
 // ============================================================================
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- intentionally empty; exists for future extension
-export interface OpenLibraryOptions extends BaseSourceOptions {}
+export type OpenLibraryOptions = BaseSourceOptions
 
 /** Shape of a single document from the Open Library Search API. */
 interface OpenLibraryDoc {

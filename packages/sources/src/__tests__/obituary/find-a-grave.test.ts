@@ -1,12 +1,11 @@
 /**
  * Tests for the Find a Grave obituary source.
  *
- * Mocks global fetch (for search requests) and shared utilities
- * (fetchPage, extractArticleContent, sanitizeSourceText) so the tests
- * exercise only the FindAGraveSource pipeline logic.
+ * Mocks shared utilities (fetchPage, extractArticleContent, sanitizeSourceText)
+ * so the tests exercise only the FindAGraveSource pipeline logic.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import { ReliabilityTier } from "debriefer"
 
 // ============================================================================
@@ -52,15 +51,16 @@ function makeSearchHtml(memorialPaths: string[]): string {
   return `<html><body><div class="search-results">${links}</div></body></html>`
 }
 
-/** Mock a successful global fetch response for search. */
-function mockSearchResponse(html: string, ok = true, status = 200): void {
-  vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-    new Response(html, {
-      status,
-      statusText: ok ? "OK" : "Error",
-      headers: { "Content-Type": "text/html" },
-    })
-  )
+/**
+ * Mock the search step via fetchPage. The search is now the first fetchPage call.
+ * Returns a FetchPageResult-shaped object.
+ */
+function mockSearchFetchPage(html: string, fetchMethod: "direct" | "none" = "direct"): void {
+  mockFetchPage.mockResolvedValueOnce({
+    content: html,
+    url: "https://www.findagrave.com/memorial/search",
+    fetchMethod,
+  })
 }
 
 // ============================================================================
@@ -71,10 +71,6 @@ beforeEach(() => {
   mockFetchPage.mockReset()
   mockExtractArticle.mockReset()
   mockSanitize.mockReset()
-})
-
-afterEach(() => {
-  vi.restoreAllMocks()
 })
 
 // ============================================================================
@@ -102,21 +98,16 @@ describe("FindAGraveSource", () => {
 
   describe("search URL construction", () => {
     it("builds search URL with first and last name from subject", async () => {
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-        new Response("<html><body></body></html>", {
-          status: 200,
-          headers: { "Content-Type": "text/html" },
-        })
-      )
+      mockSearchFetchPage("<html><body></body></html>")
 
       const source = new FindAGraveSource()
       await source.lookup(subject, signal)
 
-      expect(fetchSpy).toHaveBeenCalledTimes(1)
-      const calledUrl = fetchSpy.mock.calls[0][0] as string
-      expect(calledUrl).toContain("firstname=John")
-      expect(calledUrl).toContain("lastname=Wayne")
-      expect(calledUrl).toContain("orderby=r")
+      expect(mockFetchPage).toHaveBeenCalledTimes(1)
+      const calledOpts = mockFetchPage.mock.calls[0][0] as { url: string }
+      expect(calledOpts.url).toContain("firstname=John")
+      expect(calledOpts.url).toContain("lastname=Wayne")
+      expect(calledOpts.url).toContain("orderby=r")
     })
   })
 
@@ -126,11 +117,11 @@ describe("FindAGraveSource", () => {
         "/memorial/12345/john-wayne",
         "/memorial/67890/john-wayne-gacy",
       ])
-      mockSearchResponse(searchHtml)
+      mockSearchFetchPage(searchHtml)
 
       // The name-matching step will filter for "john-wayne" in URL
       // Both URLs contain "john-wayne" but first one is an exact match
-      mockFetchPage.mockResolvedValue({
+      mockFetchPage.mockResolvedValueOnce({
         content: '<html><body><div id="bio">Bio content here</div></body></html>',
         url: "https://www.findagrave.com/memorial/12345/john-wayne",
         fetchMethod: "direct",
@@ -148,8 +139,9 @@ describe("FindAGraveSource", () => {
       const result = await source.lookup(subject, signal)
 
       expect(result).not.toBeNull()
-      // fetchPage should have been called with the first matching memorial URL
-      expect(mockFetchPage).toHaveBeenCalledWith(
+      // Second fetchPage call should be for the memorial page
+      expect(mockFetchPage).toHaveBeenCalledTimes(2)
+      expect(mockFetchPage.mock.calls[1][0]).toEqual(
         expect.objectContaining({
           url: "https://www.findagrave.com/memorial/12345/john-wayne",
         })
@@ -163,9 +155,9 @@ describe("FindAGraveSource", () => {
         "/memorial/11111/jane-smith",
         "/memorial/22222/john-wayne",
       ])
-      mockSearchResponse(searchHtml)
+      mockSearchFetchPage(searchHtml)
 
-      mockFetchPage.mockResolvedValue({
+      mockFetchPage.mockResolvedValueOnce({
         content: "<html><body>content</body></html>",
         url: "https://www.findagrave.com/memorial/22222/john-wayne",
         fetchMethod: "direct",
@@ -184,7 +176,7 @@ describe("FindAGraveSource", () => {
 
       expect(result).not.toBeNull()
       // Should have fetched the john-wayne URL, not jane-smith
-      expect(mockFetchPage).toHaveBeenCalledWith(
+      expect(mockFetchPage.mock.calls[1][0]).toEqual(
         expect.objectContaining({
           url: "https://www.findagrave.com/memorial/22222/john-wayne",
         })
@@ -195,29 +187,29 @@ describe("FindAGraveSource", () => {
   describe("null returns", () => {
     it("returns null when no matching memorials found (name mismatch)", async () => {
       const searchHtml = makeSearchHtml(["/memorial/11111/jane-smith", "/memorial/22222/bob-jones"])
-      mockSearchResponse(searchHtml)
+      mockSearchFetchPage(searchHtml)
 
       const source = new FindAGraveSource()
       const result = await source.lookup(subject, signal)
 
       expect(result).toBeNull()
-      // fetchPage should never have been called since no URLs matched the name
-      expect(mockFetchPage).not.toHaveBeenCalled()
+      // Only the search fetchPage call should have been made
+      expect(mockFetchPage).toHaveBeenCalledTimes(1)
     })
 
     it("returns null when search returns no results", async () => {
       const emptyHtml = '<html><body><div class="search-results"></div></body></html>'
-      mockSearchResponse(emptyHtml)
+      mockSearchFetchPage(emptyHtml)
 
       const source = new FindAGraveSource()
       const result = await source.lookup(subject, signal)
 
       expect(result).toBeNull()
-      expect(mockFetchPage).not.toHaveBeenCalled()
+      expect(mockFetchPage).toHaveBeenCalledTimes(1)
     })
 
-    it("returns null when search HTTP request fails", async () => {
-      mockSearchResponse("", false, 500)
+    it("returns null when search fetch fails", async () => {
+      mockSearchFetchPage("", "none")
 
       const source = new FindAGraveSource()
       const result = await source.lookup(subject, signal)
@@ -229,11 +221,11 @@ describe("FindAGraveSource", () => {
   describe("bio extraction and sanitization", () => {
     it("extracts bio via Readability and sanitizes output", async () => {
       const searchHtml = makeSearchHtml(["/memorial/12345/john-wayne"])
-      mockSearchResponse(searchHtml)
+      mockSearchFetchPage(searchHtml)
 
       const bioContent =
         "John Wayne (born Marion Robert Morrison; May 26, 1907 – June 11, 1979) was an American actor who became a popular icon through his leading roles in films during Hollywood's Golden Age."
-      mockFetchPage.mockResolvedValue({
+      mockFetchPage.mockResolvedValueOnce({
         content: `<html><body><article>${bioContent}</article></body></html>`,
         url: "https://www.findagrave.com/memorial/12345/john-wayne",
         fetchMethod: "direct",
@@ -261,13 +253,13 @@ describe("FindAGraveSource", () => {
 
     it("falls back to regex when Readability extraction fails", async () => {
       const searchHtml = makeSearchHtml(["/memorial/12345/john-wayne"])
-      mockSearchResponse(searchHtml)
+      mockSearchFetchPage(searchHtml)
 
       const bioDivContent =
         "John Wayne was born Marion Robert Morrison on May 26, 1907. He was a famous American actor known for westerns and war films during Hollywood's Golden Age."
       const pageHtml = `<html><body><div id="bio">${bioDivContent}</div></body></html>`
 
-      mockFetchPage.mockResolvedValue({
+      mockFetchPage.mockResolvedValueOnce({
         content: pageHtml,
         url: "https://www.findagrave.com/memorial/12345/john-wayne",
         fetchMethod: "direct",
