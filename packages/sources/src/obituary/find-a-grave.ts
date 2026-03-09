@@ -117,9 +117,26 @@ export class FindAGraveSource extends BaseResearchSource<ResearchSubject> {
       return null
     }
 
-    // Step 4: Filter for URLs containing the subject's name (normalized)
+    // Step 4: Prefer exact slug matches for the subject's normalized name
     const normalizedName = subject.name.toLowerCase().replace(/\s+/g, "-")
-    const matchingUrls = memorialUrls.filter((url) => url.toLowerCase().includes(normalizedName))
+
+    // First: look for URLs where the slug segment exactly matches normalizedName.
+    const exactSlugMatches = memorialUrls.filter((url) => {
+      try {
+        const { pathname } = new URL(url)
+        const segments = pathname.split("/").filter((s) => s.length > 0)
+        // Find a Grave memorial path: /memorial/{id}/{slug}
+        const slug = segments[2]?.toLowerCase() ?? ""
+        return slug === normalizedName
+      } catch {
+        return false
+      }
+    })
+
+    const matchingUrls =
+      exactSlugMatches.length > 0
+        ? exactSlugMatches
+        : memorialUrls.filter((url) => url.toLowerCase().includes(normalizedName))
 
     if (matchingUrls.length === 0) {
       return null
