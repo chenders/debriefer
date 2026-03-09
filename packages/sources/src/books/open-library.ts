@@ -51,8 +51,8 @@ interface OpenLibrarySearchResponse {
  * Research source backed by the Open Library Search API.
  *
  * Searches for books about a subject, picks the first result with
- * a title and author, and returns a combined attribution string
- * as the finding text.
+ * a title, and returns a combined attribution string (including any
+ * available authors and publication year) as the finding text.
  */
 export class OpenLibrarySource extends BaseResearchSource<ResearchSubject> {
   readonly name = "Open Library"

@@ -55,7 +55,7 @@ interface IAApiResponse {
 export class InternetArchiveSource extends BaseResearchSource<ResearchSubject> {
   readonly name = "Internet Archive"
   readonly type = "internet-archive"
-  readonly reliabilityTier = ReliabilityTier.ARCHIVAL
+  readonly reliabilityTier = ReliabilityTier.ARCHIVE_MIRROR
   readonly domain = "archive.org"
   readonly isFree = true
   readonly estimatedCostPerQuery = 0

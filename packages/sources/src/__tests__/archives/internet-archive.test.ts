@@ -78,7 +78,7 @@ describe("InternetArchiveSource", () => {
 
       expect(source.name).toBe("Internet Archive")
       expect(source.type).toBe("internet-archive")
-      expect(source.reliabilityTier).toBe(ReliabilityTier.ARCHIVAL)
+      expect(source.reliabilityTier).toBe(ReliabilityTier.ARCHIVE_MIRROR)
       expect(source.domain).toBe("archive.org")
       expect(source.isFree).toBe(true)
       expect(source.estimatedCostPerQuery).toBe(0)
