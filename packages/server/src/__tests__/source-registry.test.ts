@@ -6,10 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest"
-import {
-  SOURCE_CATEGORIES,
-  createSourcesWithCategory,
-} from "../source-registry.js"
+import { SOURCE_CATEGORIES, createSourcesWithCategory } from "../source-registry.js"
 
 // ============================================================================
 // SOURCE_CATEGORIES structure
@@ -21,22 +18,13 @@ describe("SOURCE_CATEGORIES", () => {
   })
 
   it("contains expected category names", () => {
-    const expected = [
-      "structured",
-      "news",
-      "search",
-      "books",
-      "archives",
-      "obituary",
-    ]
+    const expected = ["structured", "news", "search", "books", "archives", "obituary"]
     expect(Object.keys(SOURCE_CATEGORIES).sort()).toEqual(expected.sort())
   })
 
   it("every category has at least one factory", () => {
     for (const [name, factories] of Object.entries(SOURCE_CATEGORIES)) {
-      expect(factories.length, `${name} should have factories`).toBeGreaterThan(
-        0,
-      )
+      expect(factories.length, `${name} should have factories`).toBeGreaterThan(0)
     }
   })
 })
@@ -50,7 +38,7 @@ describe("createSourcesWithCategory", () => {
     const results = createSourcesWithCategory()
     const totalFactories = Object.values(SOURCE_CATEGORIES).reduce(
       (sum, arr) => sum + arr.length,
-      0,
+      0
     )
     expect(results).toHaveLength(totalFactories)
   })
@@ -84,8 +72,7 @@ describe("createSourcesWithCategory", () => {
 
   it("combines multiple valid categories", () => {
     const results = createSourcesWithCategory(["structured", "books"])
-    const expected =
-      SOURCE_CATEGORIES.structured.length + SOURCE_CATEGORIES.books.length
+    const expected = SOURCE_CATEGORIES.structured.length + SOURCE_CATEGORIES.books.length
     expect(results).toHaveLength(expected)
   })
 })

@@ -55,13 +55,7 @@ import {
 export type SourceFactory = () => BaseResearchSource<ResearchSubject>
 
 /** Valid source category names. */
-export type SourceCategory =
-  | "structured"
-  | "news"
-  | "search"
-  | "books"
-  | "archives"
-  | "obituary"
+export type SourceCategory = "structured" | "news" | "search" | "books" | "archives" | "obituary"
 
 /**
  * Maps category names to arrays of source factory functions.
@@ -104,10 +98,9 @@ export const SOURCE_CATEGORIES: Record<SourceCategory, SourceFactory[]> = {
  * from all categories. Unknown category names are silently ignored.
  */
 export function createSourcesWithCategory(
-  categories?: string[],
+  categories?: string[]
 ): { source: BaseResearchSource<ResearchSubject>; category: string }[] {
-  const selected =
-    categories ?? (Object.keys(SOURCE_CATEGORIES) as SourceCategory[])
+  const selected = categories ?? (Object.keys(SOURCE_CATEGORIES) as SourceCategory[])
   return selected.flatMap((category) => {
     if (!Object.hasOwn(SOURCE_CATEGORIES, category)) return []
     const factories = SOURCE_CATEGORIES[category as SourceCategory]

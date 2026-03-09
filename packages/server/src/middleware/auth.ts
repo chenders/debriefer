@@ -19,7 +19,7 @@ import type { Request, Response, NextFunction } from "express"
  * Uses a Set for O(1) token lookup.
  */
 export function createAuthMiddleware(
-  apiKeys: string[],
+  apiKeys: string[]
 ): (req: Request, res: Response, next: NextFunction) => void {
   const validKeys = new Set(apiKeys)
 
