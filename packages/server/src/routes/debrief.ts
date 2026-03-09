@@ -11,7 +11,7 @@ import type { Request, Response } from "express"
 import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "debriefer"
 import type { ResearchSubject, ResearchConfig, SourcePhaseGroup, Synthesizer } from "debriefer"
 import { debriefRequestSchema } from "../schemas.js"
-import { createSourcesWithCategory } from "../source-registry.js"
+import { createSourcesWithCategory, VALID_CATEGORIES } from "../source-registry.js"
 import type { ServerConfig } from "../config.js"
 
 /**
@@ -30,14 +30,28 @@ export function createDebriefRouter(config: ServerConfig): Router {
       if (!parsed.success) {
         res.status(400).json({
           error: "Invalid request",
-          details: parsed.error.errors.map((e) => e.message),
+          details: parsed.error.issues.map((e) => e.message),
         })
         return
       }
 
       const { name, categories, budget, synthesis, model, prompt } = parsed.data
 
-      // 2. Create sources and filter to available
+      // 2. Validate categories
+      if (categories) {
+        const invalid = categories.filter(
+          (c) => !VALID_CATEGORIES.includes(c as (typeof VALID_CATEGORIES)[number])
+        )
+        if (invalid.length > 0) {
+          res.status(400).json({
+            error: `Unknown categories: ${invalid.join(", ")}`,
+            validCategories: [...VALID_CATEGORIES],
+          })
+          return
+        }
+      }
+
+      // 3. Create sources and filter to available
       const tagged = createSourcesWithCategory(categories)
       const available = tagged.filter(({ source }) => source.isAvailable())
 
@@ -48,7 +62,7 @@ export function createDebriefRouter(config: ServerConfig): Router {
         return
       }
 
-      // 3. Build synthesizer
+      // 4. Build synthesizer
       let synthesizer: Synthesizer<ResearchSubject, unknown>
 
       if (synthesis) {
@@ -83,7 +97,7 @@ export function createDebriefRouter(config: ServerConfig): Router {
         synthesizer = new NoopSynthesizer<ResearchSubject>()
       }
 
-      // 4. Split into free (phase 1) and paid (phase 2)
+      // 5. Split into free (phase 1) and paid (phase 2)
       const sources = available.map(({ source }) => source)
       const freeSources = sources.filter((s) => s.isFree)
       const paidSources = sources.filter((s) => !s.isFree)
@@ -96,7 +110,7 @@ export function createDebriefRouter(config: ServerConfig): Router {
         phases.push({ phase: 2, name: "Paid Sources", sources: paidSources })
       }
 
-      // 5. Build config
+      // 6. Build config
       const orchestratorConfig: ResearchConfig = {
         costLimits: {
           maxCostPerSubject: budget ?? config.defaultBudget,
@@ -106,16 +120,18 @@ export function createDebriefRouter(config: ServerConfig): Router {
         },
       }
 
-      // 6. Run orchestrator
+      // 7. Run orchestrator
       const orchestrator = new ResearchOrchestrator(phases, synthesizer, orchestratorConfig)
       const result = await orchestrator.debrief({ id: name, name })
 
       res.json(result)
     } catch (error) {
-      res.status(500).json({
-        error: "Research failed",
-        message: error instanceof Error ? error.message : String(error),
-      })
+      console.error("Error in /debrief route:", error)
+      const body: { error: string; message?: string } = { error: "Research failed" }
+      if (process.env.NODE_ENV !== "production") {
+        body.message = error instanceof Error ? error.message : String(error)
+      }
+      res.status(500).json(body)
     }
   })
 

@@ -31,12 +31,18 @@ export function createAuthMiddleware(
     }
 
     const header = req.headers.authorization
-    if (!header || !header.startsWith("Bearer ")) {
+    if (!header) {
       res.status(401).json({ error: "Unauthorized" })
       return
     }
 
-    const token = header.slice("Bearer ".length).trim()
+    const [scheme, ...rest] = header.split(/\s+/)
+    if (!scheme || scheme.toLowerCase() !== "bearer") {
+      res.status(401).json({ error: "Unauthorized" })
+      return
+    }
+
+    const token = rest.join(" ").trim()
     if (!token || !validKeys.has(token)) {
       res.status(401).json({ error: "Unauthorized" })
       return

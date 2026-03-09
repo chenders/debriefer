@@ -55,7 +55,16 @@ import {
 export type SourceFactory = () => BaseResearchSource<ResearchSubject>
 
 /** Valid source category names. */
-export type SourceCategory = "structured" | "news" | "search" | "books" | "archives" | "obituary"
+export const VALID_CATEGORIES = [
+  "structured",
+  "news",
+  "search",
+  "books",
+  "archives",
+  "obituary",
+] as const
+
+export type SourceCategory = (typeof VALID_CATEGORIES)[number]
 
 /**
  * Maps category names to arrays of source factory functions.

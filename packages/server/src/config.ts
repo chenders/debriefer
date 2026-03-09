@@ -50,9 +50,9 @@ function safeParseInt(value: string | undefined, fallback: number): number {
   return Number.isNaN(parsed) ? fallback : parsed
 }
 
-/** parseFloat with NaN fallback. */
+/** parseFloat with NaN fallback. Values ≤ 0 fall back to the default. */
 function safeParseFloat(value: string | undefined, fallback: number): number {
   if (value === undefined) return fallback
   const parsed = parseFloat(value)
-  return Number.isNaN(parsed) ? fallback : parsed
+  return Number.isNaN(parsed) || parsed <= 0 ? fallback : parsed
 }

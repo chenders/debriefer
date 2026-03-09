@@ -85,6 +85,16 @@ describe("POST /api/debrief — validation", () => {
     expect(res.status).toBe(400)
     expect(res.body.error).toBe("Invalid request")
   })
+
+  it("returns 400 for unknown categories with valid list", async () => {
+    const res = await request(createApp())
+      .post("/api/debrief")
+      .send({ name: "Test", categories: ["nonexistent"], synthesis: false })
+    expect(res.status).toBe(400)
+    expect(res.body.error).toContain("Unknown categories")
+    expect(res.body.validCategories).toBeDefined()
+    expect(Array.isArray(res.body.validCategories)).toBe(true)
+  })
 })
 
 // ============================================================================

@@ -61,6 +61,20 @@ describe("auth middleware — valid token", () => {
     middleware(mockReq("Bearer key-b"), mockRes(), next)
     expect(next).toHaveBeenCalledOnce()
   })
+
+  it("accepts lowercase 'bearer' scheme (case-insensitive)", () => {
+    const middleware = createAuthMiddleware(["secret-key"])
+    const next = vi.fn()
+    middleware(mockReq("bearer secret-key"), mockRes(), next)
+    expect(next).toHaveBeenCalledOnce()
+  })
+
+  it("accepts uppercase 'BEARER' scheme (case-insensitive)", () => {
+    const middleware = createAuthMiddleware(["secret-key"])
+    const next = vi.fn()
+    middleware(mockReq("BEARER secret-key"), mockRes(), next)
+    expect(next).toHaveBeenCalledOnce()
+  })
 })
 
 // ============================================================================

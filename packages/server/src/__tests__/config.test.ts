@@ -113,6 +113,18 @@ describe("DEFAULT_BUDGET env var", () => {
     const config = loadConfig()
     expect(config.defaultBudget).toBe(1.0)
   })
+
+  it("falls back to default on zero budget", () => {
+    vi.stubEnv("DEFAULT_BUDGET", "0")
+    const config = loadConfig()
+    expect(config.defaultBudget).toBe(1.0)
+  })
+
+  it("falls back to default on negative budget", () => {
+    vi.stubEnv("DEFAULT_BUDGET", "-5")
+    const config = loadConfig()
+    expect(config.defaultBudget).toBe(1.0)
+  })
 })
 
 // ============================================================================

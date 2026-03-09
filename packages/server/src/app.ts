@@ -41,7 +41,8 @@ export function createApp(config?: ServerConfig): express.Express {
   // Global error handler (4-arg signature tells Express this is error middleware)
   app.use(
     (err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-      res.status(500).json({ error: "Internal server error", message: err.message })
+      console.error(err)
+      res.status(500).json({ error: "Internal server error" })
     }
   )
 
