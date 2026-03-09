@@ -119,6 +119,35 @@ describe("POST /api/debrief — success", () => {
     await request(createApp()).post("/api/debrief").send({ name: "Test", synthesis: false })
     expect(NoopSynthesizer).toHaveBeenCalled()
   })
+
+  it("passes default budget and model to orchestrator config", async () => {
+    await request(createApp()).post("/api/debrief").send({ name: "Test", synthesis: false })
+    const constructorArgs = vi.mocked(ResearchOrchestrator).mock.calls[0]
+    const config = constructorArgs[2]!
+    expect(config.costLimits?.maxCostPerSubject).toBe(1.0)
+    expect(config.synthesis?.model).toBe("claude-sonnet-4-20250514")
+  })
+
+  it("uses request budget and model when provided", async () => {
+    await request(createApp())
+      .post("/api/debrief")
+      .send({ name: "Test", synthesis: false, budget: 5.0, model: "claude-opus-4-20250514" })
+    const constructorArgs = vi.mocked(ResearchOrchestrator).mock.calls[0]
+    const config = constructorArgs[2]!
+    expect(config.costLimits?.maxCostPerSubject).toBe(5.0)
+    expect(config.synthesis?.model).toBe("claude-opus-4-20250514")
+  })
+
+  it("constructs orchestrator with phase groups", async () => {
+    await request(createApp()).post("/api/debrief").send({ name: "Test", synthesis: false })
+    const constructorArgs = vi.mocked(ResearchOrchestrator).mock.calls[0]
+    const phases = constructorArgs[0]
+    expect(Array.isArray(phases)).toBe(true)
+    expect(phases.length).toBeGreaterThan(0)
+    expect(phases[0]).toHaveProperty("phase")
+    expect(phases[0]).toHaveProperty("name")
+    expect(phases[0]).toHaveProperty("sources")
+  })
 })
 
 // ============================================================================

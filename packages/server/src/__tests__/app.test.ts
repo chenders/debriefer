@@ -33,6 +33,17 @@ vi.mock("debriefer", async (importOriginal) => {
 })
 
 import { createApp } from "../app.js"
+import type { ServerConfig } from "../config.js"
+
+const testConfig: ServerConfig = {
+  port: 8090,
+  apiKeys: [],
+  authEnabled: false,
+  defaultBudget: 1.0,
+  defaultModel: "claude-sonnet-4-20250514",
+  anthropicApiKey: undefined,
+  corsOrigin: undefined,
+}
 
 // ============================================================================
 // Health endpoint
@@ -40,7 +51,7 @@ import { createApp } from "../app.js"
 
 describe("createApp — health", () => {
   it("GET /api/health returns 200", async () => {
-    const app = createApp()
+    const app = createApp(testConfig)
     const res = await request(app).get("/api/health")
     expect(res.status).toBe(200)
     expect(res.body.status).toBe("ok")
@@ -53,7 +64,7 @@ describe("createApp — health", () => {
 
 describe("createApp — sources", () => {
   it("GET /api/sources returns 200 with array", async () => {
-    const app = createApp()
+    const app = createApp(testConfig)
     const res = await request(app).get("/api/sources")
     expect(res.status).toBe(200)
     expect(Array.isArray(res.body)).toBe(true)
@@ -66,7 +77,7 @@ describe("createApp — sources", () => {
 
 describe("createApp — debrief", () => {
   it("POST /api/debrief returns 200 for valid request", async () => {
-    const app = createApp()
+    const app = createApp(testConfig)
     const res = await request(app).post("/api/debrief").send({ name: "Test", synthesis: false })
     expect(res.status).toBe(200)
     expect(res.body).toHaveProperty("subject")
@@ -79,14 +90,14 @@ describe("createApp — debrief", () => {
 
 describe("createApp — 404", () => {
   it("returns 404 with JSON error for unknown route", async () => {
-    const app = createApp()
+    const app = createApp(testConfig)
     const res = await request(app).get("/api/nonexistent")
     expect(res.status).toBe(404)
     expect(res.body).toEqual({ error: "Not found" })
   })
 
   it("returns 404 for routes outside /api", async () => {
-    const app = createApp()
+    const app = createApp(testConfig)
     const res = await request(app).get("/something")
     expect(res.status).toBe(404)
     expect(res.body).toEqual({ error: "Not found" })
