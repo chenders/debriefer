@@ -82,7 +82,7 @@ describe("GuardianSource", () => {
       expect(source.type).toBe("guardian")
       expect(source.reliabilityTier).toBe(ReliabilityTier.TIER_1_NEWS)
       expect(source.domain).toBe("content.guardianapis.com")
-      expect(source.isFree).toBe(false)
+      expect(source.isFree).toBe(true)
       expect(source.estimatedCostPerQuery).toBe(0)
     })
   })

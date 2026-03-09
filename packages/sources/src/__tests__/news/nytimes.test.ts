@@ -89,7 +89,7 @@ describe("NYTimesSource", () => {
       expect(source.type).toBe("nytimes")
       expect(source.reliabilityTier).toBe(ReliabilityTier.TIER_1_NEWS)
       expect(source.domain).toBe("api.nytimes.com")
-      expect(source.isFree).toBe(false)
+      expect(source.isFree).toBe(true)
       expect(source.estimatedCostPerQuery).toBe(0)
     })
   })

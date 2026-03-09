@@ -81,7 +81,7 @@ export class GuardianSource extends BaseResearchSource<ResearchSubject> {
   readonly type = "guardian"
   readonly reliabilityTier = ReliabilityTier.TIER_1_NEWS
   readonly domain = "content.guardianapis.com"
-  readonly isFree = false
+  readonly isFree = true
   readonly estimatedCostPerQuery = 0
 
   private apiKey: string | undefined

@@ -40,7 +40,7 @@ export class NYTimesSource extends BaseResearchSource<ResearchSubject> {
   readonly type = "nytimes"
   readonly reliabilityTier = ReliabilityTier.TIER_1_NEWS
   readonly domain = "api.nytimes.com"
-  readonly isFree = false
+  readonly isFree = true
   readonly estimatedCostPerQuery = 0
 
   private apiKey: string | undefined
