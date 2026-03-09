@@ -73,6 +73,16 @@ npx prettier --check .                # formatting (root-level, catches docs too
 
 CI runs Format Check (`prettier --check .`), Lint, Build, Test, Type Check, and Dependency Audit. All six must pass before merging.
 
+### Re-requesting Copilot Review
+
+After pushing fixes for Copilot review comments, re-request a review:
+
+```bash
+gh api repos/chenders/debriefer/pulls/{PR_NUMBER}/requested_reviewers -X POST -f 'reviewers[]=copilot-pull-request-reviewer[bot]'
+```
+
+Then poll for the new review to appear before proceeding.
+
 **Common CI failures to avoid:**
 
 - **Format Check**: Prettier runs at root level (`prettier --check .`) and checks ALL files including `docs/plans/*.md`, `CLAUDE.md`, etc. — not just `src/`. Always run `npx prettier --write .` before committing.

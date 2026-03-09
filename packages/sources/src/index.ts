@@ -55,3 +55,35 @@ export { BraveSearchSource, braveSearch } from "./web-search/brave.js"
 export type { BraveSearchOptions } from "./web-search/brave.js"
 export { DuckDuckGoSearchSource, duckduckgoSearch } from "./web-search/duckduckgo.js"
 export type { DuckDuckGoSourceOptions } from "./web-search/duckduckgo.js"
+
+// News sources — site-search based
+export { SiteSearchSource, pickBestUrl } from "./news/site-search-source.js"
+export type { SiteSearchConfig } from "./news/site-search-source.js"
+export {
+  apNews,
+  bbcNews,
+  reuters,
+  npr,
+  independent,
+  telegraph,
+  washingtonPost,
+  laTimes,
+  time,
+  newYorker,
+  pbs,
+  britannica,
+  rollingStone,
+  smithsonian,
+  nationalGeographic,
+  historyCom,
+  tcm,
+  allMusic,
+  people,
+  biographyCom,
+} from "./news/sources.js"
+
+// News sources — API based
+export { GuardianSource, guardian } from "./news/guardian.js"
+export type { GuardianOptions } from "./news/guardian.js"
+export { NYTimesSource, nytimes } from "./news/nytimes.js"
+export type { NYTimesOptions } from "./news/nytimes.js"
