@@ -16,7 +16,7 @@ export interface FetchPageOptions {
   url: string
   /** AbortSignal from the caller (combined with timeoutMs). */
   signal?: AbortSignal
-  /** Timeout in milliseconds for each fetch attempt. Default: 15000. */
+  /** Total timeout budget in milliseconds (shared across direct + archive attempts). Default: 15000. */
   timeoutMs?: number
   /** User-Agent header to send. Default: browser-like Chrome UA. */
   userAgent?: string
@@ -40,13 +40,13 @@ export interface FetchPageResult {
 const DEFAULT_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-/** Default timeout for each fetch attempt in milliseconds. */
+/** Default total timeout budget in milliseconds (shared across direct + archive attempts). */
 const DEFAULT_TIMEOUT_MS = 15000
 
 /** HTTP status codes that indicate a hard block (should trigger archive fallback). */
 const HARD_BLOCK_STATUSES = new Set([401, 403, 429, 451])
 
-/** Maximum body size (in bytes) for soft block detection. Pages larger than this are assumed to be real content. */
+/** Maximum body length (in characters) for soft block detection. Pages larger than this are assumed to be real content. */
 const SOFT_BLOCK_MAX_SIZE = 50_000
 
 /** Case-insensitive patterns in response body that indicate a soft block. */

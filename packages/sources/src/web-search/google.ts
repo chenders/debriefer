@@ -6,7 +6,8 @@ const GOOGLE_CSE_URL = "https://www.googleapis.com/customsearch/v1"
 export interface GoogleSearchOptions extends WebSearchOptions {
   apiKey?: string // default: process.env.GOOGLE_SEARCH_API_KEY
   cx?: string // default: process.env.GOOGLE_SEARCH_CX
-  maxResults?: number // default: 10
+  /** Number of results (1–10, Google CSE limit). Default: 10. */
+  maxResults?: number
 }
 
 export class GoogleSearchSource extends WebSearchBase {
@@ -25,7 +26,7 @@ export class GoogleSearchSource extends WebSearchBase {
     super({ rateLimitMs: 500, ...options })
     this.apiKey = options.apiKey ?? process.env.GOOGLE_SEARCH_API_KEY
     this.cx = options.cx ?? process.env.GOOGLE_SEARCH_CX
-    this.maxResults = options.maxResults ?? 10
+    this.maxResults = Math.min(Math.max(options.maxResults ?? 10, 1), 10)
   }
 
   override isAvailable(): boolean {

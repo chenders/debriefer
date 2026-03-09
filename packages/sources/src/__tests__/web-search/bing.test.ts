@@ -156,45 +156,6 @@ describe("BingSearchSource", () => {
   // ==========================================================================
 
   describe("result merging and deduplication", () => {
-    it("merges webPages and news results, deduplicating by URL", async () => {
-      const source = new BingSearchSource({ apiKey: "test-key" })
-
-      const duplicateUrl = "https://example.com/shared"
-
-      mockFetchOk(
-        makeBingResponse({
-          webPages: [
-            { name: "Web Result 1", url: "https://example.com/web1", snippet: "Web snippet 1" },
-            { name: "Web Result Dup", url: duplicateUrl, snippet: "Web duplicate snippet" },
-          ],
-          news: [
-            {
-              name: "News Result Dup",
-              url: duplicateUrl,
-              description: "News duplicate description",
-            },
-            {
-              name: "News Result 1",
-              url: "https://example.com/news1",
-              description: "News description 1",
-            },
-          ],
-        })
-      )
-
-      // We test performSearch indirectly through lookup. Since fetchPage and
-      // extractArticleContent are mocked to return nothing, the pipeline will
-      // return null from lookup, but we can verify what fetch was called with.
-      await source.lookup({ id: 1, name: "test" }, AbortSignal.timeout(5000))
-
-      // Verify fetch was called once (for the Bing API itself)
-      expect(globalThis.fetch).toHaveBeenCalledTimes(1)
-
-      // To verify deduplication behavior directly, we'll create a second source
-      // and spy on the internal fetch call to capture the response processing.
-      // Instead, let's re-test by making a subclass that exposes performSearch.
-    })
-
     it("correctly deduplicates URLs across webPages and news", async () => {
       // Create a subclass that exposes performSearch for direct testing
       class TestBingSource extends BingSearchSource {
