@@ -73,15 +73,17 @@ npx prettier --check .                # formatting (root-level, catches docs too
 
 CI runs Format Check (`prettier --check .`), Lint, Build, Test, Type Check, and Dependency Audit. All six must pass before merging.
 
-### Re-requesting Copilot Review
+### Copilot Review Loop
 
-After pushing fixes for Copilot review comments, re-request a review:
+After pushing fixes for Copilot review comments, re-request a review and keep looping until clean:
 
-```bash
-gh api repos/chenders/debriefer/pulls/{PR_NUMBER}/requested_reviewers -X POST -f 'reviewers[]=copilot-pull-request-reviewer[bot]'
-```
-
-Then poll for the new review to appear before proceeding.
+1. Re-request the review:
+   ```bash
+   gh api repos/chenders/debriefer/pulls/{PR_NUMBER}/requested_reviewers -X POST -f 'reviewers[]=copilot-pull-request-reviewer[bot]'
+   ```
+2. Poll until the new review appears (check review count increases).
+3. Run `/respond-to-copilot` to address any new comments.
+4. Repeat from step 1 until a review comes back with no new comments.
 
 **Common CI failures to avoid:**
 
