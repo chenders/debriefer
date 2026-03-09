@@ -199,8 +199,14 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
       let score = 50 - index
 
       // Domain score bonus
-      const hostname = new URL(result.url).hostname
+      let hostname: string | null = null
+      try {
+        hostname = new URL(result.url).hostname
+      } catch {
+        // Invalid URL — skip domain scoring
+      }
       for (const [domain, domainScore] of Object.entries(this.domainScores)) {
+        if (!hostname) break
         if (this.hostnameMatchesDomain(hostname, domain)) {
           score += domainScore
           break

@@ -147,6 +147,26 @@ describe("extractUrlsFromDuckDuckGoHtml", () => {
     expect(results[0].title).toBe("NYT Article")
   })
 
+  it("rejects domain spoofing (evilnytimes.com does not match nytimes.com)", () => {
+    const html = `
+      <div class="result">
+        <a class="result__url" href="https://evilnytimes.com/article"></a>
+        <a class="result__a" href="https://evilnytimes.com/article">Fake NYT</a>
+        <a class="result__snippet">Spoofed domain.</a>
+      </div>
+      <div class="result">
+        <a class="result__url" href="https://www.nytimes.com/real"></a>
+        <a class="result__a" href="https://www.nytimes.com/real">Real NYT</a>
+        <a class="result__snippet">Real article.</a>
+      </div>
+    `
+
+    const results = extractUrlsFromDuckDuckGoHtml(html, "nytimes.com")
+
+    expect(results).toHaveLength(1)
+    expect(results[0].url).toBe("https://www.nytimes.com/real")
+  })
+
   it("cleans DDG redirect URLs in results", () => {
     const html = `
       <div class="result">

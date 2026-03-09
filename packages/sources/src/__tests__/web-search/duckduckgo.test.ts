@@ -7,7 +7,7 @@
  * and the factory function.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { ReliabilityTier } from "debriefer"
 
 // ============================================================================
@@ -33,6 +33,10 @@ import { DuckDuckGoSearchSource, duckduckgoSearch } from "../../web-search/duckd
 
 beforeEach(() => {
   mockSearchDDG.mockReset()
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 // ============================================================================

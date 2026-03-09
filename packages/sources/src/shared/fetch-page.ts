@@ -107,10 +107,13 @@ function isSoftBlocked(body: string): boolean {
 }
 
 /**
- * Check whether an error is an abort (cancellation) error.
+ * Check whether an error is an abort or timeout error.
+ * Node.js 22 AbortSignal.timeout() produces DOMException with name "TimeoutError".
  */
 function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === "AbortError"
+  return (
+    error instanceof DOMException && (error.name === "AbortError" || error.name === "TimeoutError")
+  )
 }
 
 /**

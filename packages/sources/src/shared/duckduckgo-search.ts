@@ -185,7 +185,7 @@ export function extractUrlsFromDuckDuckGoHtml(html: string, domainFilter?: strin
     if (domainFilter) {
       try {
         const hostname = new URL(url).hostname
-        if (!hostname.endsWith(domainFilter) && hostname !== domainFilter) {
+        if (hostname !== domainFilter && !hostname.endsWith("." + domainFilter)) {
           continue
         }
       } catch {
@@ -250,7 +250,14 @@ export async function searchDuckDuckGo(options: DuckDuckGoSearchOptions): Promis
   let response: Response
   try {
     response = await fetch(searchUrl, { signal })
-  } catch {
+  } catch (error) {
+    // Re-throw abort/timeout so BaseResearchSource.lookup() can record telemetry
+    if (
+      error instanceof DOMException &&
+      (error.name === "AbortError" || error.name === "TimeoutError")
+    ) {
+      throw error
+    }
     return []
   }
 
