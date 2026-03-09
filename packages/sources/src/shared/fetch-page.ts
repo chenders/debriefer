@@ -180,13 +180,17 @@ export async function fetchPage(options: FetchPageOptions): Promise<FetchPageRes
   try {
     response = await fetch(url, { headers, signal })
   } catch (error: unknown) {
-    // Abort errors should not trigger archive fallback
+    // Abort/timeout errors should not trigger archive fallback
     if (isAbortError(error)) {
+      const reason =
+        error instanceof DOMException && error.name === "TimeoutError"
+          ? "Request timed out"
+          : "Request was aborted"
       return {
         content: "",
         url,
         fetchMethod: "none",
-        error: "Request was aborted",
+        error: reason,
       }
     }
 

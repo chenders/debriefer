@@ -132,6 +132,8 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
     const extractedPages: Array<{ url: string; title: string; text: string }> = []
 
     for (const { result } of linksToFollow) {
+      if (signal.aborted) break
+
       const pageResult = await fetchPage({ url: result.url, signal })
 
       if (pageResult.fetchMethod === "none" || !pageResult.content) {
@@ -241,14 +243,35 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
   }
 
   /**
-   * Check whether a URL's domain is in the blocked list.
+   * Check whether a URL should be excluded (blocked domain or unsafe URL).
+   * Blocks: non-http(s) schemes, localhost, private IP ranges, and user-specified domains.
    */
   private isDomainBlocked(url: string): boolean {
-    let hostname: string
+    let parsed: URL
     try {
-      hostname = new URL(url).hostname
+      parsed = new URL(url)
     } catch {
-      return false
+      return true // Unparseable URLs are blocked
+    }
+
+    // Only allow http and https
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return true
+    }
+
+    // Block localhost and private IPs (SSRF prevention)
+    const hostname = parsed.hostname
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]" ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("172.") ||
+      hostname === "0.0.0.0" ||
+      hostname.endsWith(".local")
+    ) {
+      return true
     }
 
     return this.blockedDomains.some((domain) => this.hostnameMatchesDomain(hostname, domain))
