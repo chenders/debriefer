@@ -25,6 +25,7 @@
   "dependencies": {
     "debriefer": "*",
     "debriefer-sources": "*",
-    "commander": "^13"
+    "commander": "^13",
+    "@anthropic-ai/sdk": ">=0.39.0 <1"
   }
 }
