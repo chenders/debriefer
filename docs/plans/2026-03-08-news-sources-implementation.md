@@ -2,9 +2,9 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add 21 news and reference sources — 19 via a configurable `SiteSearchSource` class, 2 via direct API classes (Guardian, NYT).
+**Goal:** Add 22 news and reference sources — 20 via a configurable `SiteSearchSource` class, 2 via direct API classes (Guardian, NYT).
 
-**Architecture:** A single `SiteSearchSource` class handles the DDG `site:` search → pick best URL → fetch → extract pattern. Each of the 19 sources is a factory function passing different config (domain, tier, paths, query terms). Guardian and NYT are separate classes with proprietary API integrations. All sources extend `BaseResearchSource<ResearchSubject>`.
+**Architecture:** A single `SiteSearchSource` class handles the DDG `site:` search → pick best URL → fetch → extract pattern. Each of the 20 sources is a factory function passing different config (domain, tier, paths, query terms). Guardian and NYT are separate classes with proprietary API integrations. All sources extend `BaseResearchSource<ResearchSubject>`.
 
 **Tech Stack:** TypeScript 5.x, Node.js 22 built-in `fetch`, vitest, existing shared utilities (`searchDuckDuckGo`, `fetchPage`, `extractArticleContent`, `sanitizeSourceText`), debriefer core (`BaseResearchSource`, `ReliabilityTier`)
 

@@ -89,8 +89,11 @@ export class NYTimesSource extends BaseResearchSource<ResearchSubject> {
 
     if (!data.response?.docs?.length) return null
 
-    // Pick best article
-    const doc = this.findBestArticle(data.response.docs)
+    // Filter out docs without URLs, then pick best article
+    const docsWithUrls = data.response.docs.filter((d) => d.web_url)
+    if (docsWithUrls.length === 0) return null
+
+    const doc = this.findBestArticle(docsWithUrls)
     if (!doc) return null
 
     // Combine available text fields (NYT API doesn't return full body)
@@ -106,7 +109,7 @@ export class NYTimesSource extends BaseResearchSource<ResearchSubject> {
       text: sanitized,
       confidence: 0.7,
       costUsd: 0,
-      url: doc.web_url ?? "",
+      url: doc.web_url,
       publication: "The New York Times",
       metadata: {
         title: doc.headline?.main ?? "",

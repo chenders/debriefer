@@ -1,12 +1,12 @@
 # News Sources Design
 
 **Date:** 2026-03-08
-**Scope:** Phase 5, Task 17 — news and reference sources (21 sources)
+**Scope:** Phase 5, Task 17 — news and reference sources (22 sources)
 **Package:** `debriefer-sources`
 
 ## Overview
 
-Add 21 news and reference sources. 19 follow an identical pattern (DDG `site:` search → fetch → extract) and are handled by a single configurable `SiteSearchSource` class. 2 use proprietary APIs (Guardian, NYT) and get their own classes.
+Add 21 news and reference sources. 20 follow an identical pattern (DDG `site:` search → fetch → extract) and are handled by a single configurable `SiteSearchSource` class. 2 use proprietary APIs (Guardian, NYT) and get their own classes.
 
 **Files to create:** 4 source files + 3 test files
 **Estimated tests:** ~31
@@ -60,7 +60,7 @@ All 19 sources are free (no API keys), use DDG search, and differ only in config
 - **API:** `GET content.guardianapis.com/search?q=...&show-fields=bodyText,standfirst`
 - **Auth:** `GUARDIAN_API_KEY` env var
 - **Tier:** TIER_1_NEWS (0.95)
-- **Rate limit:** 200ms (12 req/sec)
+- **Rate limit:** 200ms (~5 req/sec)
 - **Returns:** Full bodyText — confidence delegated to base
 
 ### NYTimesSource
