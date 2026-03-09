@@ -98,10 +98,16 @@ export class FindAGraveSource extends BaseResearchSource<ResearchSubject> {
     MEMORIAL_URL_PATTERN.lastIndex = 0
     while ((match = MEMORIAL_URL_PATTERN.exec(searchHtml)) !== null) {
       const fullMatch = match[0]
+      const anchorIndex = match.index
       // Build the full memorial URL from the path found in the HTML
       // Search result links look like: /memorial/12345/john-wayne
-      const endIdx = searchHtml.indexOf('"', searchHtml.indexOf(fullMatch))
-      const startIdx = searchHtml.lastIndexOf('"', searchHtml.indexOf(fullMatch)) + 1
+      const startQuoteIdx = searchHtml.lastIndexOf('"', anchorIndex)
+      const endQuoteIdx = searchHtml.indexOf('"', anchorIndex + fullMatch.length)
+      if (startQuoteIdx === -1 || endQuoteIdx === -1) {
+        continue
+      }
+      const startIdx = startQuoteIdx + 1
+      const endIdx = endQuoteIdx
       const path = searchHtml.slice(startIdx, endIdx)
 
       if (path.startsWith("/memorial/")) {

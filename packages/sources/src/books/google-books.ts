@@ -68,8 +68,8 @@ export class GoogleBooksSource extends BaseResearchSource<ResearchSubject> {
   readonly name = "Google Books"
   readonly type = "google-books"
   readonly reliabilityTier = ReliabilityTier.SECONDARY_COMPILATION
-  readonly domain = "googleapis.com"
-  readonly isFree = false
+  readonly domain = "www.googleapis.com"
+  readonly isFree = true
   readonly estimatedCostPerQuery = 0
 
   private apiKey: string | undefined
