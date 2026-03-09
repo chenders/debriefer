@@ -118,7 +118,7 @@ import {
   wikipedia,
   guardian,
   apNews,
-  variety,
+  bbcNews,
   chroniclingAmerica,
   internetArchive,
   legacy,
@@ -150,7 +150,7 @@ const orchestrator = new ResearchOrchestrator(
     {
       phase: 2,
       name: "News & Archives",
-      sources: [guardian(), apNews(), variety(), chroniclingAmerica()],
+      sources: [guardian(), apNews(), bbcNews(), chroniclingAmerica()],
     },
     { phase: 3, name: "Deep Archives", sources: [internetArchive(), legacy()] },
   ],
@@ -263,7 +263,8 @@ One researcher, four countries' archives, one API call. Without Debriefer, this 
 ## CLI
 
 ```bash
-npm install -g debriefer-cli
+# From the repo (npm publish is on the roadmap)
+npm run build && npm link -w packages/cli
 
 # List available sources and their reliability tiers
 debriefer sources

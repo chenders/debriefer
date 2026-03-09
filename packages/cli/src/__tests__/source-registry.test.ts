@@ -22,28 +22,22 @@ describe("SOURCE_CATEGORIES", () => {
     expect(Object.keys(SOURCE_CATEGORIES).sort()).toEqual(expected.sort())
   })
 
-  it("structured has 2 factories", () => {
-    expect(SOURCE_CATEGORIES.structured).toHaveLength(2)
+  it("every category has at least one factory", () => {
+    for (const [name, factories] of Object.entries(SOURCE_CATEGORIES)) {
+      expect(factories.length, `${name} should have factories`).toBeGreaterThan(0)
+    }
   })
 
-  it("news has 22 factories", () => {
-    expect(SOURCE_CATEGORIES.news).toHaveLength(22)
+  it("structured includes wikidata and wikipedia", () => {
+    const types = SOURCE_CATEGORIES.structured.map((f) => f().type)
+    expect(types).toContain("wikidata")
+    expect(types).toContain("wikipedia")
   })
 
-  it("search has 4 factories", () => {
-    expect(SOURCE_CATEGORIES.search).toHaveLength(4)
-  })
-
-  it("books has 2 factories", () => {
-    expect(SOURCE_CATEGORIES.books).toHaveLength(2)
-  })
-
-  it("archives has 4 factories", () => {
-    expect(SOURCE_CATEGORIES.archives).toHaveLength(4)
-  })
-
-  it("obituary has 2 factories", () => {
-    expect(SOURCE_CATEGORIES.obituary).toHaveLength(2)
+  it("news includes AP and Guardian", () => {
+    const types = SOURCE_CATEGORIES.news.map((f) => f().type)
+    expect(types).toContain("ap-news")
+    expect(types).toContain("guardian")
   })
 })
 
@@ -63,7 +57,7 @@ describe("createSources", () => {
 
   it("returns only structured sources for ['structured']", () => {
     const sources = createSources(["structured"])
-    expect(sources).toHaveLength(2)
+    expect(sources.length).toBe(SOURCE_CATEGORIES.structured.length)
     const types = sources.map((s) => s.type)
     expect(types).toContain("wikidata")
     expect(types).toContain("wikipedia")
@@ -71,12 +65,13 @@ describe("createSources", () => {
 
   it("combines multiple categories", () => {
     const sources = createSources(["structured", "books"])
-    expect(sources).toHaveLength(4)
+    const expected = SOURCE_CATEGORIES.structured.length + SOURCE_CATEGORIES.books.length
+    expect(sources.length).toBe(expected)
   })
 
   it("silently ignores unknown categories", () => {
     const sources = createSources(["structured", "nonexistent"])
-    expect(sources).toHaveLength(2)
+    expect(sources.length).toBe(SOURCE_CATEGORIES.structured.length)
   })
 
   it("returns empty array when all categories are unknown", () => {

@@ -42,8 +42,8 @@ interface DebriefOptions {
  * Must be a positive number representing USD.
  */
 function parseBudget(value: string): number {
-  const parsed = parseFloat(value)
-  if (isNaN(parsed) || parsed <= 0) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed <= 0) {
     throw new InvalidArgumentError("Budget must be a positive number (USD).")
   }
   return parsed
@@ -87,7 +87,10 @@ export function buildDebriefCommand(): Command {
 async function runDebrief(name: string, options: DebriefOptions): Promise<void> {
   // 1. Parse categories from comma-separated string
   const categories = options.categories
-    ? options.categories.split(",").map((c) => c.trim())
+    ? options.categories
+        .split(",")
+        .map((c) => c.trim())
+        .filter((c) => c.length > 0)
     : undefined
 
   // 2. Warn about unknown categories

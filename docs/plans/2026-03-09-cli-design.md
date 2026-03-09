@@ -84,7 +84,7 @@ Single JSON object:
 
 - `commander` (already in package.json)
 - `debriefer` and `debriefer-sources` (already in package.json)
-- `@anthropic-ai/sdk` as optional peer dep (needed only for synthesis)
+- `@anthropic-ai/sdk` as regular dependency (needed because `debriefer` imports it at module load via `ClaudeSynthesizer`)
 
 ## Decisions
 

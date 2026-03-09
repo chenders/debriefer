@@ -10,31 +10,19 @@ import { Command } from "commander"
 import { createSources, SOURCE_CATEGORIES, type SourceCategory } from "../source-registry.js"
 import { formatSourceList } from "../formatters.js"
 
-// ============================================================================
-// Category reverse map
-// ============================================================================
-
 /**
- * Reverse map from source type string to category name.
- * Built once at module load by instantiating each factory to read its type.
+ * Build a reverse map from source type to category name.
+ * Instantiates each factory once to read its type.
  */
-let typeToCategory: Map<string, SourceCategory> | undefined
-
-function getTypeToCategory(): Map<string, SourceCategory> {
-  if (typeToCategory) return typeToCategory
-  typeToCategory = new Map<string, SourceCategory>()
+function buildTypeToCategoryMap(): Map<string, SourceCategory> {
+  const map = new Map<string, SourceCategory>()
   for (const [category, factories] of Object.entries(SOURCE_CATEGORIES)) {
     for (const factory of factories) {
-      const source = factory()
-      typeToCategory.set(source.type, category as SourceCategory)
+      map.set(factory().type, category as SourceCategory)
     }
   }
-  return typeToCategory
+  return map
 }
-
-// ============================================================================
-// Command builder
-// ============================================================================
 
 /**
  * Builds the `sources` subcommand for the CLI.
@@ -54,11 +42,13 @@ export function buildSourcesCommand(): Command {
       const sources = createSources(categories)
 
       if (options.format === "json") {
-        const categoryMap = getTypeToCategory()
+        // When a category filter is set, all sources share that category.
+        // Otherwise build a reverse map (one extra instantiation set).
+        const categoryMap = options.category ? null : buildTypeToCategoryMap()
         const data = sources.map((source) => ({
           name: source.name,
           type: source.type,
-          category: categoryMap.get(source.type) ?? "unknown",
+          category: options.category ?? categoryMap?.get(source.type) ?? "unknown",
           reliabilityTier: source.reliabilityTier,
           reliabilityScore: source.reliabilityScore,
           domain: source.domain,

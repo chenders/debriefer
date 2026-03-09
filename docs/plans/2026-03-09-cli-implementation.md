@@ -914,19 +914,14 @@ git commit -m "feat(cli): wire up entry point with debrief and sources commands"
 
 **Files:**
 
-- Modify: `packages/cli/package.json` — add `@anthropic-ai/sdk` as optional peer dep
+- Modify: `packages/cli/package.json` — add `@anthropic-ai/sdk` as regular dependency
 
 **Step 1: Update package.json**
 
-Add to `packages/cli/package.json`:
+Add to `packages/cli/package.json` `dependencies`:
 
 ```json
-"peerDependencies": {
-  "@anthropic-ai/sdk": ">=0.30.0"
-},
-"peerDependenciesMeta": {
-  "@anthropic-ai/sdk": {
-    "optional": true
+"@anthropic-ai/sdk": ">=0.39.0 <1"
   }
 }
 ```
