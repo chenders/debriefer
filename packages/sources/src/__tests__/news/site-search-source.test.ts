@@ -171,7 +171,7 @@ describe("SiteSearchSource", () => {
 
     it("appends queryTerms when configured", () => {
       const source = new SiteSearchSource(makeConfig({ queryTerms: "biography OR profile" }))
-      expect(source.buildQuery(subject)).toBe('"John Wayne" biography OR profile')
+      expect(source.buildQuery(subject)).toBe('"John Wayne" (biography OR profile)')
     })
   })
 
@@ -222,7 +222,7 @@ describe("SiteSearchSource", () => {
       await source.lookup(subject, signal)
 
       const callArgs = mockSearchDDG.mock.calls[0][0] as { query: string }
-      expect(callArgs.query).toBe('"John Wayne" obituary')
+      expect(callArgs.query).toBe('"John Wayne" (obituary)')
     })
 
     it("passes domainFilter to searchDuckDuckGo", async () => {

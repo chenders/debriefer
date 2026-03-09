@@ -6,7 +6,7 @@
  * extracts article content, and returns a sanitized finding.
  *
  * This is the reusable base that 19+ news/reference source factories
- * instantiate with different SiteSearchConfig values (AP, BBC, NYT, etc.).
+ * instantiate with different SiteSearchConfig values (AP, BBC, Reuters, etc.).
  */
 
 import {
@@ -155,7 +155,7 @@ export class SiteSearchSource extends BaseResearchSource<ResearchSubject> {
   buildQuery(subject: ResearchSubject): string {
     const base = `"${subject.name}"`
     if (this.config.queryTerms) {
-      return `${base} ${this.config.queryTerms}`
+      return `${base} (${this.config.queryTerms})`
     }
     return base
   }
