@@ -26,5 +26,13 @@
     "debriefer": "*",
     "debriefer-sources": "*",
     "commander": "^13"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": ">=0.30.0"
+  },
+  "peerDependenciesMeta": {
+    "@anthropic-ai/sdk": {
+      "optional": true
+    }
   }
 }
