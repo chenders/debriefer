@@ -145,6 +145,7 @@ export class FindAGraveSource extends BaseResearchSource<ResearchSubject> {
     const memorialUrl = matchingUrls[0]
 
     // Step 5: Fetch the memorial page
+    await this.rateLimiter?.acquire(this.domain, this.options.rateLimitMs!)
     const page = await fetchPage({ url: memorialUrl, signal })
 
     if (page.fetchMethod === "none" || !page.content) {
