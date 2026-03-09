@@ -18,7 +18,7 @@ const orchestrator = new ResearchOrchestrator(
   new NoopSynthesizer()
 )
 
-const result = await orchestrator.debrief({ id: "einstein", name: "Albert Einstein" })
+const result = await orchestrator.debrief({ id: "nm0000030", name: "Audrey Hepburn" })
 
 console.log(`${result.findings.length} findings from ${result.sourcesSucceeded} sources`)
 for (const finding of result.findings) {
@@ -107,75 +107,158 @@ Sources requiring no API key run in the earliest phases. Basic research costs no
 
 ## Integration Examples
 
-### AI Agent with Grounded Research
+### Actor Research with AI Synthesis
 
-Use Debriefer to gather cited sources, then synthesize structured output with Claude:
+Build a film database that enriches actor profiles from news, archives, and structured data — then synthesizes a cited biography with Claude:
 
 ```typescript
-import { ResearchOrchestrator, ClaudeSynthesizer } from "debriefer"
-import { wikipedia, wikidata, guardian, apNews } from "debriefer-sources"
+import { ResearchOrchestrator, ClaudeSynthesizer, type ResearchSubject } from "debriefer"
+import {
+  wikidata,
+  wikipedia,
+  guardian,
+  apNews,
+  variety,
+  chroniclingAmerica,
+  internetArchive,
+  legacy,
+} from "debriefer-sources"
 
-interface ResearchBrief {
-  summary: string
-  keyFacts: string[]
-  sources: { name: string; url: string }[]
+interface ActorProfile {
+  biography: string
+  birthDate: string | null
+  deathDate: string | null
+  notableRoles: string[]
+  sources: { name: string; url: string; reliability: number }[]
 }
 
-const synthesizer = new ClaudeSynthesizer<ResearchSubject, ResearchBrief>({
+const synthesizer = new ClaudeSynthesizer<ResearchSubject, ActorProfile>({
   promptBuilder: (subject, findings) => ({
-    system: `Synthesize findings into a cited brief.
-Return JSON: { "summary": "...", "keyFacts": ["..."], "sources": [{"name": "...", "url": "..."}] }`,
-    user: `Subject: ${subject.name}\n\nFindings:\n${findings
-      .map((f) => `[${f.sourceName}] ${f.url}\n${f.text}`)
+    system: `You are building a film database. Given research findings about an actor,
+extract a biography, birth/death dates, notable roles, and cite your sources.
+Return JSON matching: { biography, birthDate, deathDate, notableRoles, sources }`,
+    user: `Actor: ${subject.name}\n\nFindings:\n${findings
+      .map((f) => `[${f.sourceName}] (reliability: ${f.reliabilityScore}) ${f.url}\n${f.text}`)
       .join("\n\n")}`,
   }),
-  responseParser: (raw) => raw as ResearchBrief,
+  responseParser: (raw) => raw as ActorProfile,
 })
 
 const orchestrator = new ResearchOrchestrator(
   [
     { phase: 1, name: "Structured", sources: [wikidata(), wikipedia()] },
-    { phase: 2, name: "News", sources: [guardian(), apNews()] },
+    {
+      phase: 2,
+      name: "News & Archives",
+      sources: [guardian(), apNews(), variety(), chroniclingAmerica()],
+    },
+    { phase: 3, name: "Deep Archives", sources: [internetArchive(), legacy()] },
   ],
   synthesizer,
-  { earlyStopThreshold: 3, costLimits: { maxCostPerSubject: 0.05 } }
+  { earlyStopThreshold: 3, costLimits: { maxCostPerSubject: 0.1 } }
 )
 
-const result = await orchestrator.debrief({ id: 1, name: "Alan Turing" })
-console.log(result.data!.summary)
-result.data!.sources.forEach((s) => console.log(`  ${s.name}: ${s.url}`))
+const profile = await orchestrator.debrief({
+  id: "nm0000030",
+  name: "Audrey Hepburn",
+  context: { knownFor: "Breakfast at Tiffany's" },
+})
+
+console.log(profile.data!.biography)
+console.log(
+  `Sources: ${profile.data!.sources.length} cited, cost: $${profile.totalCostUsd.toFixed(4)}`
+)
 ```
 
-### Database Enrichment Pipeline
+Structured data runs first (free, fast). News and archives only fire if early stopping hasn't triggered. Deep archives are the last resort. The whole thing costs pennies.
 
-Process hundreds of records with concurrency control and lifecycle hooks:
+### Provenance-Scored Context for RAG Pipelines
+
+RAG systems typically stuff all retrieved text into the LLM's context window with no way to distinguish a Reuters wire story from a random blog post. Debriefer solves this by scoring every piece of retrieved content on two axes — source reliability and content relevance — so your LLM only sees trusted, relevant context and can cite where each fact came from.
+
+```typescript
+import { ResearchOrchestrator, NoopSynthesizer, type ScoredFinding } from "debriefer"
+import {
+  wikidata,
+  wikipedia,
+  apNews,
+  bbcNews,
+  reuters,
+  guardian,
+  openLibrary,
+} from "debriefer-sources"
+
+const orchestrator = new ResearchOrchestrator(
+  [
+    { phase: 1, sources: [wikidata(), wikipedia(), openLibrary()] },
+    { phase: 2, sources: [apNews(), bbcNews(), reuters(), guardian()] },
+  ],
+  new NoopSynthesizer(),
+  { confidenceThreshold: 0.6, reliabilityThreshold: 0.7 }
+)
+
+async function buildRAGContext(query: string): Promise<string> {
+  const result = await orchestrator.debrief({ id: query, name: query })
+
+  // Filter to high-quality findings only
+  const trusted = result.findings.filter((f) => f.reliabilityScore >= 0.7 && f.confidence >= 0.6)
+
+  // Build context with provenance metadata the LLM can cite
+  return trusted
+    .map(
+      (f) => `[Source: ${f.sourceName} | Reliability: ${f.reliabilityScore} | ${f.url}]\n${f.text}`
+    )
+    .join("\n\n---\n\n")
+}
+
+// Feed to your LLM with full provenance
+const context = await buildRAGContext("climate change effects on coral reefs")
+const prompt = `Using ONLY the following sourced context, answer the question. Cite sources by name.\n\n${context}\n\nQuestion: ...`
+```
+
+Without this, you'd need to build and maintain integrations with every source API, implement your own reliability scoring system, and somehow correlate quality signals across different source formats. Debriefer gives you a single call that returns findings pre-scored on both axes, ready to filter and feed into your model.
+
+### Cross-Archive Historical Research
+
+Historians and journalists researching how a person or event was documented across different countries and eras face a painful problem: every archive has a different API, different query syntax, different authentication, and different response format. Chronicling America (Library of Congress), Trove (National Library of Australia), Europeana (EU cultural heritage), and the Internet Archive each require separate integration work. Debriefer queries them all in one call, with reliability scoring to help you weight institutional archives against mirrors.
 
 ```typescript
 import { ResearchOrchestrator, NoopSynthesizer } from "debriefer"
-import { wikipedia, wikidata, openLibrary } from "debriefer-sources"
+import {
+  chroniclingAmerica,
+  trove,
+  europeana,
+  internetArchive,
+  wikipedia,
+  openLibrary,
+} from "debriefer-sources"
 
 const orchestrator = new ResearchOrchestrator(
-  [{ phase: 1, sources: [wikidata(), wikipedia(), openLibrary()] }],
-  new NoopSynthesizer(),
-  { concurrency: 10, costLimits: { maxTotalCost: 1.0 } }
+  [
+    { phase: 1, name: "Reference", sources: [wikipedia(), openLibrary()] },
+    {
+      phase: 2,
+      name: "Archives",
+      sources: [chroniclingAmerica(), trove(), europeana(), internetArchive()],
+    },
+  ],
+  new NoopSynthesizer()
 )
 
-const subjects = await db.query("SELECT id, name FROM people WHERE bio IS NULL LIMIT 200")
+const result = await orchestrator.debrief({ id: "1918-flu", name: "1918 influenza pandemic" })
 
-await orchestrator.debriefBatch(subjects, {
-  onSubjectComplete: async (subject, result) => {
-    if (result.findings.length > 0) {
-      await db.query("UPDATE people SET bio = $1 WHERE id = $2", [
-        result.findings.map((f) => f.text).join("\n\n"),
-        subject.id,
-      ])
-    }
-  },
-  onBatchProgress: (stats) => {
-    console.log(`${stats.completed}/${stats.total} — $${stats.costUsd.toFixed(4)}`)
-  },
-})
+// Group findings by source for comparative analysis
+const bySource = Object.groupBy(result.findings, (f) => f.sourceName)
+for (const [source, findings] of Object.entries(bySource)) {
+  console.log(`\n${source} (${findings!.length} results):`)
+  for (const f of findings!) {
+    console.log(`  [reliability: ${f.reliabilityScore}] ${f.url}`)
+    console.log(`  ${f.text.slice(0, 150)}...`)
+  }
+}
 ```
+
+One researcher, four countries' archives, one API call. Without Debriefer, this is weeks of integration work per archive.
 
 ## CLI
 
@@ -185,23 +268,24 @@ npm install -g debriefer-cli
 # List available sources and their reliability tiers
 debriefer sources
 
-# Research with free structured data sources
-debriefer debrief "Albert Einstein" --no-synthesis --categories structured
+# Research an actress with free structured data sources
+debriefer debrief "Audrey Hepburn" --no-synthesis --categories structured
 
 # JSON output, piped to jq
-debriefer debrief "Marie Curie" --categories structured,news --format json \
+debriefer debrief "Sidney Poitier" --categories structured,news --format json \
   | jq '.findings[] | {source: .sourceName, url: .url}'
 
-# Verbose mode shows per-source progress
-debriefer debrief "Ada Lovelace" --verbose --categories structured,books
+# Verbose mode shows per-source progress and early stopping
+debriefer debrief "Toshiro Mifune" --verbose --categories structured,books,archives
 ```
 
 ## When to Use Debriefer
 
+- **Film & entertainment databases** — Enrich actor profiles, filmographies, and biographical records from news archives, structured data, and obituary sources with reliability-scored citations.
+- **RAG pipelines that need provenance** — Feed your LLM only trusted, relevant context with source reliability scores attached, so it can cite real sources instead of hallucinating URLs.
+- **Cross-archive historical research** — Query digitized newspaper archives across multiple countries and institutions in one call instead of learning four different APIs.
 - **Fact-checking pipelines** — Verify claims against multiple independent sources ranked by editorial credibility, not just by which API returned first.
-- **Database enrichment** — Pull biographical data, news coverage, or archival references for thousands of records from dozens of APIs without blowing your budget.
-- **Grounding AI agents** — Give your LLM-based agent real sources with reliability metadata instead of hallucinated URLs.
-- **Coverage aggregation** — Find out what AP, BBC, Chronicling America, and the Internet Archive all say about something, with quality scoring to help you decide what to trust.
+- **Database enrichment at scale** — Pull biographical data, news coverage, or archival references for thousands of records from dozens of APIs without blowing your budget.
 
 ## Python Client
 
