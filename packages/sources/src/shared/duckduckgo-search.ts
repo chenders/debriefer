@@ -89,15 +89,18 @@ export function isDuckDuckGoCaptcha(html: string): boolean {
  * @returns Cleaned URL pointing to the actual destination
  */
 export function cleanDuckDuckGoUrl(url: string): string {
-  // Handle DDG redirect URLs containing uddg parameter
+  // Handle DDG redirect URLs — only extract uddg from known DDG redirect paths
   if (url.includes("uddg=")) {
-    // Normalize protocol-relative URL before parsing
     const normalizedUrl = url.startsWith("//") ? `https:${url}` : url
     try {
       const parsed = new URL(normalizedUrl)
-      const uddg = parsed.searchParams.get("uddg")
-      if (uddg) {
-        return uddg
+      const hostname = parsed.hostname.toLowerCase()
+      const isDDG = hostname === "duckduckgo.com" || hostname === "www.duckduckgo.com"
+      if (isDDG && parsed.pathname.startsWith("/l/")) {
+        const uddg = parsed.searchParams.get("uddg")
+        if (uddg) {
+          return uddg
+        }
       }
     } catch {
       // Fall through to other checks

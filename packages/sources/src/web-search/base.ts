@@ -246,7 +246,7 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
    * Check whether a URL should be excluded (blocked domain or unsafe URL).
    * Blocks: non-http(s) schemes, localhost, private IP ranges, and user-specified domains.
    */
-  private isDomainBlocked(url: string): boolean {
+  protected isDomainBlocked(url: string): boolean {
     let parsed: URL
     try {
       parsed = new URL(url)
@@ -260,11 +260,18 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
     }
 
     // Block localhost, private IPs, and link-local addresses (SSRF prevention)
-    const hostname = parsed.hostname
+    // Normalize IPv4-mapped IPv6 (e.g., ::ffff:127.0.0.1) to plain IPv4
+    let hostname = parsed.hostname
+    const mappedMatch = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(hostname)
+    if (mappedMatch) {
+      hostname = mappedMatch[1]
+    }
+
     if (
       hostname === "localhost" ||
       hostname.startsWith("127.") || // 127.0.0.0/8 loopback
-      hostname === "::1" || // IPv6 loopback (URL parser strips brackets)
+      hostname === "::1" || // IPv6 loopback
+      hostname === "[::1]" || // IPv6 loopback (bracketed form)
       hostname.startsWith("10.") || // RFC 1918
       hostname.startsWith("192.168.") || // RFC 1918
       hostname.startsWith("169.254.") || // Link-local / cloud metadata (169.254.169.254)

@@ -56,6 +56,11 @@ class TestSearchSource extends WebSearchBase {
     return this.searchResults
   }
 
+  /** Expose protected isDomainBlocked for testing. */
+  testIsDomainBlocked(url: string): boolean {
+    return this.isDomainBlocked(url)
+  }
+
   /** Expose protected fetchResult for testing. */
   async doFetch(
     subject: ResearchSubject,
@@ -530,6 +535,77 @@ describe("WebSearchBase", () => {
 
       expect(result).not.toBeNull()
       expect(result!.text).toContain("Successful page content")
+    })
+  })
+
+  // ==========================================================================
+  // SSRF prevention
+  // ==========================================================================
+
+  describe("SSRF prevention (isDomainBlocked)", () => {
+    const source = new TestSearchSource()
+
+    it("allows normal http URLs", () => {
+      expect(source.testIsDomainBlocked("https://example.com/page")).toBe(false)
+      expect(source.testIsDomainBlocked("http://example.com/page")).toBe(false)
+    })
+
+    it("blocks non-http schemes", () => {
+      expect(source.testIsDomainBlocked("file:///etc/passwd")).toBe(true)
+      expect(source.testIsDomainBlocked("ftp://internal/file")).toBe(true)
+      expect(source.testIsDomainBlocked("javascript:alert(1)")).toBe(true)
+    })
+
+    it("blocks localhost", () => {
+      expect(source.testIsDomainBlocked("http://localhost/admin")).toBe(true)
+      expect(source.testIsDomainBlocked("http://localhost:8080/")).toBe(true)
+    })
+
+    it("blocks 127.0.0.0/8 loopback range", () => {
+      expect(source.testIsDomainBlocked("http://127.0.0.1/")).toBe(true)
+      expect(source.testIsDomainBlocked("http://127.1.2.3/")).toBe(true)
+      expect(source.testIsDomainBlocked("http://127.255.255.255/")).toBe(true)
+    })
+
+    it("blocks IPv6 loopback", () => {
+      expect(source.testIsDomainBlocked("http://[::1]/")).toBe(true)
+    })
+
+    it("blocks RFC 1918 private IPs", () => {
+      expect(source.testIsDomainBlocked("http://10.0.0.1/")).toBe(true)
+      expect(source.testIsDomainBlocked("http://10.255.255.255/")).toBe(true)
+      expect(source.testIsDomainBlocked("http://192.168.1.1/")).toBe(true)
+      expect(source.testIsDomainBlocked("http://172.16.0.1/")).toBe(true)
+      expect(source.testIsDomainBlocked("http://172.31.255.255/")).toBe(true)
+    })
+
+    it("allows non-private 172.x IPs", () => {
+      expect(source.testIsDomainBlocked("http://172.64.0.1/")).toBe(false) // Cloudflare
+      expect(source.testIsDomainBlocked("http://172.15.0.1/")).toBe(false)
+      expect(source.testIsDomainBlocked("http://172.32.0.1/")).toBe(false)
+    })
+
+    it("blocks cloud metadata endpoint", () => {
+      expect(source.testIsDomainBlocked("http://169.254.169.254/latest/meta-data/")).toBe(true)
+      expect(source.testIsDomainBlocked("http://169.254.0.1/")).toBe(true)
+    })
+
+    it("blocks 0.0.0.0", () => {
+      expect(source.testIsDomainBlocked("http://0.0.0.0/")).toBe(true)
+    })
+
+    it("blocks .local domains", () => {
+      expect(source.testIsDomainBlocked("http://myserver.local/")).toBe(true)
+    })
+
+    it("blocks unparseable URLs", () => {
+      expect(source.testIsDomainBlocked("not-a-url")).toBe(true)
+    })
+
+    it("does not false-positive on domains starting with fc/fd/fe80", () => {
+      expect(source.testIsDomainBlocked("https://fcnews.com/article")).toBe(false)
+      expect(source.testIsDomainBlocked("https://fdic.gov/")).toBe(false)
+      expect(source.testIsDomainBlocked("https://fe80news.com/")).toBe(false)
     })
   })
 })
