@@ -85,9 +85,7 @@ function buildHeaders(userAgent: string): Record<string, string> {
     "User-Agent": userAgent,
     Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
     "Cache-Control": "no-cache",
-    Connection: "keep-alive",
   }
 }
 
@@ -118,9 +116,18 @@ function isAbortError(error: unknown): boolean {
 
 /**
  * Construct the archive.org Wayback Machine URL for a given URL.
+ * Strips fragments and credentials which aren't part of the archived resource key.
  */
 function archiveUrl(url: string): string {
-  return `https://web.archive.org/web/${url}`
+  try {
+    const normalized = new URL(url)
+    normalized.hash = ""
+    normalized.username = ""
+    normalized.password = ""
+    return `https://web.archive.org/web/${normalized.toString()}`
+  } catch {
+    return `https://web.archive.org/web/${url}`
+  }
 }
 
 /**
@@ -260,7 +267,7 @@ export async function fetchPage(options: FetchPageOptions): Promise<FetchPageRes
   // --- Success ---
   return {
     content: body,
-    url,
+    url: response.url || url,
     fetchMethod: "direct",
   }
 }

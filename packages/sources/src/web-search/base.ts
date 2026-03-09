@@ -259,16 +259,20 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
       return true
     }
 
-    // Block localhost and private IPs (SSRF prevention)
+    // Block localhost, private IPs, and link-local addresses (SSRF prevention)
     const hostname = parsed.hostname
     if (
       hostname === "localhost" ||
       hostname.startsWith("127.") || // 127.0.0.0/8 loopback
       hostname === "::1" || // IPv6 loopback (URL parser strips brackets)
-      hostname.startsWith("10.") ||
-      hostname.startsWith("192.168.") ||
+      hostname.startsWith("10.") || // RFC 1918
+      hostname.startsWith("192.168.") || // RFC 1918
+      hostname.startsWith("169.254.") || // Link-local / cloud metadata (169.254.169.254)
       hostname === "0.0.0.0" ||
       hostname.endsWith(".local") ||
+      hostname.startsWith("fc") || // IPv6 unique local (fc00::/7)
+      hostname.startsWith("fd") || // IPv6 unique local (fc00::/7)
+      hostname.startsWith("fe80") || // IPv6 link-local (fe80::/10)
       this.isPrivate172(hostname)
     ) {
       return true
