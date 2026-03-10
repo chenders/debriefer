@@ -90,7 +90,7 @@ class TestHealth:
     async def test_health(
         self, base_url: str, mock_health_response: dict
     ) -> None:
-        respx.get(f"{base_url}/health").mock(
+        respx.get(f"{base_url}/api/health").mock(
             return_value=httpx.Response(200, json=mock_health_response)
         )
         async with AsyncDebriefer(base_url) as client:
@@ -107,7 +107,7 @@ class TestListSources:
     async def test_list_sources(
         self, base_url: str, mock_sources_response: list[dict]
     ) -> None:
-        respx.get(f"{base_url}/sources").mock(
+        respx.get(f"{base_url}/api/sources").mock(
             return_value=httpx.Response(200, json=mock_sources_response)
         )
         async with AsyncDebriefer(base_url) as client:
@@ -121,7 +121,7 @@ class TestListSources:
     async def test_list_sources_with_category(
         self, base_url: str, mock_sources_response: list[dict]
     ) -> None:
-        route = respx.get(f"{base_url}/sources", params={"category": "news"}).mock(
+        route = respx.get(f"{base_url}/api/sources", params={"category": "news"}).mock(
             return_value=httpx.Response(200, json=mock_sources_response)
         )
         async with AsyncDebriefer(base_url) as client:
@@ -135,7 +135,7 @@ class TestDebrief:
     async def test_debrief_minimal(
         self, base_url: str, mock_debrief_response: dict
     ) -> None:
-        route = respx.post(f"{base_url}/debrief").mock(
+        route = respx.post(f"{base_url}/api/debrief").mock(
             return_value=httpx.Response(200, json=mock_debrief_response)
         )
         async with AsyncDebriefer(base_url) as client:
@@ -159,7 +159,7 @@ class TestDebrief:
     async def test_debrief_with_options(
         self, base_url: str, mock_debrief_response: dict
     ) -> None:
-        route = respx.post(f"{base_url}/debrief").mock(
+        route = respx.post(f"{base_url}/api/debrief").mock(
             return_value=httpx.Response(200, json=mock_debrief_response)
         )
         async with AsyncDebriefer(base_url) as client:
@@ -186,7 +186,7 @@ class TestErrorHandling:
     @pytest.mark.asyncio()
     @respx.mock
     async def test_api_error_400(self, base_url: str) -> None:
-        respx.post(f"{base_url}/debrief").mock(
+        respx.post(f"{base_url}/api/debrief").mock(
             return_value=httpx.Response(
                 400,
                 json={
@@ -205,7 +205,7 @@ class TestErrorHandling:
     @pytest.mark.asyncio()
     @respx.mock
     async def test_api_error_401(self, base_url: str) -> None:
-        respx.get(f"{base_url}/health").mock(
+        respx.get(f"{base_url}/api/health").mock(
             return_value=httpx.Response(401, json={"error": "Unauthorized"})
         )
         async with AsyncDebriefer(base_url) as client:
@@ -216,7 +216,7 @@ class TestErrorHandling:
     @pytest.mark.asyncio()
     @respx.mock
     async def test_api_error_500(self, base_url: str) -> None:
-        respx.get(f"{base_url}/health").mock(
+        respx.get(f"{base_url}/api/health").mock(
             return_value=httpx.Response(500, json={"error": "Research failed"})
         )
         async with AsyncDebriefer(base_url) as client:
@@ -228,7 +228,7 @@ class TestErrorHandling:
     @pytest.mark.asyncio()
     @respx.mock
     async def test_connection_error(self, base_url: str) -> None:
-        respx.get(f"{base_url}/health").mock(
+        respx.get(f"{base_url}/api/health").mock(
             side_effect=httpx.ConnectError("Connection refused")
         )
         async with AsyncDebriefer(base_url) as client:
@@ -238,7 +238,7 @@ class TestErrorHandling:
     @pytest.mark.asyncio()
     @respx.mock
     async def test_transport_error(self, base_url: str) -> None:
-        respx.get(f"{base_url}/health").mock(
+        respx.get(f"{base_url}/api/health").mock(
             side_effect=httpx.TransportError("network down")
         )
         async with AsyncDebriefer(base_url) as client:
@@ -255,7 +255,7 @@ class TestAuthHeader:
         api_key: str,
         mock_health_response: dict,
     ) -> None:
-        route = respx.get(f"{base_url}/health").mock(
+        route = respx.get(f"{base_url}/api/health").mock(
             return_value=httpx.Response(200, json=mock_health_response)
         )
         async with AsyncDebriefer(base_url, api_key=api_key) as client:
@@ -270,7 +270,7 @@ class TestAuthHeader:
         base_url: str,
         mock_health_response: dict,
     ) -> None:
-        route = respx.get(f"{base_url}/health").mock(
+        route = respx.get(f"{base_url}/api/health").mock(
             return_value=httpx.Response(200, json=mock_health_response)
         )
         async with AsyncDebriefer(base_url) as client:

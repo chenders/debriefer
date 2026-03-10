@@ -107,7 +107,7 @@ class AsyncDebriefer:
         Returns:
             HealthStatus with status, version, and uptime fields.
         """
-        data = await self._request("GET", "/health")
+        data = await self._request("GET", "/api/health")
         return HealthStatus.model_validate(data)
 
     async def list_sources(
@@ -126,7 +126,7 @@ class AsyncDebriefer:
         params: dict[str, str] = {}
         if category is not None:
             params["category"] = category
-        data = await self._request("GET", "/sources", params=params)
+        data = await self._request("GET", "/api/sources", params=params)
         return [Source.model_validate(item) for item in data]
 
     async def debrief(
@@ -163,5 +163,5 @@ class AsyncDebriefer:
             body["model"] = model
         if prompt is not None:
             body["prompt"] = prompt
-        data = await self._request("POST", "/debrief", json=body)
+        data = await self._request("POST", "/api/debrief", json=body)
         return DebriefResult.model_validate(data)
