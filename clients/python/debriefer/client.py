@@ -124,7 +124,8 @@ class AsyncDebriefer:
         """List available research sources.
 
         Args:
-            category: Optional category filter (e.g. ``"news"``, ``"free"``).
+            category: Optional category filter (one of ``"structured"``, ``"news"``,
+                ``"search"``, ``"books"``, ``"archives"``, ``"obituary"``).
 
         Returns:
             List of Source objects with metadata and availability.

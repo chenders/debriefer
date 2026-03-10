@@ -674,7 +674,7 @@ __all__ = [
 **Step 2: Run all tests**
 
 Run: `cd clients/python && python -m pytest tests/ -v`
-Expected: PASS (all 18 tests)
+Expected: PASS (all 39 tests)
 
 **Step 3: Commit**
 
