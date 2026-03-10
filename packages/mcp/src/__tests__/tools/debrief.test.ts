@@ -139,3 +139,36 @@ describe("debriefHandler — config", () => {
     expect(phases[0]).toHaveProperty("sources")
   })
 })
+
+// ============================================================================
+// Category validation
+// ============================================================================
+
+describe("debriefHandler — category validation", () => {
+  it("returns error for unknown categories", async () => {
+    const result = await debriefHandler({ name: "Test", categories: ["nonexistent"] }, baseConfig)
+    expect(result.isError).toBe(true)
+    const text = (result.content[0] as { type: "text"; text: string }).text
+    expect(text).toContain("Unknown categories")
+    expect(text).toContain("nonexistent")
+  })
+})
+
+// ============================================================================
+// Error handling
+// ============================================================================
+
+describe("debriefHandler — error handling", () => {
+  it("returns error when orchestrator throws", async () => {
+    vi.mocked(ResearchOrchestrator).mockImplementationOnce(
+      () =>
+        ({
+          debrief: vi.fn().mockRejectedValue(new Error("Orchestrator failed")),
+        }) as unknown as InstanceType<typeof ResearchOrchestrator>
+    )
+    const result = await debriefHandler({ name: "Test" }, baseConfig)
+    expect(result.isError).toBe(true)
+    const text = (result.content[0] as { type: "text"; text: string }).text
+    expect(text).toContain("Orchestrator failed")
+  })
+})

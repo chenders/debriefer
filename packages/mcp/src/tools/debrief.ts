@@ -9,7 +9,7 @@
 import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "debriefer"
 import type { ResearchSubject, ResearchConfig, SourcePhaseGroup, Synthesizer } from "debriefer"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
-import { createSourcesWithCategory } from "../source-registry.js"
+import { createSourcesWithCategory, VALID_CATEGORIES } from "../source-registry.js"
 import type { McpConfig } from "../config.js"
 
 export interface DebriefArgs {
@@ -30,10 +30,29 @@ export interface DebriefArgs {
  */
 export async function debriefHandler(
   args: DebriefArgs,
-  config: McpConfig
+  config: McpConfig,
+  signal?: AbortSignal
 ): Promise<CallToolResult> {
   try {
-    // 1. Create sources and filter to available
+    // 1. Validate categories
+    if (args.categories) {
+      const invalid = args.categories.filter(
+        (c) => !VALID_CATEGORIES.includes(c as (typeof VALID_CATEGORIES)[number])
+      )
+      if (invalid.length > 0) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Unknown categories: ${invalid.join(", ")}. Valid: ${VALID_CATEGORIES.join(", ")}`,
+            },
+          ],
+          isError: true,
+        }
+      }
+    }
+
+    // 2. Create sources and filter to available
     const tagged = createSourcesWithCategory(args.categories)
     const available = tagged.filter(({ source }) => source.isAvailable())
 
@@ -44,7 +63,7 @@ export async function debriefHandler(
       }
     }
 
-    // 2. Build synthesizer
+    // 3. Build synthesizer
     const useSynthesis = args.synthesis ?? false
     let synthesizer: Synthesizer<ResearchSubject, unknown>
 
@@ -90,7 +109,7 @@ export async function debriefHandler(
       synthesizer = new NoopSynthesizer<ResearchSubject>()
     }
 
-    // 3. Split into free (phase 1) and paid (phase 2)
+    // 4. Split into free (phase 1) and paid (phase 2)
     const sources = available.map(({ source }) => source)
     const freeSources = sources.filter((s) => s.isFree)
     const paidSources = sources.filter((s) => !s.isFree)
@@ -103,7 +122,7 @@ export async function debriefHandler(
       phases.push({ phase: 2, name: "Paid Sources", sources: paidSources })
     }
 
-    // 4. Build config
+    // 5. Build config
     const orchestratorConfig: ResearchConfig = {
       costLimits: {
         maxCostPerSubject: args.budget ?? config.defaultBudget,
@@ -113,9 +132,9 @@ export async function debriefHandler(
       },
     }
 
-    // 5. Run orchestrator
+    // 6. Run orchestrator
     const orchestrator = new ResearchOrchestrator(phases, synthesizer, orchestratorConfig)
-    const result = await orchestrator.debrief({ id: args.name, name: args.name })
+    const result = await orchestrator.debrief({ id: args.name, name: args.name }, { signal })
 
     return {
       content: [{ type: "text", text: JSON.stringify(result, null, 2) }],

@@ -33,37 +33,46 @@ export function createServer(): McpServer {
   })
 
   // ── debrief tool ──────────────────────────────────────────────────────
-  // @ts-expect-error — TS2589: deep instantiation from MCP SDK overloads + Zod v3 generics
-  server.tool(
+  const debriefSchema = {
+    name: z.string().describe("Name of the subject to research"),
+    categories: z.array(z.string()).optional().describe(categoriesDesc),
+    budget: z.number().optional().describe("Maximum cost in USD (default: 1.0)"),
+    synthesis: z
+      .boolean()
+      .optional()
+      .describe("Enable AI synthesis of findings (requires ANTHROPIC_API_KEY)"),
+    model: z.string().optional().describe("Anthropic model for synthesis"),
+    prompt: z.string().optional().describe("Custom system prompt for synthesis"),
+  }
+
+  server.registerTool(
     "debrief",
-    "Run multi-source research on a subject. Orchestrates 60+ data sources " +
-      "with reliability scoring, phased execution, and optional AI synthesis.",
     {
-      name: z.string().describe("Name of the subject to research"),
-      categories: z.array(z.string()).optional().describe(categoriesDesc),
-      budget: z.number().optional().describe("Maximum cost in USD (default: 1.0)"),
-      synthesis: z
-        .boolean()
-        .optional()
-        .describe("Enable AI synthesis of findings (requires ANTHROPIC_API_KEY)"),
-      model: z.string().optional().describe("Anthropic model for synthesis"),
-      prompt: z.string().optional().describe("Custom system prompt for synthesis"),
+      description:
+        "Run multi-source research on a subject. Orchestrates 60+ data sources " +
+        "with reliability scoring, phased execution, and optional AI synthesis.",
+      inputSchema: debriefSchema,
     },
-    async (args) => debriefHandler(args as unknown as DebriefArgs, config)
+    // @ts-expect-error — TS2589: deep type instantiation from MCP SDK generics + Zod v3 with 6 fields
+    async (args: DebriefArgs, extra: { signal: AbortSignal }) =>
+      debriefHandler(args, config, extra.signal)
   )
 
   // ── list_sources tool ─────────────────────────────────────────────────
-  server.tool(
+  server.registerTool(
     "list_sources",
-    "List available research sources with metadata including reliability " +
-      "tier, cost, and availability. Optionally filter by category.",
     {
-      category: z
-        .string()
-        .optional()
-        .describe(`Filter to a single category. Valid: ${VALID_CATEGORIES.join(", ")}`),
+      description:
+        "List available research sources with metadata including reliability " +
+        "tier, cost, and availability. Optionally filter by category.",
+      inputSchema: {
+        category: z
+          .string()
+          .optional()
+          .describe(`Filter to a single category. Valid: ${VALID_CATEGORIES.join(", ")}`),
+      },
     },
-    (args) => listSourcesHandler(args as unknown as ListSourcesArgs)
+    (args: ListSourcesArgs) => listSourcesHandler(args)
   )
 
   return server
