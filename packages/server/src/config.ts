@@ -23,6 +23,7 @@ export interface ServerConfig {
  * - DEFAULT_BUDGET: float, default 1.0
  * - DEFAULT_MODEL: string, default "claude-sonnet-4-20250514"
  * - ANTHROPIC_API_KEY: string or undefined
+ * - CORS_ORIGIN: allowed origin for CORS, default permissive (*)
  */
 export function loadConfig(): ServerConfig {
   const port = safeParsePort(process.env.PORT, 8090)

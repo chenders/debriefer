@@ -40,10 +40,15 @@ export function createApp(config?: ServerConfig): express.Express {
 
   // Global error handler (4-arg signature tells Express this is error middleware)
   app.use(
-    (err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    (
+      err: Error & { status?: number },
+      _req: express.Request,
+      res: express.Response,
+      _next: express.NextFunction
+    ) => {
       console.error(err)
       // Honor status from body-parser SyntaxError (e.g., malformed JSON → 400)
-      const status = "status" in err && typeof err.status === "number" ? err.status : 500
+      const status = typeof err.status === "number" ? err.status : 500
       res.status(status).json({ error: status < 500 ? err.message : "Internal server error" })
     }
   )
