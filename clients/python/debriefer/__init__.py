@@ -1,4 +1,4 @@
-"""Debriefer: Multi-source research orchestration engine."""
+"""Debriefer: Python HTTP client for the debriefer research server."""
 
 from __future__ import annotations
 

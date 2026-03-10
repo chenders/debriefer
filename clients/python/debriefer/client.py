@@ -39,7 +39,8 @@ class AsyncDebriefer:
         self._client: httpx.AsyncClient | None = None
 
     async def __aenter__(self) -> AsyncDebriefer:
-        self._client = self._build_client()
+        if self._client is None:
+            self._client = self._build_client()
         return self
 
     async def __aexit__(
