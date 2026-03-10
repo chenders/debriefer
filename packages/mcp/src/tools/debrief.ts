@@ -87,7 +87,7 @@ export async function debriefHandler(
 
       synthesizer = new ClaudeSynthesizer<ResearchSubject, string>({
         promptBuilder: (subject, findings) => ({
-          system: (args.prompt ?? defaultPrompt) + jsonSuffix,
+          system: (args.prompt?.trim() || defaultPrompt) + jsonSuffix,
           user:
             `Subject: ${subject.name}\n\nFindings:\n${findings.map((f) => `[${f.sourceName}] ${f.text}`).join("\n\n")}\n\n` +
             'Respond with JSON: { "summary": "..." }',
@@ -122,13 +122,15 @@ export async function debriefHandler(
       phases.push({ phase: 2, name: "Paid Sources", sources: paidSources })
     }
 
-    // 5. Build config
+    // 5. Build config — normalize empty strings and validate budget
+    const effectiveBudget = args.budget && args.budget > 0 ? args.budget : config.defaultBudget
+    const effectiveModel = args.model?.trim() || config.defaultModel
     const orchestratorConfig: ResearchConfig = {
       costLimits: {
-        maxCostPerSubject: args.budget ?? config.defaultBudget,
+        maxCostPerSubject: effectiveBudget,
       },
       synthesis: {
-        model: args.model ?? config.defaultModel,
+        model: effectiveModel,
       },
     }
 

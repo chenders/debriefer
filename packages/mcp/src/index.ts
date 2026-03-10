@@ -11,7 +11,7 @@
  * server connects over stdio transport for use by MCP-compatible clients.
  */
 
-import { z } from "zod/v3"
+import { z } from "zod"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { debriefHandler, type DebriefArgs } from "./tools/debrief.js"
 import { listSourcesHandler, type ListSourcesArgs } from "./tools/list-sources.js"
@@ -34,9 +34,13 @@ export function createServer(): McpServer {
 
   // ── debrief tool ──────────────────────────────────────────────────────
   const debriefSchema = {
-    name: z.string().describe("Name of the subject to research"),
+    name: z.string().min(1, "Subject name is required").describe("Name of the subject to research"),
     categories: z.array(z.string()).optional().describe(categoriesDesc),
-    budget: z.number().optional().describe("Maximum cost in USD (default: 1.0)"),
+    budget: z
+      .number()
+      .positive("Budget must be positive")
+      .optional()
+      .describe("Maximum cost in USD (default: 1.0)"),
     synthesis: z
       .boolean()
       .optional()
@@ -53,7 +57,6 @@ export function createServer(): McpServer {
         "with reliability scoring, phased execution, and optional AI synthesis.",
       inputSchema: debriefSchema,
     },
-    // @ts-expect-error — TS2589: deep type instantiation from MCP SDK generics + Zod v3 with 6 fields
     async (args: DebriefArgs, extra: { signal: AbortSignal }) =>
       debriefHandler(args, config, extra.signal)
   )
@@ -90,8 +93,10 @@ export {
 export type { SourceCategory } from "./source-registry.js"
 
 // ── Direct-run: connect via stdio ─────────────────────────────────────
-const isDirectRun =
-  process.argv[1]?.includes("debriefer-mcp") || process.argv[1]?.endsWith("index.js")
+import { fileURLToPath } from "node:url"
+
+const thisFile = fileURLToPath(import.meta.url)
+const isDirectRun = process.argv[1] === thisFile
 
 if (isDirectRun) {
   const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js")
