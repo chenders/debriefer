@@ -2,3 +2,4 @@ dist
 node_modules
 .turbo
 package-lock.json
+.pytest_cache
