@@ -1,14 +1,11 @@
-#!/usr/bin/env node
-
 /**
- * debriefer-mcp — MCP server entry point.
+ * debriefer-mcp — MCP server library entry point.
  *
  * Exports a `createServer()` factory that returns an McpServer with two
  * registered tools: `debrief` (single-subject research orchestration)
  * and `list_sources` (source metadata listing).
  *
- * When run directly (via `debriefer-mcp` bin or `node index.js`), the
- * server connects over stdio transport for use by MCP-compatible clients.
+ * For CLI usage, see `cli.ts` which connects via StdioServerTransport.
  */
 
 import { z } from "zod"
@@ -40,7 +37,7 @@ export function createServer(): McpServer {
       .number()
       .positive("Budget must be positive")
       .optional()
-      .describe("Maximum cost in USD (default: 1.0)"),
+      .describe(`Maximum cost in USD (default: ${config.defaultBudget})`),
     synthesis: z
       .boolean()
       .optional()
@@ -91,16 +88,3 @@ export {
   createSourcesWithCategory,
 } from "./source-registry.js"
 export type { SourceCategory } from "./source-registry.js"
-
-// ── Direct-run: connect via stdio ─────────────────────────────────────
-import { fileURLToPath } from "node:url"
-
-const thisFile = fileURLToPath(import.meta.url)
-const isDirectRun = process.argv[1] === thisFile
-
-if (isDirectRun) {
-  const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js")
-  const server = createServer()
-  const transport = new StdioServerTransport()
-  await server.connect(transport)
-}

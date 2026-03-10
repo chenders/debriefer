@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "debriefer-mcp": "dist/index.js"
+    "debriefer-mcp": "dist/cli.js"
   },
   "exports": {
     ".": {
