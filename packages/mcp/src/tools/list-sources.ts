@@ -20,7 +20,8 @@ export interface ListSourcesArgs {
  * categories silently return an empty array.
  */
 export function listSourcesHandler(args: ListSourcesArgs): CallToolResult {
-  const categories = args.category ? [args.category] : undefined
+  const trimmed = args.category?.trim()
+  const categories = trimmed ? [trimmed] : undefined
   const tagged = createSourcesWithCategory(categories)
 
   const data = tagged.map(({ source, category }) => ({
