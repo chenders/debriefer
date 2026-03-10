@@ -903,7 +903,7 @@ Implements Phase 8 — an MCP server wrapping debriefer's research orchestration
     }
   }
 }
-````
+```
 
 ## Test plan
 
@@ -913,10 +913,9 @@ Implements Phase 8 — an MCP server wrapping debriefer's research orchestration
 - [ ] debrief tool handler tests
 - [ ] MCP server integration tests (InMemoryTransport)
 - [ ] Type-check, lint, prettier clean
-      EOF
-      )"
-
-```
+EOF
+)"
+````
 
 ---
 
@@ -931,4 +930,7 @@ Tasks should be implemented in this order:
 5. **Task 4** — debrief tool handler
 6. **Task 5** — MCP server entry point
 7. **Task 7** — Pre-push verification + PR
+
+```
+
 ```
