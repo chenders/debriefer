@@ -48,6 +48,10 @@ class AsyncDebriefer:
         exc_val: BaseException | None,
         exc_tb: Any,
     ) -> None:
+        await self.close()
+
+    async def close(self) -> None:
+        """Close the underlying HTTP client and release resources."""
         if self._client is not None:
             await self._client.aclose()
             self._client = None
@@ -97,6 +101,7 @@ class AsyncDebriefer:
                 status_code=response.status_code,
                 message=message,
                 details=details,
+                body=body or None,
             )
 
         return response.json()

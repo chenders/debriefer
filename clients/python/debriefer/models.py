@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -38,7 +40,7 @@ class SynthesisResult(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    data: str | None
+    data: Any
     cost_usd: float = Field(alias="costUsd")
     input_tokens: int = Field(alias="inputTokens")
     output_tokens: int = Field(alias="outputTokens")
@@ -51,7 +53,7 @@ class DebriefResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     subject: Subject
-    data: str | None
+    data: Any = None
     findings: list[Finding]
     synthesis_result: SynthesisResult | None = Field(
         default=None, alias="synthesisResult"

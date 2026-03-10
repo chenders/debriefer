@@ -103,16 +103,18 @@ class TestSynthesisResult:
         assert sr.output_tokens == 300
         assert sr.model == "claude-sonnet-4-20250514"
 
-    def test_data_can_be_none(self) -> None:
+    def test_data_can_be_list(self) -> None:
+        """NoopSynthesizer returns findings array as data."""
+        findings = [{"text": "found", "sourceType": "wiki"}]
         data = {
-            "data": None,
+            "data": findings,
             "costUsd": 0.0,
             "inputTokens": 0,
             "outputTokens": 0,
             "model": "noop",
         }
         sr = SynthesisResult.model_validate(data)
-        assert sr.data is None
+        assert sr.data == findings
 
 
 class TestDebriefResult:

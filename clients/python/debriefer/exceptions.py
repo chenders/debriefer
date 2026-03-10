@@ -15,10 +15,12 @@ class DebrieferAPIError(DebrieferError):
         status_code: int,
         message: str,
         details: list[str] | None = None,
+        body: dict[str, object] | None = None,
     ) -> None:
         self.status_code = status_code
         self.message = message
         self.details = details
+        self.body = body
         super().__init__(f"HTTP {status_code}: {message}")
 
 
