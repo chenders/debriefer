@@ -47,7 +47,7 @@ No API keys required — Wikipedia, Wikidata, and Open Library are free and open
 | [`debriefer-cli`](packages/cli)         | Command-line interface                   | Stable |
 | [`debriefer-server`](packages/server)   | REST API server + Docker                 | Stable |
 | [`debriefer-mcp`](packages/mcp)         | Model Context Protocol for AI assistants | Stable |
-| [`debriefer`](clients/python)           | Python HTTP client                       | Stable |
+| [`debriefer` (Python)](clients/python)  | Python HTTP client                       | Stable |
 
 ## How It Works
 
@@ -307,7 +307,7 @@ async with AsyncDebriefer("http://localhost:8090") as db:
 
 Auth is only needed if you've set `DEBRIEFER_API_KEYS` on the server — pass `api_key="sk-..."` to enable it.
 
-Install from source: `cd clients/python && pip install -e ".[dev]"`
+Not yet published on PyPI; install from source: `cd clients/python && pip install -e ".[dev]"`
 
 ## Roadmap
 
