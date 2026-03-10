@@ -293,16 +293,20 @@ debriefer debrief "Toshiro Mifune" --verbose --categories structured,books,archi
 An async Python HTTP client wrapping `debriefer-server`:
 
 ```python
+import asyncio
 from debriefer import AsyncDebriefer
 
-async with AsyncDebriefer("http://localhost:8090") as db:
-    result = await db.debrief("Marie Curie", categories=["structured", "news"])
+async def main():
+    async with AsyncDebriefer("http://localhost:8090") as db:
+        result = await db.debrief("Marie Curie", categories=["structured", "news"])
 
-    for finding in result.findings:
-        print(f"[{finding.source_name}] {finding.url}")
+        for finding in result.findings:
+            print(f"[{finding.source_name}] {finding.url}")
 
-    sources = await db.list_sources(category="news")
-    health = await db.health()
+        sources = await db.list_sources(category="news")
+        health = await db.health()
+
+asyncio.run(main())
 ```
 
 Auth is only needed if you've set `DEBRIEFER_API_KEYS` on the server — pass `api_key="sk-..."` to enable it.
