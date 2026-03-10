@@ -34,9 +34,14 @@ export async function debriefHandler(
   signal?: AbortSignal
 ): Promise<CallToolResult> {
   try {
-    // 1. Validate categories
-    if (args.categories) {
-      const invalid = args.categories.filter(
+    // 1. Normalize and validate categories
+    const categories = args.categories?.map((c) => c.trim()).filter((c) => c.length > 0)
+
+    // Treat empty array as "all categories"
+    const effectiveCategories = categories && categories.length > 0 ? categories : undefined
+
+    if (effectiveCategories) {
+      const invalid = effectiveCategories.filter(
         (c) => !VALID_CATEGORIES.includes(c as (typeof VALID_CATEGORIES)[number])
       )
       if (invalid.length > 0) {
@@ -53,7 +58,7 @@ export async function debriefHandler(
     }
 
     // 2. Create sources and filter to available
-    const tagged = createSourcesWithCategory(args.categories)
+    const tagged = createSourcesWithCategory(effectiveCategories)
     const available = tagged.filter(({ source }) => source.isAvailable())
 
     if (available.length === 0) {
