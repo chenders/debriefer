@@ -94,7 +94,7 @@ class AsyncDebriefer:
             body: dict[str, Any] = {}
             try:
                 body = response.json()
-            except Exception:
+            except (ValueError, KeyError):
                 pass
             message = body.get("error", response.reason_phrase or "Unknown error")
             details = body.get("details")
