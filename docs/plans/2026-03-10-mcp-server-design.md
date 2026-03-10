@@ -54,19 +54,25 @@ Returns array of source metadata: name, type, category, reliability tier/score, 
 
 ```
 packages/mcp/src/
-├── index.ts                  # Entry point: MCP Server + StdioServerTransport
+├── index.ts                  # Library entry: createServer() factory + re-exports
+├── cli.ts                    # CLI entry: StdioServerTransport + shebang
+├── config.ts                 # Environment variable config loader
 ├── tools/
 │   ├── debrief.ts            # debrief tool handler
 │   └── list-sources.ts       # list_sources tool handler
 └── source-registry.ts        # Category → source mapping (same as server)
 ```
 
-### Entry Point (`index.ts`)
+### Library Entry (`index.ts`)
 
-- Creates `McpServer` from `@modelcontextprotocol/sdk/server/mcp`
-- Registers both tools with Zod input schemas (SDK converts to JSON Schema internally)
-- Connects via `StdioServerTransport` for stdio-based MCP communication
-- Shebang line (`#!/usr/bin/env node`) for direct execution
+- Exports `createServer()` which creates `McpServer` and registers both tools
+- Registers tools with Zod input schemas (SDK converts to JSON Schema internally)
+- Pure synchronous module — no top-level await, safe for programmatic import
+
+### CLI Entry (`cli.ts`)
+
+- Shebang line (`#!/usr/bin/env node`) for `npx debriefer-mcp`
+- Imports `createServer()`, connects via `StdioServerTransport`
 
 ### Tool Handlers
 
