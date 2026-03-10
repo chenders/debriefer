@@ -30,9 +30,9 @@ export function loadConfig(): McpConfig {
   }
 }
 
-/** parseFloat with NaN fallback. Values <= 0 fall back to the default. */
+/** parseFloat with NaN/Infinity fallback. Only finite values > 0 are accepted. */
 function safeParseFloat(value: string | undefined, fallback: number): number {
   if (value === undefined) return fallback
   const parsed = parseFloat(value)
-  return Number.isNaN(parsed) || parsed <= 0 ? fallback : parsed
+  return !Number.isFinite(parsed) || parsed <= 0 ? fallback : parsed
 }

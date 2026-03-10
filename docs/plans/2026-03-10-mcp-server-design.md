@@ -63,8 +63,8 @@ packages/mcp/src/
 
 ### Entry Point (`index.ts`)
 
-- Creates `Server` from `@modelcontextprotocol/sdk/server`
-- Registers both tools with JSON Schema input definitions
+- Creates `McpServer` from `@modelcontextprotocol/sdk/server/mcp`
+- Registers both tools with Zod input schemas (SDK converts to JSON Schema internally)
 - Connects via `StdioServerTransport` for stdio-based MCP communication
 - Shebang line (`#!/usr/bin/env node`) for direct execution
 

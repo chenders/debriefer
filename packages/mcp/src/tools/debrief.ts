@@ -123,7 +123,10 @@ export async function debriefHandler(
     }
 
     // 5. Build config — normalize empty strings and validate budget
-    const effectiveBudget = args.budget && args.budget > 0 ? args.budget : config.defaultBudget
+    const effectiveBudget =
+      typeof args.budget === "number" && Number.isFinite(args.budget) && args.budget > 0
+        ? args.budget
+        : config.defaultBudget
     const effectiveModel = args.model?.trim() || config.defaultModel
     const orchestratorConfig: ResearchConfig = {
       costLimits: {
