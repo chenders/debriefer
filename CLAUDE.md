@@ -157,7 +157,7 @@ Heavier dependencies are acceptable here: `@mozilla/readability`, `jsdom`, `he`,
 - **Test files**: `src/__tests__/*.test.ts` alongside source
 - **Mock patterns**: use `vi.fn()` and `vi.mock()`, never real API calls in unit tests
 - **Coverage targets**: happy path + error handling + edge cases for every module
-- Currently at 713 TypeScript tests across all packages (+ 39 Python client tests)
+- Hundreds of tests across all TypeScript packages and the Python client (see CI for current counts)
 
 ### Error Handling
 
