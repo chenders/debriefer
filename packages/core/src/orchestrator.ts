@@ -25,6 +25,7 @@ import type {
   ScoredFinding,
   DebriefResult,
   SourcePhaseGroup,
+  MinimalSource,
   Synthesizer,
   LifecycleHooks,
   TelemetryProvider,
@@ -167,7 +168,11 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
   }
 
   /**
-   * Execute all available sources in a single phase concurrently.
+   * Execute all available sources in a single phase.
+   *
+   * By default, sources run concurrently via Promise.allSettled(). When
+   * `phaseGroup.sequential` is true, sources run one at a time in order,
+   * stopping at the first source that returns a non-null finding.
    *
    * Fires onSourceAttempt before each lookup and onSourceComplete after.
    * Returns the phase's findings, attempt/success counts, and cost.
@@ -188,12 +193,40 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
       return { findings: [], sourcesAttempted: 0, sourcesSucceeded: 0, costUsd: 0 }
     }
 
+    if (phaseGroup.sequential) {
+      return this.executePhaseSequentially(
+        subject,
+        availableSources,
+        phaseGroup.phase,
+        signal,
+        hooks
+      )
+    }
+
+    return this.executePhaseConcurrently(subject, availableSources, phaseGroup.phase, signal, hooks)
+  }
+
+  /**
+   * Execute sources concurrently via Promise.allSettled().
+   */
+  private async executePhaseConcurrently(
+    subject: TSubject,
+    availableSources: MinimalSource<TSubject>[],
+    phase: number,
+    signal: AbortSignal | undefined,
+    hooks: LifecycleHooks<TSubject, TOutput> | undefined
+  ): Promise<{
+    findings: ScoredFinding[]
+    sourcesAttempted: number
+    sourcesSucceeded: number
+    costUsd: number
+  }> {
     const timeoutSignal = AbortSignal.timeout(120_000)
     const phaseSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
 
     const results = await Promise.allSettled(
       availableSources.map((source) => {
-        hooks?.onSourceAttempt?.(subject, source.name, phaseGroup.phase)
+        hooks?.onSourceAttempt?.(subject, source.name, phase)
         return source.lookup(subject, phaseSignal)
       })
     )
@@ -223,6 +256,69 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
     }
 
     return { findings, sourcesAttempted: availableSources.length, sourcesSucceeded, costUsd }
+  }
+
+  /**
+   * Execute sources sequentially, stopping at the first non-null finding.
+   * Used for AI model phases where cheapest-first ordering controls cost.
+   */
+  private async executePhaseSequentially(
+    subject: TSubject,
+    availableSources: MinimalSource<TSubject>[],
+    phase: number,
+    signal: AbortSignal | undefined,
+    hooks: LifecycleHooks<TSubject, TOutput> | undefined
+  ): Promise<{
+    findings: ScoredFinding[]
+    sourcesAttempted: number
+    sourcesSucceeded: number
+    costUsd: number
+  }> {
+    const timeoutSignal = AbortSignal.timeout(120_000)
+    const phaseSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
+
+    const findings: ScoredFinding[] = []
+    let costUsd = 0
+    let sourcesAttempted = 0
+    let sourcesSucceeded = 0
+
+    for (const source of availableSources) {
+      if (phaseSignal.aborted) break
+
+      sourcesAttempted++
+      hooks?.onSourceAttempt?.(subject, source.name, phase)
+
+      let finding: RawFinding | null = null
+      try {
+        finding = await source.lookup(subject, phaseSignal)
+      } catch (error) {
+        // Source errors are swallowed — consistent with concurrent path.
+        // BaseResearchSource.lookup() already records errors internally,
+        // but record here too for defense-in-depth.
+        this.telemetry.recordError(error instanceof Error ? error : new Error(String(error)), {
+          source: source.name,
+          subject: subject.name,
+          phase,
+        })
+      }
+
+      hooks?.onSourceComplete?.(subject, source.name, finding, finding?.costUsd ?? 0)
+
+      if (finding) {
+        costUsd += finding.costUsd
+        sourcesSucceeded++
+        findings.push({
+          ...finding,
+          sourceType: source.type,
+          sourceName: source.name,
+          reliabilityTier: source.reliabilityTier,
+          reliabilityScore: source.reliabilityScore,
+        })
+        break // Stop at first success
+      }
+    }
+
+    return { findings, sourcesAttempted, sourcesSucceeded, costUsd }
   }
 
   /**

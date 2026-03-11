@@ -188,6 +188,12 @@ export interface SourcePhaseGroup<TSubject extends ResearchSubject> {
   name?: string
   /** Sources to execute concurrently within this phase */
   sources: ReadonlyArray<MinimalSource<TSubject>>
+  /**
+   * If true, execute sources sequentially within this phase instead of
+   * concurrently. Stops at the first source that returns a non-null finding.
+   * Useful for AI model sources where you want cheapest-first with early exit.
+   */
+  sequential?: boolean
 }
 
 // ============================================================================

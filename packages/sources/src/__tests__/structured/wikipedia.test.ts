@@ -627,6 +627,236 @@ describe("WikipediaSource", () => {
       const subject = makeSubject()
       expect(source.buildQuery(subject)).toBe("John Wayne|sections:custom|no-intro")
     })
+
+    it("includes async marker when asyncSectionFilter is provided", () => {
+      const source = new WikipediaSource({
+        asyncSectionFilter: async (sections) => sections,
+      })
+      const subject = makeSubject()
+      expect(source.buildQuery(subject)).toBe("John Wayne|sections:async")
+    })
+
+    it("prefers async marker over sync marker when both provided", () => {
+      const source = new WikipediaSource({
+        sectionFilter: (sections) => sections,
+        asyncSectionFilter: async (sections) => sections,
+      })
+      const subject = makeSubject()
+      expect(source.buildQuery(subject)).toBe("John Wayne|sections:async")
+    })
+
+    it("includes validate marker when validatePerson is provided", () => {
+      const source = new WikipediaSource({
+        validatePerson: () => true,
+      })
+      const subject = makeSubject()
+      expect(source.buildQuery(subject)).toBe("John Wayne|validate:person")
+    })
+  })
+
+  describe("async section filter", () => {
+    it("uses asyncSectionFilter when provided", async () => {
+      const asyncFilter = vi.fn().mockResolvedValue([{ index: 2, title: "Death", depth: 1 }])
+
+      const source = new WikipediaSource({ asyncSectionFilter: asyncFilter })
+      const subject = makeSubject()
+
+      const doc = makeDocument("John Wayne", [
+        makeSection(
+          "",
+          "Introduction text about John Wayne that is long enough to include in the output for the test.",
+          0
+        ),
+        makeSection(
+          "Career",
+          "Career section content that is long enough to include in the output for the test to verify filtering.",
+          1
+        ),
+        makeSection(
+          "Death",
+          "Wayne died of stomach cancer on June 11, 1979, at UCLA Medical Center in Los Angeles.",
+          1
+        ),
+      ])
+
+      mockFetch.mockResolvedValueOnce(doc)
+
+      const signal = AbortSignal.timeout(5000)
+      const result = await source.lookup(subject, signal)
+
+      expect(asyncFilter).toHaveBeenCalledTimes(1)
+      // First arg: all sections
+      expect(asyncFilter.mock.calls[0]![0]).toHaveLength(3)
+      // Second arg: full article text
+      expect(asyncFilter.mock.calls[0]![1]).toContain("John Wayne")
+      expect(result).not.toBeNull()
+      // Intro included by default
+      expect(result!.text).toContain("[Introduction]")
+      // Death selected by async filter
+      expect(result!.text).toContain("[Death]")
+      // Career NOT selected
+      expect(result!.text).not.toContain("[Career]")
+    })
+
+    it("asyncSectionFilter takes precedence over sync sectionFilter", async () => {
+      const syncFilter = vi.fn().mockReturnValue([])
+      const asyncFilter = vi.fn().mockResolvedValue([{ index: 1, title: "Death", depth: 1 }])
+
+      const source = new WikipediaSource({
+        sectionFilter: syncFilter,
+        asyncSectionFilter: asyncFilter,
+      })
+      const subject = makeSubject()
+
+      const doc = makeDocument("John Wayne", [
+        makeSection(
+          "",
+          "Introduction text about John Wayne that is long enough to include in the output for the test.",
+          0
+        ),
+        makeSection(
+          "Death",
+          "Wayne died of stomach cancer on June 11, 1979, at UCLA Medical Center in Los Angeles.",
+          1
+        ),
+      ])
+
+      mockFetch.mockResolvedValueOnce(doc)
+
+      const signal = AbortSignal.timeout(5000)
+      const result = await source.lookup(subject, signal)
+
+      // Async filter should have been called, NOT the sync one
+      expect(asyncFilter).toHaveBeenCalledTimes(1)
+      expect(syncFilter).not.toHaveBeenCalled()
+      expect(result).not.toBeNull()
+      expect(result!.text).toContain("[Death]")
+    })
+  })
+
+  describe("person validation", () => {
+    it("uses the document when validatePerson returns true", async () => {
+      const validate = vi.fn().mockReturnValue(true)
+      const source = new WikipediaSource({ validatePerson: validate })
+      const subject = makeSubject()
+
+      const doc = makeDocument("John Wayne", [
+        makeSection(
+          "",
+          "John Wayne (born May 26, 1907) was born Marion Robert Morrison, an American actor.",
+          0
+        ),
+      ])
+
+      mockFetch.mockResolvedValueOnce(doc)
+
+      const signal = AbortSignal.timeout(5000)
+      const result = await source.lookup(subject, signal)
+
+      expect(validate).toHaveBeenCalledTimes(1)
+      expect(validate.mock.calls[0]![1]).toBe(subject)
+      expect(result).not.toBeNull()
+      expect(result!.text).toContain("John Wayne")
+    })
+
+    it("tries disambiguation suffixes when validatePerson returns false", async () => {
+      const validate = vi
+        .fn()
+        .mockReturnValueOnce(false) // reject first doc
+        .mockReturnValueOnce(true) // accept alternate
+
+      const source = new WikipediaSource({
+        validatePerson: validate,
+        disambiguationSuffixes: ["_(actor)"],
+      })
+      const subject = makeSubject()
+
+      const wrongDoc = makeDocument("John Wayne", [
+        makeSection(
+          "",
+          "John Wayne is a city in Indiana with a population of about 30,000 people.",
+          0
+        ),
+      ])
+      const actorDoc = makeDocument("John Wayne (actor)", [
+        makeSection(
+          "",
+          "John Wayne (born May 26, 1907) was born Marion Robert Morrison, an American actor.",
+          0
+        ),
+      ])
+
+      mockFetch.mockResolvedValueOnce(wrongDoc).mockResolvedValueOnce(actorDoc)
+
+      const signal = AbortSignal.timeout(5000)
+      const result = await source.lookup(subject, signal)
+
+      expect(validate).toHaveBeenCalledTimes(2)
+      expect(result).not.toBeNull()
+      expect(result!.text).toContain("Marion Robert Morrison")
+    })
+
+    it("returns null when validatePerson fails for all documents", async () => {
+      const validate = vi.fn().mockReturnValue(false)
+
+      const source = new WikipediaSource({
+        validatePerson: validate,
+        disambiguationSuffixes: ["_(actor)"],
+      })
+      const subject = makeSubject()
+
+      const doc1 = makeDocument("John Wayne", [
+        makeSection(
+          "",
+          "John Wayne is a city in Indiana with a population of about 30,000 people.",
+          0
+        ),
+      ])
+      const doc2 = makeDocument("John Wayne (actor)", [
+        makeSection(
+          "",
+          "Different John Wayne actor from an indie film that is not the right person.",
+          0
+        ),
+      ])
+
+      mockFetch.mockResolvedValueOnce(doc1).mockResolvedValueOnce(doc2)
+
+      const signal = AbortSignal.timeout(5000)
+      const result = await source.lookup(subject, signal)
+
+      expect(validate).toHaveBeenCalledTimes(2)
+      expect(result).toBeNull()
+    })
+
+    it("returns null immediately when validation fails and handleDisambiguation is false", async () => {
+      const validate = vi.fn().mockReturnValue(false)
+
+      const source = new WikipediaSource({
+        validatePerson: validate,
+        handleDisambiguation: false,
+        disambiguationSuffixes: ["_(actor)"],
+      })
+      const subject = makeSubject()
+
+      const doc = makeDocument("John Wayne", [
+        makeSection(
+          "",
+          "John Wayne is a city in Indiana with a population of about 30,000 people.",
+          0
+        ),
+      ])
+
+      mockFetch.mockResolvedValueOnce(doc)
+
+      const signal = AbortSignal.timeout(5000)
+      const result = await source.lookup(subject, signal)
+
+      // Should NOT try disambiguation suffixes
+      expect(mockFetch).toHaveBeenCalledTimes(1)
+      expect(validate).toHaveBeenCalledTimes(1)
+      expect(result).toBeNull()
+    })
   })
 
   describe("keyword-based confidence delegation", () => {
