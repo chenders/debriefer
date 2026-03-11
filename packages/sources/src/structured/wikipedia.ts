@@ -191,24 +191,29 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
     // If we still have no valid document, return null
     if (!doc || this.isDisambig(doc)) return null
 
-    // Validate person if callback is provided
+    // Validate person if callback is provided.
+    // Track fullText so we can reuse it for asyncSectionFilter without recomputing.
+    let cachedFullText: string | undefined
     if (this.validatePerson) {
-      if (!this.validatePerson(this.getFullText(doc), subject)) {
+      cachedFullText = this.getFullText(doc)
+      if (!this.validatePerson(cachedFullText, subject)) {
         // Validation failed — try disambiguation suffixes if enabled
         if (!this.handleDisambiguation) return null
         const altDoc = await this.tryDisambiguationSuffixes(baseTitle, null)
         if (!altDoc || this.isDisambig(altDoc)) return null
         // Validate the alternate document too
-        if (!this.validatePerson(this.getFullText(altDoc), subject)) return null
+        const altText = this.getFullText(altDoc)
+        if (!this.validatePerson(altText, subject)) return null
         doc = altDoc
+        cachedFullText = altText
       }
     }
 
     const sections = doc.sections() as wtf.Section[]
     if (sections.length === 0) return null
 
-    // Compute full text once for async section filter (after doc is finalized)
-    const fullText = this.asyncSectionFilter ? this.getFullText(doc) : undefined
+    // Reuse cached full text from validation, or compute once for async filter
+    const fullText = this.asyncSectionFilter ? (cachedFullText ?? this.getFullText(doc)) : undefined
 
     // Map wtf sections to WikipediaSection interface
     const wikiSections: WikipediaSection[] = sections.map((s: wtf.Section, i: number) => ({

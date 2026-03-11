@@ -186,7 +186,7 @@ export interface SourcePhaseGroup<TSubject extends ResearchSubject> {
   phase: number
   /** Human-readable phase name for logging (e.g., "Structured Data", "Web Search") */
   name?: string
-  /** Sources to execute concurrently within this phase */
+  /** Sources to execute within this phase (concurrently by default, or sequentially when `sequential: true`) */
   sources: ReadonlyArray<MinimalSource<TSubject>>
   /**
    * If true, execute sources sequentially within this phase instead of
