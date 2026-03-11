@@ -157,7 +157,7 @@ Heavier dependencies are acceptable here: `@mozilla/readability`, `jsdom`, `he`,
 - **Test files**: `src/__tests__/*.test.ts` alongside source
 - **Mock patterns**: use `vi.fn()` and `vi.mock()`, never real API calls in unit tests
 - **Coverage targets**: happy path + error handling + edge cases for every module
-- Currently at 195 tests across 11 files in core
+- Hundreds of tests across all TypeScript packages and the Python client (see CI for current counts)
 
 ### Error Handling
 
@@ -231,13 +231,13 @@ Based on Wikipedia's Reliable Sources Perennial list (RSP). When adding new sour
 | 2. Core types              | Complete | 19 types, 3 error classes, ReliabilityTier                             |
 | 3. Infrastructure          | Complete | Rate limiter, cost tracker, batch runner, cache, telemetry, confidence |
 | 4. Engine                  | Complete | BaseResearchSource, ClaudeSynthesizer, ResearchOrchestrator            |
-| 5. Built-in sources        | Pending  | Migrate 60+ sources from deadonfilm                                    |
-| 6. CLI                     | Pending  | Commander.js CLI                                                       |
-| 7. HTTP server             | Pending  | Express REST API + Docker                                              |
-| 8. MCP server              | Pending  | Model Context Protocol for AI assistants                               |
-| 9. Python client           | Pending  | httpx + Pydantic HTTP wrapper                                          |
+| 5. Built-in sources        | Complete | 30+ sources migrated from deadonfilm                                   |
+| 6. CLI                     | Complete | Commander.js CLI                                                       |
+| 7. HTTP server             | Complete | Express REST API + Docker                                              |
+| 8. MCP server              | Complete | Model Context Protocol for AI assistants                               |
+| 9. Python client           | Complete | httpx + Pydantic HTTP wrapper                                          |
 | 10. Deadonfilm integration | Pending  | Refactor deadonfilm to consume debriefer                               |
-| 11. Polish + publish       | Pending  | README, npm publish, PyPI, Docker Hub                                  |
+| 11. Polish + publish       | Pending  | npm publish, PyPI, Docker Hub                                          |
 
 ## Reference Documents
 

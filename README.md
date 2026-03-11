@@ -40,14 +40,14 @@ No API keys required — Wikipedia, Wikidata, and Open Library are free and open
 
 ## Packages
 
-| Package                                 | Description                              | Status  |
-| --------------------------------------- | ---------------------------------------- | ------- |
-| [`debriefer`](packages/core)            | Core orchestration engine                | Stable  |
-| [`debriefer-sources`](packages/sources) | 30+ built-in source integrations         | Stable  |
-| [`debriefer-cli`](packages/cli)         | Command-line interface                   | Stable  |
-| [`debriefer-server`](packages/server)   | REST API server + Docker                 | Planned |
-| [`debriefer-mcp`](packages/mcp)         | Model Context Protocol for AI assistants | Planned |
-| `debriefer` (PyPI)                      | Python HTTP client                       | Planned |
+| Package                                 | Description                              | Status |
+| --------------------------------------- | ---------------------------------------- | ------ |
+| [`debriefer`](packages/core)            | Core orchestration engine                | Stable |
+| [`debriefer-sources`](packages/sources) | 30+ built-in source integrations         | Stable |
+| [`debriefer-cli`](packages/cli)         | Command-line interface                   | Stable |
+| [`debriefer-server`](packages/server)   | REST API server + Docker                 | Stable |
+| [`debriefer-mcp`](packages/mcp)         | Model Context Protocol for AI assistants | Stable |
+| [`debriefer` (Python)](clients/python)  | Python HTTP client                       | Stable |
 
 ## How It Works
 
@@ -263,7 +263,7 @@ One researcher, four countries' archives, one API call. Without Debriefer, this 
 ## CLI
 
 ```bash
-# From the repo (npm publish is on the roadmap)
+# From the repo
 npm run build && npm link -w packages/cli
 
 # List available sources and their reliability tiers
@@ -290,19 +290,28 @@ debriefer debrief "Toshiro Mifune" --verbose --categories structured,books,archi
 
 ## Python Client
 
-A Python HTTP client (`pip install debriefer`) is planned for use with `debriefer-server`:
+An async Python HTTP client wrapping `debriefer-server`:
 
 ```python
-from debriefer import Debriefer
+import asyncio
+from debriefer import AsyncDebriefer
 
-client = Debriefer(base_url="http://localhost:3000")
-result = client.debrief(name="Marie Curie", categories=["structured", "news"])
+async def main():
+    async with AsyncDebriefer("http://localhost:8090") as db:
+        result = await db.debrief("Marie Curie", categories=["structured", "news"])
 
-for finding in result.findings:
-    print(f"[{finding.source_name}] {finding.url}")
+        for finding in result.findings:
+            print(f"[{finding.source_name}] {finding.url}")
+
+        sources = await db.list_sources(category="news")
+        health = await db.health()
+
+asyncio.run(main())
 ```
 
-The HTTP server and Python client are on the [roadmap](#roadmap).
+Auth is only needed if you've set `DEBRIEFER_API_KEYS` on the server — pass `api_key="sk-..."` to enable it.
+
+Not yet published on PyPI; install from source: `cd clients/python && pip install -e ".[dev]"`
 
 ## Roadmap
 
@@ -311,9 +320,9 @@ The HTTP server and Python client are on the [roadmap](#roadmap).
 | Core engine                | Complete |
 | 30+ built-in sources       | Complete |
 | CLI                        | Complete |
-| HTTP server + Docker       | Planned  |
-| MCP server (AI assistants) | Planned  |
-| Python client              | Planned  |
+| HTTP server + Docker       | Complete |
+| MCP server (AI assistants) | Complete |
+| Python client              | Complete |
 | npm publish                | Planned  |
 
 ## Contributing
