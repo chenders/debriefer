@@ -306,12 +306,22 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
 
       sourcesAttempted++
 
-      let finding: RawFinding | null = null
       try {
         hooks?.onSourceAttempt?.(subject, source.name, phase)
+      } catch (error) {
+        this.telemetry.recordError(error instanceof Error ? error : new Error(String(error)), {
+          hook: "onSourceAttempt",
+          source: source.name,
+          subject: subject.name,
+          phase,
+        })
+      }
+
+      let finding: RawFinding | null = null
+      try {
         finding = await source.lookup(subject, phaseSignal)
       } catch (error) {
-        // Source/hook errors are swallowed — consistent with concurrent path
+        // Source errors are swallowed — consistent with concurrent path
         // where async callbacks turn throws into rejected promises.
         this.telemetry.recordError(error instanceof Error ? error : new Error(String(error)), {
           source: source.name,
