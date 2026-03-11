@@ -10,7 +10,8 @@
  * Algorithm (per subject):
  * 1. For each phase in order:
  *    a. Filter to available sources (isAvailable())
- *    b. Fire all sources concurrently via Promise.allSettled()
+ *    b. Execute sources — concurrently via Promise.allSettled() by default,
+ *       or sequentially (stop at first success) when phase.sequential is true
  *    c. Collect successful findings, tag with reliability info → ScoredFinding
  *    d. Check early-stop: do we have earlyStopThreshold+ high-quality families?
  *    e. Check per-subject cost limit
@@ -25,6 +26,7 @@ import type {
   ScoredFinding,
   DebriefResult,
   SourcePhaseGroup,
+  MinimalSource,
   Synthesizer,
   LifecycleHooks,
   TelemetryProvider,
@@ -85,9 +87,11 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
   /**
    * Research a single subject through all configured phases.
    *
-   * Iterates through phases sequentially. Within each phase, all sources run
-   * concurrently via Promise.allSettled. Accumulates findings, checks early
-   * stopping between phases, then runs synthesis on all collected findings.
+   * Iterates through phases sequentially. Within each phase, sources run
+   * concurrently via Promise.allSettled by default, or sequentially (stopping
+   * at first success) when `phase.sequential` is true. Accumulates findings,
+   * checks early stopping between phases, then runs synthesis on all collected
+   * findings.
    *
    * @param subject - The subject to research
    * @param options - Optional abort signal and lifecycle hooks
@@ -167,7 +171,11 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
   }
 
   /**
-   * Execute all available sources in a single phase concurrently.
+   * Execute all available sources in a single phase.
+   *
+   * By default, sources run concurrently via Promise.allSettled(). When
+   * `phaseGroup.sequential` is true, sources run one at a time in order,
+   * stopping at the first source that returns a non-null finding.
    *
    * Fires onSourceAttempt before each lookup and onSourceComplete after.
    * Returns the phase's findings, attempt/success counts, and cost.
@@ -188,12 +196,40 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
       return { findings: [], sourcesAttempted: 0, sourcesSucceeded: 0, costUsd: 0 }
     }
 
+    if (phaseGroup.sequential) {
+      return this.executePhaseSequentially(
+        subject,
+        availableSources,
+        phaseGroup.phase,
+        signal,
+        hooks
+      )
+    }
+
+    return this.executePhaseConcurrently(subject, availableSources, phaseGroup.phase, signal, hooks)
+  }
+
+  /**
+   * Execute sources concurrently via Promise.allSettled().
+   */
+  private async executePhaseConcurrently(
+    subject: TSubject,
+    availableSources: MinimalSource<TSubject>[],
+    phase: number,
+    signal: AbortSignal | undefined,
+    hooks: LifecycleHooks<TSubject, TOutput> | undefined
+  ): Promise<{
+    findings: ScoredFinding[]
+    sourcesAttempted: number
+    sourcesSucceeded: number
+    costUsd: number
+  }> {
     const timeoutSignal = AbortSignal.timeout(120_000)
     const phaseSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
 
     const results = await Promise.allSettled(
-      availableSources.map((source) => {
-        hooks?.onSourceAttempt?.(subject, source.name, phaseGroup.phase)
+      availableSources.map(async (source) => {
+        hooks?.onSourceAttempt?.(subject, source.name, phase)
         return source.lookup(subject, phaseSignal)
       })
     )
@@ -207,7 +243,23 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
       const source = availableSources[i]!
       const finding = result.status === "fulfilled" ? (result.value as RawFinding | null) : null
 
-      hooks?.onSourceComplete?.(subject, source.name, finding, finding?.costUsd ?? 0)
+      if (result.status === "rejected") {
+        this.telemetry.recordError(
+          result.reason instanceof Error ? result.reason : new Error(String(result.reason)),
+          { source: source.name, subject: subject.name, phase }
+        )
+      }
+
+      try {
+        hooks?.onSourceComplete?.(subject, source.name, finding, finding?.costUsd ?? 0)
+      } catch (error) {
+        this.telemetry.recordError(error instanceof Error ? error : new Error(String(error)), {
+          hook: "onSourceComplete",
+          source: source.name,
+          subject: subject.name,
+          phase,
+        })
+      }
 
       if (finding) {
         costUsd += finding.costUsd
@@ -223,6 +275,77 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
     }
 
     return { findings, sourcesAttempted: availableSources.length, sourcesSucceeded, costUsd }
+  }
+
+  /**
+   * Execute sources sequentially, stopping at the first non-null finding.
+   * Used for AI model phases where cheapest-first ordering controls cost.
+   */
+  private async executePhaseSequentially(
+    subject: TSubject,
+    availableSources: MinimalSource<TSubject>[],
+    phase: number,
+    signal: AbortSignal | undefined,
+    hooks: LifecycleHooks<TSubject, TOutput> | undefined
+  ): Promise<{
+    findings: ScoredFinding[]
+    sourcesAttempted: number
+    sourcesSucceeded: number
+    costUsd: number
+  }> {
+    const timeoutSignal = AbortSignal.timeout(120_000)
+    const phaseSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
+
+    const findings: ScoredFinding[] = []
+    let costUsd = 0
+    let sourcesAttempted = 0
+    let sourcesSucceeded = 0
+
+    for (const source of availableSources) {
+      if (phaseSignal.aborted) break
+
+      sourcesAttempted++
+
+      let finding: RawFinding | null = null
+      try {
+        hooks?.onSourceAttempt?.(subject, source.name, phase)
+        finding = await source.lookup(subject, phaseSignal)
+      } catch (error) {
+        // Source/hook errors are swallowed — consistent with concurrent path
+        // where async callbacks turn throws into rejected promises.
+        this.telemetry.recordError(error instanceof Error ? error : new Error(String(error)), {
+          source: source.name,
+          subject: subject.name,
+          phase,
+        })
+      }
+
+      try {
+        hooks?.onSourceComplete?.(subject, source.name, finding, finding?.costUsd ?? 0)
+      } catch (error) {
+        this.telemetry.recordError(error instanceof Error ? error : new Error(String(error)), {
+          source: source.name,
+          subject: subject.name,
+          phase,
+          hook: "onSourceComplete",
+        })
+      }
+
+      if (finding) {
+        costUsd += finding.costUsd
+        sourcesSucceeded++
+        findings.push({
+          ...finding,
+          sourceType: source.type,
+          sourceName: source.name,
+          reliabilityTier: source.reliabilityTier,
+          reliabilityScore: source.reliabilityScore,
+        })
+        break // Stop at first success
+      }
+    }
+
+    return { findings, sourcesAttempted, sourcesSucceeded, costUsd }
   }
 
   /**

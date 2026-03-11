@@ -29,7 +29,12 @@ export type {
 } from "./structured/wikidata.js"
 
 export { WikipediaSource, wikipedia } from "./structured/wikipedia.js"
-export type { WikipediaOptions, WikipediaSection, SectionFilter } from "./structured/wikipedia.js"
+export type {
+  WikipediaOptions,
+  WikipediaSection,
+  SectionFilter,
+  AsyncSectionFilter,
+} from "./structured/wikipedia.js"
 
 // Shared utilities — fetch and search
 export { fetchPage } from "./shared/fetch-page.js"

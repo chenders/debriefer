@@ -49,6 +49,16 @@ export interface WikipediaSection {
  */
 export type SectionFilter = (sections: WikipediaSection[]) => WikipediaSection[]
 
+/**
+ * Async section filter that receives all sections and the full article text.
+ * Returns a promise resolving to the sections to include.
+ * Takes precedence over the sync `sectionFilter` when both are provided.
+ */
+export type AsyncSectionFilter = (
+  sections: WikipediaSection[],
+  articleText: string
+) => Promise<WikipediaSection[]>
+
 /** Options for the Wikipedia source */
 export interface WikipediaOptions extends BaseSourceOptions {
   /**
@@ -64,6 +74,21 @@ export interface WikipediaOptions extends BaseSourceOptions {
    * ```
    */
   sectionFilter?: SectionFilter
+
+  /**
+   * Async section filter. Receives all sections and the full article text,
+   * returns a promise of which sections to include. Takes precedence over
+   * the sync `sectionFilter`. Useful for AI-based section selection.
+   *
+   * @example
+   * ```typescript
+   * asyncSectionFilter: async (sections, articleText) => {
+   *   const selected = await geminiSelectSections(sections, articleText)
+   *   return selected
+   * }
+   * ```
+   */
+  asyncSectionFilter?: AsyncSectionFilter
 
   /**
    * Whether to include the article introduction (section 0).
@@ -83,6 +108,21 @@ export interface WikipediaOptions extends BaseSourceOptions {
    * Set to an empty array to disable alternate title attempts.
    */
   disambiguationSuffixes?: string[]
+
+  /**
+   * Validate that the fetched article matches the intended person.
+   * Receives the full article text and the subject. When provided and
+   * returns false, the source tries disambiguation suffixes before giving up.
+   *
+   * @example
+   * ```typescript
+   * validatePerson: (articleText, subject) => {
+   *   const birthYear = subject.context?.birthYear as string
+   *   return birthYear ? articleText.includes(birthYear) : true
+   * }
+   * ```
+   */
+  validatePerson?: (articleText: string, subject: ResearchSubject) => boolean
 }
 
 // ============================================================================
@@ -115,16 +155,20 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
   readonly estimatedCostPerQuery = 0
 
   private sectionFilter: SectionFilter
+  private asyncSectionFilter?: AsyncSectionFilter
   private includeIntro: boolean
   private handleDisambiguation: boolean
   private disambiguationSuffixes: string[]
+  private validatePerson?: (articleText: string, subject: ResearchSubject) => boolean
 
   constructor(options: WikipediaOptions = {}) {
     super({ rateLimitMs: 500, ...options })
     this.sectionFilter = options.sectionFilter ?? defaultSectionFilter
+    this.asyncSectionFilter = options.asyncSectionFilter
     this.includeIntro = options.includeIntro ?? true
     this.handleDisambiguation = options.handleDisambiguation ?? true
     this.disambiguationSuffixes = options.disambiguationSuffixes ?? ["_(actor)", "_(actress)"]
+    this.validatePerson = options.validatePerson
   }
 
   protected async fetchResult(
@@ -141,21 +185,35 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
 
     // Handle disambiguation pages
     if (this.handleDisambiguation && (!doc || this.isDisambig(doc))) {
-      for (const suffix of this.disambiguationSuffixes) {
-        const altTitle = baseTitle + suffix
-        const altDoc = await this.fetchDocument(altTitle)
-        if (altDoc && !this.isDisambig(altDoc)) {
-          doc = altDoc
-          break
-        }
-      }
+      doc = await this.tryDisambiguationSuffixes(baseTitle, doc)
     }
 
     // If we still have no valid document, return null
     if (!doc || this.isDisambig(doc)) return null
 
+    // Validate person if callback is provided.
+    // Track fullText so we can reuse it for asyncSectionFilter without recomputing.
+    let cachedFullText: string | undefined
+    if (this.validatePerson) {
+      cachedFullText = this.getFullText(doc)
+      if (!this.validatePerson(cachedFullText, subject)) {
+        // Validation failed — try disambiguation suffixes if enabled
+        if (!this.handleDisambiguation) return null
+        const altDoc = await this.tryDisambiguationSuffixes(baseTitle, null)
+        if (!altDoc || this.isDisambig(altDoc)) return null
+        // Validate the alternate document too
+        const altText = this.getFullText(altDoc)
+        if (!this.validatePerson(altText, subject)) return null
+        doc = altDoc
+        cachedFullText = altText
+      }
+    }
+
     const sections = doc.sections() as wtf.Section[]
     if (sections.length === 0) return null
+
+    // Reuse cached full text from validation, or compute once for async filter
+    const fullText = this.asyncSectionFilter ? (cachedFullText ?? this.getFullText(doc)) : undefined
 
     // Map wtf sections to WikipediaSection interface
     const wikiSections: WikipediaSection[] = sections.map((s: wtf.Section, i: number) => ({
@@ -164,8 +222,10 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
       depth: s.depth(),
     }))
 
-    // Apply section filter
-    const selectedSections = this.sectionFilter(wikiSections)
+    // Apply section filter — async takes precedence over sync
+    const selectedSections = this.asyncSectionFilter
+      ? await this.asyncSectionFilter(wikiSections, fullText!)
+      : this.sectionFilter(wikiSections)
 
     // Build the set of section indices to extract
     const indicesToExtract = new Set(selectedSections.map((s) => s.index))
@@ -229,8 +289,14 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
    */
   override buildQuery(subject: ResearchSubject): string {
     const parts = [subject.name]
-    if (this.sectionFilter !== defaultSectionFilter) parts.push(`sections:custom`)
+    if (this.asyncSectionFilter) parts.push("sections:async")
+    else if (this.sectionFilter !== defaultSectionFilter) parts.push("sections:custom")
     if (this.includeIntro === false) parts.push("no-intro")
+    if (this.validatePerson) parts.push("validate:person")
+    if (!this.handleDisambiguation) parts.push("disambig:off")
+    if (this.handleDisambiguation && this.disambiguationSuffixes.length > 0) {
+      parts.push(`suffixes:${this.disambiguationSuffixes.join(",")}`)
+    }
     return parts.join("|")
   }
 
@@ -249,6 +315,32 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
    */
   private isDisambig(doc: InstanceType<typeof wtf.Document>): boolean {
     return doc.isDisambiguation()
+  }
+
+  /**
+   * Try disambiguation suffixes to find a valid (non-disambiguation) article.
+   * Returns the first valid document found, or the provided fallback if none match.
+   */
+  private async tryDisambiguationSuffixes(
+    baseTitle: string,
+    fallback: InstanceType<typeof wtf.Document> | null
+  ): Promise<InstanceType<typeof wtf.Document> | null> {
+    for (const suffix of this.disambiguationSuffixes) {
+      const altTitle = baseTitle + suffix
+      const altDoc = await this.fetchDocument(altTitle)
+      if (altDoc && !this.isDisambig(altDoc)) {
+        return altDoc
+      }
+    }
+    return fallback
+  }
+
+  /**
+   * Extract full plaintext from a document for validation and async filtering.
+   */
+  private getFullText(doc: InstanceType<typeof wtf.Document>): string {
+    const sections = doc.sections() as wtf.Section[]
+    return sections.map((s: wtf.Section) => s.text({})).join("\n\n")
   }
 
   /**

@@ -807,4 +807,219 @@ describe("ResearchOrchestrator", () => {
       expect(result.synthesisResult).toBeUndefined()
     })
   })
+
+  describe("sequential phase execution", () => {
+    it("executes sources one at a time when sequential is true", async () => {
+      let inFlight = 0
+      let peakInFlight = 0
+      const callOrder: string[] = []
+
+      const makeSeqSource = (name: string, finding: RawFinding | null) => {
+        const source = createMockSource({ name, type: name, finding })
+        ;(source.lookup as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+          inFlight++
+          peakInFlight = Math.max(peakInFlight, inFlight)
+          callOrder.push(name)
+          await new Promise((r) => setTimeout(r, 30))
+          inFlight--
+          return finding
+        })
+        return source
+      }
+
+      const s1 = makeSeqSource("seq1", makeFinding({ text: "first" }))
+      const s2 = makeSeqSource("seq2", makeFinding({ text: "second" }))
+      const s3 = makeSeqSource("seq3", makeFinding({ text: "third" }))
+
+      const synthesizer = createMockSynthesizer()
+      const orchestrator = new ResearchOrchestrator(
+        [{ phase: 0, sources: [s1, s2, s3], sequential: true }],
+        synthesizer,
+        { earlyStopThreshold: 10 }
+      )
+
+      const result = await orchestrator.debrief(makeSubject())
+
+      // Only first source should have been called (it returned a finding)
+      expect(peakInFlight).toBe(1)
+      expect(callOrder).toEqual(["seq1"])
+      expect(result.findings).toHaveLength(1)
+      expect(result.findings[0]!.text).toBe("first")
+      // Only 1 source attempted because sequential stops at first success
+      expect(result.sourcesAttempted).toBe(1)
+      expect(result.sourcesSucceeded).toBe(1)
+    })
+
+    it("tries next source when previous returns null", async () => {
+      const callOrder: string[] = []
+
+      const s1 = createMockSource({
+        name: "null_source",
+        type: "null_source",
+        finding: null,
+        onLookup: () => callOrder.push("null_source"),
+      })
+      const s2 = createMockSource({
+        name: "good_source",
+        type: "good_source",
+        finding: makeFinding({ text: "found it" }),
+        onLookup: () => callOrder.push("good_source"),
+      })
+      const s3 = createMockSource({
+        name: "never_called",
+        type: "never_called",
+        onLookup: () => callOrder.push("never_called"),
+      })
+
+      const synthesizer = createMockSynthesizer()
+      const orchestrator = new ResearchOrchestrator(
+        [{ phase: 0, sources: [s1, s2, s3], sequential: true }],
+        synthesizer,
+        { earlyStopThreshold: 10 }
+      )
+
+      const result = await orchestrator.debrief(makeSubject())
+
+      expect(callOrder).toEqual(["null_source", "good_source"])
+      expect(result.findings).toHaveLength(1)
+      expect(result.findings[0]!.text).toBe("found it")
+      expect(result.sourcesAttempted).toBe(2)
+    })
+
+    it("tries all sources when all return null", async () => {
+      const callOrder: string[] = []
+
+      const s1 = createMockSource({
+        name: "empty1",
+        type: "empty1",
+        finding: null,
+        onLookup: () => callOrder.push("empty1"),
+      })
+      const s2 = createMockSource({
+        name: "empty2",
+        type: "empty2",
+        finding: null,
+        onLookup: () => callOrder.push("empty2"),
+      })
+
+      const synthesizer = createMockSynthesizer()
+      const orchestrator = new ResearchOrchestrator(
+        [{ phase: 0, sources: [s1, s2], sequential: true }],
+        synthesizer,
+        { earlyStopThreshold: 10 }
+      )
+
+      const result = await orchestrator.debrief(makeSubject())
+
+      expect(callOrder).toEqual(["empty1", "empty2"])
+      expect(result.findings).toHaveLength(0)
+      expect(result.sourcesAttempted).toBe(2)
+      expect(result.sourcesSucceeded).toBe(0)
+    })
+
+    it("skips failing sources and continues to next", async () => {
+      const callOrder: string[] = []
+
+      const s1 = createMockSource({
+        name: "failing",
+        type: "failing",
+        shouldThrow: true,
+        onLookup: () => callOrder.push("failing"),
+      })
+      const s2 = createMockSource({
+        name: "working",
+        type: "working",
+        finding: makeFinding({ text: "success" }),
+        onLookup: () => callOrder.push("working"),
+      })
+
+      const synthesizer = createMockSynthesizer()
+      const orchestrator = new ResearchOrchestrator(
+        [{ phase: 0, sources: [s1, s2], sequential: true }],
+        synthesizer,
+        { earlyStopThreshold: 10 }
+      )
+
+      const result = await orchestrator.debrief(makeSubject())
+
+      expect(callOrder).toEqual(["failing", "working"])
+      expect(result.findings).toHaveLength(1)
+      expect(result.findings[0]!.text).toBe("success")
+    })
+
+    it("fires lifecycle hooks for each sequential source", async () => {
+      const s1 = createMockSource({
+        name: "S1",
+        type: "s1",
+        finding: null,
+      })
+      const s2 = createMockSource({
+        name: "S2",
+        type: "s2",
+        finding: makeFinding({ text: "found", costUsd: 0.01 }),
+      })
+
+      const synthesizer = createMockSynthesizer()
+      const orchestrator = new ResearchOrchestrator(
+        [{ phase: 0, sources: [s1, s2], sequential: true }],
+        synthesizer,
+        { earlyStopThreshold: 10 }
+      )
+
+      const hooks: LifecycleHooks<ResearchSubject, { result: string }> = {
+        onSourceAttempt: vi.fn(),
+        onSourceComplete: vi.fn(),
+        onPhaseComplete: vi.fn(),
+      }
+
+      await orchestrator.debrief(makeSubject(), { hooks })
+
+      expect(hooks.onSourceAttempt).toHaveBeenCalledTimes(2)
+      expect(hooks.onSourceAttempt).toHaveBeenCalledWith(expect.anything(), "S1", 0)
+      expect(hooks.onSourceAttempt).toHaveBeenCalledWith(expect.anything(), "S2", 0)
+
+      expect(hooks.onSourceComplete).toHaveBeenCalledTimes(2)
+      expect(hooks.onSourceComplete).toHaveBeenCalledWith(expect.anything(), "S1", null, 0)
+      expect(hooks.onSourceComplete).toHaveBeenCalledWith(
+        expect.anything(),
+        "S2",
+        expect.objectContaining({ text: "found" }),
+        0.01
+      )
+
+      expect(hooks.onPhaseComplete).toHaveBeenCalledTimes(1)
+    })
+
+    it("does not affect concurrent execution when sequential is false/undefined", async () => {
+      let inFlight = 0
+      let peakInFlight = 0
+
+      const makeConcSource = (name: string) => {
+        const source = createMockSource({ name, type: name })
+        ;(source.lookup as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+          inFlight++
+          peakInFlight = Math.max(peakInFlight, inFlight)
+          await new Promise((r) => setTimeout(r, 30))
+          inFlight--
+          return makeFinding()
+        })
+        return source
+      }
+
+      const s1 = makeConcSource("c1")
+      const s2 = makeConcSource("c2")
+      const s3 = makeConcSource("c3")
+
+      const synthesizer = createMockSynthesizer()
+      const orchestrator = new ResearchOrchestrator(
+        [{ phase: 0, sources: [s1, s2, s3], sequential: false }],
+        synthesizer,
+        { earlyStopThreshold: 10 }
+      )
+
+      await orchestrator.debrief(makeSubject())
+
+      expect(peakInFlight).toBe(3) // All concurrent
+    })
+  })
 })

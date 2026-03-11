@@ -178,16 +178,24 @@ export interface MinimalSource<TSubject extends ResearchSubject> {
 /**
  * A group of sources that execute together in a single phase.
  *
- * The orchestrator processes phases sequentially but fires all sources
- * within a phase concurrently via Promise.allSettled().
+ * The orchestrator processes phases sequentially. Within each phase,
+ * sources run concurrently via Promise.allSettled() by default. When
+ * `sequential` is true, sources run one at a time in order, stopping
+ * at the first source that returns a non-null finding.
  */
 export interface SourcePhaseGroup<TSubject extends ResearchSubject> {
   /** Phase number — determines execution order (lower = earlier) */
   phase: number
   /** Human-readable phase name for logging (e.g., "Structured Data", "Web Search") */
   name?: string
-  /** Sources to execute concurrently within this phase */
+  /** Sources to execute within this phase (concurrently by default, or sequentially when `sequential: true`) */
   sources: ReadonlyArray<MinimalSource<TSubject>>
+  /**
+   * If true, execute sources sequentially within this phase instead of
+   * concurrently. Stops at the first source that returns a non-null finding.
+   * Useful for AI model sources where you want cheapest-first with early exit.
+   */
+  sequential?: boolean
 }
 
 // ============================================================================
