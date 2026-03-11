@@ -599,7 +599,9 @@ describe("WikipediaSource", () => {
   })
 
   describe("buildQuery (for cache key)", () => {
-    // Default suffixes are _(actor),_(actress), included in all cache keys
+    // Default suffixes _(actor),_(actress) are included in cache keys when
+    // handleDisambiguation is enabled (the default). Tests below with
+    // handleDisambiguation:false or empty suffixes verify they are omitted.
     const defaultSuffixKey = "suffixes:_(actor),_(actress)"
 
     it("returns the subject name with default suffix key", () => {

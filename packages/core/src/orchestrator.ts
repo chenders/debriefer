@@ -296,15 +296,14 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
       if (phaseSignal.aborted) break
 
       sourcesAttempted++
-      hooks?.onSourceAttempt?.(subject, source.name, phase)
 
       let finding: RawFinding | null = null
       try {
+        hooks?.onSourceAttempt?.(subject, source.name, phase)
         finding = await source.lookup(subject, phaseSignal)
       } catch (error) {
-        // Source errors are swallowed — consistent with concurrent path.
-        // BaseResearchSource.lookup() already records errors internally,
-        // but record here too for defense-in-depth.
+        // Source/hook errors are swallowed — consistent with concurrent path
+        // where async callbacks turn throws into rejected promises.
         this.telemetry.recordError(error instanceof Error ? error : new Error(String(error)), {
           source: source.name,
           subject: subject.name,
@@ -312,7 +311,16 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
         })
       }
 
-      hooks?.onSourceComplete?.(subject, source.name, finding, finding?.costUsd ?? 0)
+      try {
+        hooks?.onSourceComplete?.(subject, source.name, finding, finding?.costUsd ?? 0)
+      } catch (error) {
+        this.telemetry.recordError(error instanceof Error ? error : new Error(String(error)), {
+          source: source.name,
+          subject: subject.name,
+          phase,
+          hook: "onSourceComplete",
+        })
+      }
 
       if (finding) {
         costUsd += finding.costUsd
