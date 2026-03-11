@@ -228,7 +228,7 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
     const phaseSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
 
     const results = await Promise.allSettled(
-      availableSources.map((source) => {
+      availableSources.map(async (source) => {
         hooks?.onSourceAttempt?.(subject, source.name, phase)
         return source.lookup(subject, phaseSignal)
       })
