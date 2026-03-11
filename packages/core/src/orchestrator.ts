@@ -240,6 +240,13 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
       const source = availableSources[i]!
       const finding = result.status === "fulfilled" ? (result.value as RawFinding | null) : null
 
+      if (result.status === "rejected") {
+        this.telemetry.recordError(
+          result.reason instanceof Error ? result.reason : new Error(String(result.reason)),
+          { source: source.name, subject: subject.name, phase }
+        )
+      }
+
       hooks?.onSourceComplete?.(subject, source.name, finding, finding?.costUsd ?? 0)
 
       if (finding) {

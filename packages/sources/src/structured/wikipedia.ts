@@ -193,21 +193,22 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
 
     // Validate person if callback is provided
     if (this.validatePerson) {
-      const fullText = this.getFullText(doc)
-      if (!this.validatePerson(fullText, subject)) {
+      if (!this.validatePerson(this.getFullText(doc), subject)) {
         // Validation failed — try disambiguation suffixes if enabled
         if (!this.handleDisambiguation) return null
         const altDoc = await this.tryDisambiguationSuffixes(baseTitle, null)
         if (!altDoc || this.isDisambig(altDoc)) return null
         // Validate the alternate document too
-        const altText = this.getFullText(altDoc)
-        if (!this.validatePerson(altText, subject)) return null
+        if (!this.validatePerson(this.getFullText(altDoc), subject)) return null
         doc = altDoc
       }
     }
 
     const sections = doc.sections() as wtf.Section[]
     if (sections.length === 0) return null
+
+    // Compute full text once for async section filter (after doc is finalized)
+    const fullText = this.asyncSectionFilter ? this.getFullText(doc) : undefined
 
     // Map wtf sections to WikipediaSection interface
     const wikiSections: WikipediaSection[] = sections.map((s: wtf.Section, i: number) => ({
@@ -218,7 +219,7 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
 
     // Apply section filter — async takes precedence over sync
     const selectedSections = this.asyncSectionFilter
-      ? await this.asyncSectionFilter(wikiSections, this.getFullText(doc))
+      ? await this.asyncSectionFilter(wikiSections, fullText!)
       : this.sectionFilter(wikiSections)
 
     // Build the set of section indices to extract
