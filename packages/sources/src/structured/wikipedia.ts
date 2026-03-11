@@ -293,6 +293,10 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
     else if (this.sectionFilter !== defaultSectionFilter) parts.push("sections:custom")
     if (this.includeIntro === false) parts.push("no-intro")
     if (this.validatePerson) parts.push("validate:person")
+    if (!this.handleDisambiguation) parts.push("disambig:off")
+    if (this.disambiguationSuffixes.length > 0) {
+      parts.push(`suffixes:${this.disambiguationSuffixes.join(",")}`)
+    }
     return parts.join("|")
   }
 
@@ -315,7 +319,7 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
 
   /**
    * Try disambiguation suffixes to find a valid (non-disambiguation) article.
-   * Returns the first valid document found, or the original doc if none found.
+   * Returns the first valid document found, or the provided fallback if none match.
    */
   private async tryDisambiguationSuffixes(
     baseTitle: string,

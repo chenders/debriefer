@@ -10,7 +10,8 @@
  * Algorithm (per subject):
  * 1. For each phase in order:
  *    a. Filter to available sources (isAvailable())
- *    b. Fire all sources concurrently via Promise.allSettled()
+ *    b. Execute sources — concurrently via Promise.allSettled() by default,
+ *       or sequentially (stop at first success) when phase.sequential is true
  *    c. Collect successful findings, tag with reliability info → ScoredFinding
  *    d. Check early-stop: do we have earlyStopThreshold+ high-quality families?
  *    e. Check per-subject cost limit
@@ -86,9 +87,11 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
   /**
    * Research a single subject through all configured phases.
    *
-   * Iterates through phases sequentially. Within each phase, all sources run
-   * concurrently via Promise.allSettled. Accumulates findings, checks early
-   * stopping between phases, then runs synthesis on all collected findings.
+   * Iterates through phases sequentially. Within each phase, sources run
+   * concurrently via Promise.allSettled by default, or sequentially (stopping
+   * at first success) when `phase.sequential` is true. Accumulates findings,
+   * checks early stopping between phases, then runs synthesis on all collected
+   * findings.
    *
    * @param subject - The subject to research
    * @param options - Optional abort signal and lifecycle hooks

@@ -599,10 +599,13 @@ describe("WikipediaSource", () => {
   })
 
   describe("buildQuery (for cache key)", () => {
-    it("returns the subject name for default options", () => {
+    // Default suffixes are _(actor),_(actress), included in all cache keys
+    const defaultSuffixKey = "suffixes:_(actor),_(actress)"
+
+    it("returns the subject name with default suffix key", () => {
       const source = new WikipediaSource()
       const subject = makeSubject()
-      expect(source.buildQuery(subject)).toBe("John Wayne")
+      expect(source.buildQuery(subject)).toBe(`John Wayne|${defaultSuffixKey}`)
     })
 
     it("includes sections marker when custom sectionFilter is provided", () => {
@@ -610,13 +613,13 @@ describe("WikipediaSource", () => {
         sectionFilter: (sections) => sections.filter((s) => s.title === "Death"),
       })
       const subject = makeSubject()
-      expect(source.buildQuery(subject)).toBe("John Wayne|sections:custom")
+      expect(source.buildQuery(subject)).toBe(`John Wayne|sections:custom|${defaultSuffixKey}`)
     })
 
     it("includes no-intro marker when includeIntro is false", () => {
       const source = new WikipediaSource({ includeIntro: false })
       const subject = makeSubject()
-      expect(source.buildQuery(subject)).toBe("John Wayne|no-intro")
+      expect(source.buildQuery(subject)).toBe(`John Wayne|no-intro|${defaultSuffixKey}`)
     })
 
     it("includes both markers when both options are set", () => {
@@ -625,7 +628,9 @@ describe("WikipediaSource", () => {
         includeIntro: false,
       })
       const subject = makeSubject()
-      expect(source.buildQuery(subject)).toBe("John Wayne|sections:custom|no-intro")
+      expect(source.buildQuery(subject)).toBe(
+        `John Wayne|sections:custom|no-intro|${defaultSuffixKey}`
+      )
     })
 
     it("includes async marker when asyncSectionFilter is provided", () => {
@@ -633,7 +638,7 @@ describe("WikipediaSource", () => {
         asyncSectionFilter: async (sections) => sections,
       })
       const subject = makeSubject()
-      expect(source.buildQuery(subject)).toBe("John Wayne|sections:async")
+      expect(source.buildQuery(subject)).toBe(`John Wayne|sections:async|${defaultSuffixKey}`)
     })
 
     it("prefers async marker over sync marker when both provided", () => {
@@ -642,7 +647,7 @@ describe("WikipediaSource", () => {
         asyncSectionFilter: async (sections) => sections,
       })
       const subject = makeSubject()
-      expect(source.buildQuery(subject)).toBe("John Wayne|sections:async")
+      expect(source.buildQuery(subject)).toBe(`John Wayne|sections:async|${defaultSuffixKey}`)
     })
 
     it("includes validate marker when validatePerson is provided", () => {
@@ -650,7 +655,31 @@ describe("WikipediaSource", () => {
         validatePerson: () => true,
       })
       const subject = makeSubject()
-      expect(source.buildQuery(subject)).toBe("John Wayne|validate:person")
+      expect(source.buildQuery(subject)).toBe(`John Wayne|validate:person|${defaultSuffixKey}`)
+    })
+
+    it("includes disambig:off when handleDisambiguation is false", () => {
+      const source = new WikipediaSource({
+        handleDisambiguation: false,
+      })
+      const subject = makeSubject()
+      expect(source.buildQuery(subject)).toBe(`John Wayne|disambig:off|${defaultSuffixKey}`)
+    })
+
+    it("omits suffixes key when disambiguationSuffixes is empty", () => {
+      const source = new WikipediaSource({
+        disambiguationSuffixes: [],
+      })
+      const subject = makeSubject()
+      expect(source.buildQuery(subject)).toBe("John Wayne")
+    })
+
+    it("includes custom suffixes in cache key", () => {
+      const source = new WikipediaSource({
+        disambiguationSuffixes: ["_(filmmaker)"],
+      })
+      const subject = makeSubject()
+      expect(source.buildQuery(subject)).toBe("John Wayne|suffixes:_(filmmaker)")
     })
   })
 
