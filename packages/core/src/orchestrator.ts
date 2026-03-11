@@ -250,7 +250,16 @@ export class ResearchOrchestrator<TSubject extends ResearchSubject, TOutput> {
         )
       }
 
-      hooks?.onSourceComplete?.(subject, source.name, finding, finding?.costUsd ?? 0)
+      try {
+        hooks?.onSourceComplete?.(subject, source.name, finding, finding?.costUsd ?? 0)
+      } catch (error) {
+        this.telemetry.recordError(error instanceof Error ? error : new Error(String(error)), {
+          hook: "onSourceComplete",
+          source: source.name,
+          subject: subject.name,
+          phase,
+        })
+      }
 
       if (finding) {
         costUsd += finding.costUsd
