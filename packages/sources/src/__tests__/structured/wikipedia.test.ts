@@ -663,7 +663,8 @@ describe("WikipediaSource", () => {
         handleDisambiguation: false,
       })
       const subject = makeSubject()
-      expect(source.buildQuery(subject)).toBe(`John Wayne|disambig:off|${defaultSuffixKey}`)
+      // Suffixes excluded when disambiguation is off (they're never used)
+      expect(source.buildQuery(subject)).toBe("John Wayne|disambig:off")
     })
 
     it("omits suffixes key when disambiguationSuffixes is empty", () => {

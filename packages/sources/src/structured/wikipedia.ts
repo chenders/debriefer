@@ -294,7 +294,7 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
     if (this.includeIntro === false) parts.push("no-intro")
     if (this.validatePerson) parts.push("validate:person")
     if (!this.handleDisambiguation) parts.push("disambig:off")
-    if (this.disambiguationSuffixes.length > 0) {
+    if (this.handleDisambiguation && this.disambiguationSuffixes.length > 0) {
       parts.push(`suffixes:${this.disambiguationSuffixes.join(",")}`)
     }
     return parts.join("|")
