@@ -14,10 +14,12 @@ Extracted from a [production enrichment pipeline](https://github.com/chenders/de
 ## Quick Start
 
 ```bash
-# npm publish planned — for now, clone and build from the repo:
+# npm publish planned — for now, clone the repo and run examples from within:
 git clone https://github.com/chenders/debriefer.git
 cd debriefer && npm install && npm run build
 ```
+
+The code below runs inside the monorepo (where `debriefer` and `debriefer-sources` resolve to local workspace packages):
 
 ```typescript
 import { ResearchOrchestrator, NoopSynthesizer } from "debriefer"
@@ -267,7 +269,7 @@ console.log(result.data!.regulatoryStatus)
 console.log(`${result.sourcesSucceeded} sources, cost: $${result.totalCostUsd.toFixed(4)}`)
 ```
 
-The `reliabilityThreshold: 0.85` excludes search aggregators (0.7) and below from the quality check — they're still gathered, but only tier-1 news, structured data, and secondary compilations count toward early stopping.
+The `reliabilityThreshold: 0.85` means only tier-1 news, structured data, and secondary compilations are _eligible_ to count toward early stopping — but they must also meet the confidence threshold. Search aggregators and user-generated content are still gathered for synthesis.
 
 ### Corporate Due Diligence
 
