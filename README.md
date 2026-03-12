@@ -14,7 +14,9 @@ Extracted from a [production enrichment pipeline](https://github.com/chenders/de
 ## Quick Start
 
 ```bash
-npm install debriefer debriefer-sources
+# npm publish planned — for now, clone and link from the repo:
+git clone https://github.com/chenders/debriefer.git
+cd debriefer && npm install && npm run build
 ```
 
 ```typescript
@@ -54,7 +56,7 @@ No API keys required — Wikipedia, Wikidata, and Open Library are free and open
 
 - **Wikipedia-grade reliability scoring** — Every source is rated on a 12-tier scale derived from the [RSP list](https://en.wikipedia.org/wiki/Wikipedia:Reliable_sources/Perennial_sources) that Wikipedia editors use to settle disputes. Wikidata scores 1.0, AP and Reuters score 0.95, user-generated content scores 0.35.
 - **Two independent quality axes** — Source reliability ("is the BBC trustworthy?") and content confidence ("does this article actually answer the query?") are scored separately. A trusted source with an irrelevant page doesn't pollute your results.
-- **Phased execution with early stopping** — Cheap, fast sources run first. Expensive sources only run if the cheap ones fall short. When the quality bar is met, remaining phases are skipped. Phases can also run sequentially, stopping at the first success — useful for keeping AI model costs down.
+- **Phased execution with early stopping** — Cheap, fast sources run first. Expensive sources only run if the cheap ones fall short. When the quality bar is met, remaining phases are skipped. Within a phase, sources can also be executed sequentially, stopping at the first non-null finding — useful for keeping AI model costs down.
 - **Per-query cost budgets** — Set a dollar limit per subject and per batch. Debriefer tracks costs and stops before you overspend.
 - **Pluggable AI synthesis** — Pass findings through Claude to distill raw results into structured, cited output matching your schema. Or skip synthesis entirely. The Anthropic SDK is an optional peer dependency.
 - **Fully generic engine** — Research people, companies, drugs, or historical events — `ResearchOrchestrator<TSubject, TOutput>` has no domain assumptions built in. Bring your own subject type, output schema, and synthesis prompt.
@@ -63,12 +65,12 @@ No API keys required — Wikipedia, Wikidata, and Open Library are free and open
 ## How It Works
 
 ```
-Subject ──> Orchestrator ──> Phase 1 (free) ──> Phase 2 (paid) ──> Synthesis
-                 │                 │                  │                 │
-                 ├─ Cost Tracker   ├─ Wikidata        ├─ Guardian API   v
-                 ├─ Rate Limiter   ├─ Wikipedia       ├─ NYT API     Structured
-                 ├─ Cache          ├─ DuckDuckGo      ├─ Bing API    output with
-                 └─ Telemetry      └─ 20+ free news   └─ ...         citations
+Subject ──> Orchestrator ──> Phase 1 (free) ──────> Phase 2 (API key) ──> Synthesis
+                 │                 │                       │                   │
+                 ├─ Cost Tracker   ├─ Wikidata             ├─ Google Search    v
+                 ├─ Rate Limiter   ├─ Wikipedia            ├─ Bing Search   Structured
+                 ├─ Cache          ├─ Guardian, NYT        ├─ Brave Search  output with
+                 └─ Telemetry      └─ 20+ free site-search └─ ...           citations
 ```
 
 The orchestrator runs phases in order. Within each phase, sources run concurrently with per-domain rate limiting. After each phase, the engine checks two things: has the **early stop threshold** been met (enough distinct source families returned high-quality findings)? Has the **cost limit** been exceeded? If either is true, remaining phases are skipped and synthesis runs on what's been collected.
@@ -110,7 +112,7 @@ Based on Wikipedia's [Reliable Sources Perennial](https://en.wikipedia.org/wiki/
 | Category       | Count | Sources                                                       | Free?                     |
 | -------------- | ----- | ------------------------------------------------------------- | ------------------------- |
 | **Structured** | 2     | Wikidata, Wikipedia                                           | Yes                       |
-| **News**       | 21    | AP, Reuters, BBC, NYT, Guardian, Washington Post, NPR, + more | Mostly free (site-search) |
+| **News**       | 23    | AP, Reuters, BBC, NYT, Guardian, Washington Post, NPR, + more | Mostly free (site-search) |
 | **Search**     | 4     | Google, Bing, Brave, DuckDuckGo                               | Mixed (DDG free)          |
 | **Books**      | 2     | Google Books, Open Library                                    | Mixed (Open Library free) |
 | **Archives**   | 4     | Chronicling America, Trove, Europeana, Internet Archive       | Yes                       |
@@ -428,7 +430,9 @@ debriefer debrief "Toshiro Mifune" --budget 0.50 --verbose
 ### HTTP Server
 
 ```bash
-ANTHROPIC_API_KEY=sk-... npm start -w packages/server
+# Build and run from the repo
+npm run build -w packages/server
+ANTHROPIC_API_KEY=sk-... node packages/server/dist/index.js
 
 curl -X POST http://localhost:8090/api/debrief \
   -H "Content-Type: application/json" \
@@ -438,7 +442,9 @@ curl -X POST http://localhost:8090/api/debrief \
 ### MCP Server (AI Assistants)
 
 ```bash
-npx debriefer-mcp
+# Run from source (npm publish planned)
+npm run build -w packages/mcp
+node packages/mcp/dist/index.js
 ```
 
 Provides two tools: `debrief` (run multi-source research) and `list_sources` (browse available sources). Sources run in-process with zero HTTP overhead.
