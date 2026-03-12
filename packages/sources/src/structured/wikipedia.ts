@@ -114,15 +114,26 @@ export interface WikipediaOptions extends BaseSourceOptions {
    * Receives the full article text and the subject. When provided and
    * returns false, the source tries disambiguation suffixes before giving up.
    *
+   * Supports both sync and async callbacks. An async callback (returning
+   * `Promise<boolean>`) is useful for AI-based validation (e.g., Gemini Flash
+   * date extraction) without blocking the event loop.
+   *
    * @example
    * ```typescript
+   * // Sync — simple birth-year check
    * validatePerson: (articleText, subject) => {
    *   const birthYear = subject.context?.birthYear as string
    *   return birthYear ? articleText.includes(birthYear) : true
    * }
+   *
+   * // Async — AI-based validation
+   * validatePerson: async (articleText, subject) => {
+   *   const dates = await extractDatesWithAI(articleText)
+   *   return dates.birthYear === subject.context?.birthYear
+   * }
    * ```
    */
-  validatePerson?: (articleText: string, subject: ResearchSubject) => boolean
+  validatePerson?: (articleText: string, subject: ResearchSubject) => boolean | Promise<boolean>
 }
 
 // ============================================================================
@@ -159,7 +170,7 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
   private includeIntro: boolean
   private handleDisambiguation: boolean
   private disambiguationSuffixes: string[]
-  private validatePerson?: (articleText: string, subject: ResearchSubject) => boolean
+  private validatePerson?: (articleText: string, subject: ResearchSubject) => boolean | Promise<boolean>
 
   constructor(options: WikipediaOptions = {}) {
     super({ rateLimitMs: 500, ...options })
@@ -196,14 +207,14 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
     let cachedFullText: string | undefined
     if (this.validatePerson) {
       cachedFullText = this.getFullText(doc)
-      if (!this.validatePerson(cachedFullText, subject)) {
+      if (!await this.validatePerson(cachedFullText, subject)) {
         // Validation failed — try disambiguation suffixes if enabled
         if (!this.handleDisambiguation) return null
         const altDoc = await this.tryDisambiguationSuffixes(baseTitle, null)
         if (!altDoc || this.isDisambig(altDoc)) return null
         // Validate the alternate document too
         const altText = this.getFullText(altDoc)
-        if (!this.validatePerson(altText, subject)) return null
+        if (!await this.validatePerson(altText, subject)) return null
         doc = altDoc
         cachedFullText = altText
       }
