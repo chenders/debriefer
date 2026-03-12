@@ -659,9 +659,9 @@ describe("WebSearchBase", () => {
   // ==========================================================================
 
   describe("maxLinkCost", () => {
-    it("stops following links when cost budget is exhausted", async () => {
+    it("stops following links when cost budget is zero", async () => {
       const source = new TestSearchSource({
-        maxLinkCost: 0, // Zero budget — no links should be fetched
+        maxLinkCost: 0,
       })
       source.searchResults = [
         makeSearchResult({ url: "https://example.com/page1" }),
@@ -677,6 +677,55 @@ describe("WebSearchBase", () => {
 
       expect(result).toBeNull()
       expect(mockFetchPage).not.toHaveBeenCalled()
+    })
+
+    it("stops after budget is exhausted mid-way through links (custom fetch)", async () => {
+      const customFetch = vi.fn().mockResolvedValue(longText("Fetched content"))
+      // Budget of 0.001 with estimatedCostPerQuery=0 (TestSearchSource).
+      // customFetchPage path uses estimatedCostPerQuery for cost tracking,
+      // but TestSearchSource has cost=0, so each fetch adds $0. Use a
+      // PaidTestSearchSource instead.
+      const source = new TestSearchSource({
+        maxLinkCost: 0.001,
+        fetchPage: customFetch,
+      })
+      // Override estimatedCostPerQuery for this test
+      Object.defineProperty(source, "estimatedCostPerQuery", { value: 0.001 })
+
+      source.searchResults = [
+        makeSearchResult({ url: "https://example.com/page1" }),
+        makeSearchResult({ url: "https://example.com/page2" }),
+        makeSearchResult({ url: "https://example.com/page3" }),
+      ]
+
+      const result = await source.doFetch(makeSubject(), AbortSignal.timeout(5000))
+
+      expect(result).not.toBeNull()
+      // Budget allows exactly 1 fetch ($0.001), then exhausted before 2nd
+      expect(customFetch).toHaveBeenCalledTimes(1)
+    })
+
+    it("enforces budget in default fetch path", async () => {
+      const source = new TestSearchSource({ maxLinkCost: 0.001 })
+      Object.defineProperty(source, "estimatedCostPerQuery", { value: 0.001 })
+
+      source.searchResults = [
+        makeSearchResult({ url: "https://example.com/page1" }),
+        makeSearchResult({ url: "https://example.com/page2" }),
+        makeSearchResult({ url: "https://example.com/page3" }),
+      ]
+
+      setupPageExtraction([
+        { url: "https://example.com/page1", text: longText("Content 1") },
+        { url: "https://example.com/page2", text: longText("Content 2") },
+        { url: "https://example.com/page3", text: longText("Content 3") },
+      ])
+
+      const result = await source.doFetch(makeSubject(), AbortSignal.timeout(5000))
+
+      expect(result).not.toBeNull()
+      // Budget allows 1 successful fetch, then exhausted
+      expect(mockFetchPage).toHaveBeenCalledTimes(1)
     })
   })
 

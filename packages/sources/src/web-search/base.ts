@@ -209,6 +209,7 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
         title: extracted.title ?? result.title ?? result.url,
         text: extracted.text,
       })
+      linkCostUsd += this.estimatedCostPerQuery
     }
 
     if (extractedPages.length === 0) {
