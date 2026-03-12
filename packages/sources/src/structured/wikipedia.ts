@@ -170,7 +170,10 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
   private includeIntro: boolean
   private handleDisambiguation: boolean
   private disambiguationSuffixes: string[]
-  private validatePerson?: (articleText: string, subject: ResearchSubject) => boolean | Promise<boolean>
+  private validatePerson?: (
+    articleText: string,
+    subject: ResearchSubject
+  ) => boolean | Promise<boolean>
 
   constructor(options: WikipediaOptions = {}) {
     super({ rateLimitMs: 500, ...options })
@@ -207,14 +210,14 @@ export class WikipediaSource extends BaseResearchSource<ResearchSubject> {
     let cachedFullText: string | undefined
     if (this.validatePerson) {
       cachedFullText = this.getFullText(doc)
-      if (!await this.validatePerson(cachedFullText, subject)) {
+      if (!(await this.validatePerson(cachedFullText, subject))) {
         // Validation failed — try disambiguation suffixes if enabled
         if (!this.handleDisambiguation) return null
         const altDoc = await this.tryDisambiguationSuffixes(baseTitle, null)
         if (!altDoc || this.isDisambig(altDoc)) return null
         // Validate the alternate document too
         const altText = this.getFullText(altDoc)
-        if (!await this.validatePerson(altText, subject)) return null
+        if (!(await this.validatePerson(altText, subject))) return null
         doc = altDoc
         cachedFullText = altText
       }
