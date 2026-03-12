@@ -112,7 +112,7 @@ Based on Wikipedia's [Reliable Sources Perennial](https://en.wikipedia.org/wiki/
 | Category       | Count | Sources                                                       | Free?                     |
 | -------------- | ----- | ------------------------------------------------------------- | ------------------------- |
 | **Structured** | 2     | Wikidata, Wikipedia                                           | Yes                       |
-| **News**       | 23    | AP, Reuters, BBC, NYT, Guardian, Washington Post, NPR, + more | Mostly free (site-search) |
+| **News**       | 22    | AP, Reuters, BBC, NYT, Guardian, Washington Post, NPR, + more | Mostly free (site-search) |
 | **Search**     | 4     | Google, Bing, Brave, DuckDuckGo                               | Mixed (DDG free)          |
 | **Books**      | 2     | Google Books, Open Library                                    | Mixed (Open Library free) |
 | **Archives**   | 4     | Chronicling America, Trove, Europeana, Internet Archive       | Yes                       |
