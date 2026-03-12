@@ -14,13 +14,13 @@ Review and respond to GitHub Copilot review comments on a pull request. Loops un
    - If PR number provided, use directly
    - Otherwise find PR for current branch via `gh pr view`
 
-2. **Fetch all review comments**
+2. **Fetch Copilot review comments** — Filter to comments from `copilot-pull-request-reviewer[bot]` to avoid mixing in human reviewer comments:
 
    ```bash
-   gh api repos/chenders/debriefer/pulls/{pr_number}/comments | jq '.[] | {id, body, path, line}'
+   gh api repos/chenders/debriefer/pulls/{PR_NUMBER}/comments --jq '.[] | select(.user.login == "github-actions[bot]" or .user.login == "copilot-pull-request-reviewer[bot]" or (.user.type == "Bot")) | {id, body, path, line}'
    ```
 
-3. **Check for new comments** — If there are no new unaddressed comments since the last round, the loop is done. Report the final status and stop.
+3. **Check for new comments** — If there are no new unaddressed Copilot comments since the last round, the loop is done. Report the final status and stop.
 
 4. **Analyze each new comment**
    - Validity: Is the suggestion technically correct?
@@ -37,14 +37,14 @@ Review and respond to GitHub Copilot review comments on a pull request. Loops un
 7. **Reply to each comment**
 
    ```bash
-   gh api -X POST repos/chenders/debriefer/pulls/{pr}/comments/{id}/replies -f body="Fixed in $(git rev-parse --short HEAD). Explanation."
+   gh api -X POST repos/chenders/debriefer/pulls/{PR_NUMBER}/comments/{id}/replies -f body="Fixed in $(git rev-parse --short HEAD). Explanation."
    ```
 
 8. **Resolve implemented threads** (use PRRT* thread IDs, not PRRC* comment IDs)
 
    ```bash
    # Get thread IDs
-   gh api graphql -f query='query { repository(owner: "chenders", name: "debriefer") { pullRequest(number: PR) { reviewThreads(first: 50) { nodes { id isResolved comments(first: 1) { nodes { body } } } } } } }'
+   gh api graphql -f query='query { repository(owner: "chenders", name: "debriefer") { pullRequest(number: {PR_NUMBER}) { reviewThreads(first: 50) { nodes { id isResolved comments(first: 1) { nodes { body } } } } } } }'
 
    # Resolve
    gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "PRRT_..."}) { thread { isResolved } } }'
@@ -54,16 +54,20 @@ Review and respond to GitHub Copilot review comments on a pull request. Loops un
    - Resolve threads where you implemented the fix
    - Do NOT resolve threads where you declined
 
-9. **Re-request Copilot review**:
+9. **Capture baseline and re-request Copilot review**:
 
    ```bash
+   # Capture latest Copilot review ID before re-requesting
+   BASELINE=$(gh api repos/chenders/debriefer/pulls/{PR_NUMBER}/reviews --jq '[.[] | select(.user.login == "copilot-pull-request-reviewer[bot]")] | max_by(.id) | .id // 0')
+
+   # Re-request review
    gh api repos/chenders/debriefer/pulls/{PR_NUMBER}/requested_reviewers -X POST -f 'reviewers[]=copilot-pull-request-reviewer[bot]'
    ```
 
-10. **Wait for the new review** — Poll until a new review appears (review count increases):
+10. **Wait for the new Copilot review** — Poll until a new review from `copilot-pull-request-reviewer[bot]` appears with an ID greater than the baseline:
 
     ```bash
-    gh api repos/chenders/debriefer/pulls/{PR_NUMBER}/reviews --jq 'length'
+    gh api repos/chenders/debriefer/pulls/{PR_NUMBER}/reviews --jq '[.[] | select(.user.login == "copilot-pull-request-reviewer[bot]")] | max_by(.id) | .id // 0'
     ```
 
     Poll every 15 seconds. Timeout after 5 minutes (assume review is delayed).
