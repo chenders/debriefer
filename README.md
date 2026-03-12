@@ -432,8 +432,8 @@ debriefer debrief "Toshiro Mifune" --budget 0.50 --verbose
 ### HTTP Server
 
 ```bash
-# Build and run from the repo
-npm run build -w packages/server
+# Build all packages (server depends on core + sources), then run
+npm run build
 ANTHROPIC_API_KEY=sk-... node packages/server/dist/index.js
 
 curl -X POST http://localhost:8090/api/debrief \
@@ -444,8 +444,8 @@ curl -X POST http://localhost:8090/api/debrief \
 ### MCP Server (AI Assistants)
 
 ```bash
-# Run from source (npm publish planned)
-npm run build -w packages/mcp
+# Run from source (npm publish planned) — requires full build first
+npm run build
 node packages/mcp/dist/cli.js
 ```
 
