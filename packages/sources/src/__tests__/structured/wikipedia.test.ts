@@ -883,7 +883,7 @@ describe("WikipediaSource", () => {
       expect(result).not.toBeNull()
     })
 
-    it("tries disambiguation suffixes when async validatePerson rejects", async () => {
+    it("tries disambiguation suffixes when async validatePerson returns false", async () => {
       const validate = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true)
 
       const source = new WikipediaSource({
