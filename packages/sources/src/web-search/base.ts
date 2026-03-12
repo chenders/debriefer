@@ -231,7 +231,7 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
     return {
       text: combinedText,
       confidence: -1,
-      costUsd: this.estimatedCostPerQuery,
+      costUsd: this.estimatedCostPerQuery + linkCostUsd,
       url: extractedPages[0].url,
       metadata: {
         searchEngine: this.name,
