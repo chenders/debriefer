@@ -5,7 +5,7 @@
 [![CI](https://github.com/chenders/debriefer/actions/workflows/ci.yml/badge.svg)](https://github.com/chenders/debriefer/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-750%2B-brightgreen)](#contributing)
+[![Tests](https://img.shields.io/badge/tests-710%2B-brightgreen)](#contributing)
 
 You need facts from the open web, but every source has a different API, a different credibility, and a different cost. Debriefer queries 35+ sources in parallel — news wires, digital archives, structured databases, search engines — scores each one using Wikipedia's [Reliable Sources](https://en.wikipedia.org/wiki/Wikipedia:Reliable_sources/Perennial_sources) editorial methodology (RSP), and stops early once it has enough high-quality findings. You define the subject, the output shape, and the quality bar. Debriefer handles the orchestration, the budget, and the trust math.
 
@@ -497,7 +497,8 @@ asyncio.run(main())
 ```bash
 git clone https://github.com/chenders/debriefer.git
 cd debriefer && npm install
-npm run build && npm test    # 750+ tests across TypeScript and Python
+npm run build && npm test    # 710+ TypeScript tests
+cd clients/python && pip install -e ".[dev]" && pytest  # 39 Python tests
 ```
 
 ## License
