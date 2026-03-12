@@ -200,10 +200,15 @@ const orchestrator = new ResearchOrchestrator(
 
 const result = await orchestrator.debrief({ id: "1918-flu", name: "1918 influenza pandemic" })
 
-const bySource = Object.groupBy(result.findings, (f) => f.sourceName)
-for (const [source, findings] of Object.entries(bySource)) {
-  console.log(`\n${source} (${findings!.length} results):`)
-  for (const f of findings!) {
+const bySource = new Map<string, typeof result.findings>()
+for (const f of result.findings) {
+  const group = bySource.get(f.sourceName) ?? []
+  group.push(f)
+  bySource.set(f.sourceName, group)
+}
+for (const [source, findings] of bySource) {
+  console.log(`\n${source} (${findings.length} results):`)
+  for (const f of findings) {
     console.log(`  [reliability: ${f.reliabilityScore}] ${f.url}`)
   }
 }
@@ -500,7 +505,7 @@ asyncio.run(main())
 git clone https://github.com/chenders/debriefer.git
 cd debriefer && npm install
 npm run build && npm test    # 710+ TypeScript tests
-cd clients/python && pip install -e ".[dev]" && pytest  # 39 Python tests
+cd clients/python && pip install -e ".[dev]" && pytest  # Python client tests
 ```
 
 ## License
