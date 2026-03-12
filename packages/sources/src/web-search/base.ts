@@ -47,6 +47,28 @@ export interface WebSearchOptions extends BaseSourceOptions, LinkSelectionOption
   maxLinksToFollow?: number
   /** Minimum extracted text length in characters. Pages below this are filtered. Default: 200. */
   minContentLength?: number
+  /**
+   * Maximum cost in USD for link following per subject. When set, the source
+   * tracks cumulative fetch cost and stops following links when the budget
+   * is exhausted. Default: unlimited.
+   */
+  maxLinkCost?: number
+  /**
+   * Custom link selector that filters/reorders search results before fetching.
+   * Receives ranked results and the subject, returns the results to follow.
+   * Useful for AI-assisted link selection (e.g., Claude ranking URLs by relevance).
+   * Applied after scoring/ranking but before the maxLinksToFollow limit.
+   */
+  linkSelector?: (
+    results: WebSearchResult[],
+    subject: ResearchSubject
+  ) => Promise<WebSearchResult[]> | WebSearchResult[]
+  /**
+   * Custom page fetcher that replaces the default fetch+readability pipeline.
+   * Useful for browser-based fetching (Playwright) or sites requiring
+   * authentication/fingerprinting. Returns extracted text or null on failure.
+   */
+  fetchPage?: (url: string, signal: AbortSignal) => Promise<string | null>
 }
 
 // ============================================================================
@@ -76,6 +98,9 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
   protected readonly boostKeywords: Array<{ keyword: string; boost: number }>
   protected readonly penaltyKeywords: Array<{ keyword: string; penalty: number }>
   protected readonly blockedDomains: string[]
+  private readonly maxLinkCost?: number
+  private readonly linkSelector?: WebSearchOptions["linkSelector"]
+  private readonly customFetchPage?: WebSearchOptions["fetchPage"]
 
   constructor(options: WebSearchOptions = {}) {
     super(options)
@@ -85,6 +110,9 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
     this.boostKeywords = options.boostKeywords ?? []
     this.penaltyKeywords = options.penaltyKeywords ?? []
     this.blockedDomains = options.blockedDomains ?? []
+    this.maxLinkCost = options.maxLinkCost
+    this.linkSelector = options.linkSelector
+    this.customFetchPage = options.fetchPage
   }
 
   /**
@@ -125,17 +153,38 @@ export abstract class WebSearchBase extends BaseResearchSource<ResearchSubject> 
     // 3. Score & rank links
     const ranked = this.scoreAndRank(filtered)
 
-    // 4. Take top N links
-    const linksToFollow = ranked.slice(0, this.maxLinksToFollow)
+    // 4. Apply custom link selector if provided, then take top N
+    let selectedResults = ranked.map((r) => r.result)
+    if (this.linkSelector) {
+      selectedResults = await this.linkSelector(selectedResults, subject)
+    }
+    const linksToFollow = selectedResults.slice(0, this.maxLinksToFollow)
 
     // 5. Fetch and extract content from each page
     const extractedPages: Array<{ url: string; title: string; text: string }> = []
     let linksAttempted = 0
+    let linkCostUsd = 0
 
-    for (const { result } of linksToFollow) {
+    for (const result of linksToFollow) {
       if (signal.aborted) break
+      if (this.maxLinkCost !== undefined && linkCostUsd >= this.maxLinkCost) break
 
       linksAttempted++
+
+      // Use custom fetch if provided, otherwise default pipeline
+      if (this.customFetchPage) {
+        const text = await this.customFetchPage(result.url, signal)
+        if (text && text.length >= this.minContentLength) {
+          extractedPages.push({
+            url: result.url,
+            title: result.title ?? result.url,
+            text,
+          })
+          linkCostUsd += this.estimatedCostPerQuery
+        }
+        continue
+      }
+
       const pageResult = await fetchPage({ url: result.url, signal })
 
       if (pageResult.fetchMethod === "none" || !pageResult.content) {

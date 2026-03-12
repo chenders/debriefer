@@ -608,4 +608,126 @@ describe("WebSearchBase", () => {
       expect(source.testIsDomainBlocked("https://fe80news.com/")).toBe(false)
     })
   })
+
+  // ==========================================================================
+  // linkSelector callback
+  // ==========================================================================
+
+  describe("linkSelector", () => {
+    it("filters results via linkSelector before fetching", async () => {
+      const source = new TestSearchSource({
+        linkSelector: async (results) => results.filter((r) => r.url.includes("chosen")),
+      })
+      source.searchResults = [
+        makeSearchResult({ url: "https://example.com/skipped", title: "Skipped" }),
+        makeSearchResult({ url: "https://example.com/chosen", title: "Chosen" }),
+      ]
+
+      setupPageExtraction([
+        { url: "https://example.com/skipped", text: longText("Should not be fetched") },
+        { url: "https://example.com/chosen", text: longText("Chosen content") },
+      ])
+
+      const result = await source.doFetch(makeSubject(), AbortSignal.timeout(5000))
+
+      expect(result).not.toBeNull()
+      expect(mockFetchPage).toHaveBeenCalledTimes(1)
+      expect(mockFetchPage).toHaveBeenCalledWith(
+        expect.objectContaining({ url: "https://example.com/chosen" })
+      )
+    })
+
+    it("receives the subject for context-aware selection", async () => {
+      const selectorSpy = vi.fn().mockImplementation((results: WebSearchResult[]) => results)
+      const source = new TestSearchSource({ linkSelector: selectorSpy })
+      source.searchResults = [makeSearchResult({ url: "https://example.com/page" })]
+
+      setupPageExtraction([{ url: "https://example.com/page", text: longText("Content") }])
+
+      const subject = makeSubject({ name: "Test Actor" })
+      await source.doFetch(subject, AbortSignal.timeout(5000))
+
+      expect(selectorSpy).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.objectContaining({ name: "Test Actor" })
+      )
+    })
+  })
+
+  // ==========================================================================
+  // maxLinkCost budget
+  // ==========================================================================
+
+  describe("maxLinkCost", () => {
+    it("stops following links when cost budget is exhausted", async () => {
+      const source = new TestSearchSource({
+        maxLinkCost: 0, // Zero budget — no links should be fetched
+      })
+      source.searchResults = [
+        makeSearchResult({ url: "https://example.com/page1" }),
+        makeSearchResult({ url: "https://example.com/page2" }),
+      ]
+
+      setupPageExtraction([
+        { url: "https://example.com/page1", text: longText("Content 1") },
+        { url: "https://example.com/page2", text: longText("Content 2") },
+      ])
+
+      const result = await source.doFetch(makeSubject(), AbortSignal.timeout(5000))
+
+      expect(result).toBeNull()
+      expect(mockFetchPage).not.toHaveBeenCalled()
+    })
+  })
+
+  // ==========================================================================
+  // custom fetchPage callback
+  // ==========================================================================
+
+  describe("custom fetchPage", () => {
+    it("uses custom fetchPage instead of default pipeline", async () => {
+      const customFetch = vi.fn().mockResolvedValue(longText("Custom fetched content"))
+      const source = new TestSearchSource({ fetchPage: customFetch })
+      source.searchResults = [
+        makeSearchResult({ url: "https://example.com/page", title: "Custom Page" }),
+      ]
+
+      const result = await source.doFetch(makeSubject(), AbortSignal.timeout(5000))
+
+      expect(result).not.toBeNull()
+      expect(result!.text).toContain("Custom fetched content")
+      // Default fetchPage should NOT have been called
+      expect(mockFetchPage).not.toHaveBeenCalled()
+      // Custom fetch should have been called with the URL
+      expect(customFetch).toHaveBeenCalledWith("https://example.com/page", expect.any(AbortSignal))
+    })
+
+    it("skips pages where custom fetchPage returns null", async () => {
+      const customFetch = vi
+        .fn()
+        .mockResolvedValueOnce(null) // First page fails
+        .mockResolvedValueOnce(longText("Second page content"))
+      const source = new TestSearchSource({ fetchPage: customFetch })
+      source.searchResults = [
+        makeSearchResult({ url: "https://example.com/fail", title: "Fail" }),
+        makeSearchResult({ url: "https://example.com/succeed", title: "Succeed" }),
+      ]
+
+      const result = await source.doFetch(makeSubject(), AbortSignal.timeout(5000))
+
+      expect(result).not.toBeNull()
+      expect(result!.text).toContain("Second page content")
+      expect(customFetch).toHaveBeenCalledTimes(2)
+    })
+
+    it("respects minContentLength with custom fetchPage", async () => {
+      const customFetch = vi.fn().mockResolvedValue("Short")
+      const source = new TestSearchSource({ fetchPage: customFetch, minContentLength: 200 })
+      source.searchResults = [makeSearchResult({ url: "https://example.com/short" })]
+
+      const result = await source.doFetch(makeSubject(), AbortSignal.timeout(5000))
+
+      expect(result).toBeNull()
+    })
+  })
 })
