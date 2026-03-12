@@ -1,12 +1,14 @@
 # Respond to Copilot
 
-Review and respond to GitHub Copilot review comments on a pull request.
+Review and respond to GitHub Copilot review comments on a pull request. Loops until Copilot has no new comments.
 
 ## Arguments
 
 - `$ARGUMENTS` - PR number or branch name (optional, defaults to current branch)
 
 ## Instructions
+
+### Per-round steps
 
 1. **Identify the PR**
    - If PR number provided, use directly
@@ -18,25 +20,27 @@ Review and respond to GitHub Copilot review comments on a pull request.
    gh api repos/chenders/debriefer/pulls/{pr_number}/comments | jq '.[] | {id, body, path, line}'
    ```
 
-3. **Analyze each comment**
+3. **Check for new comments** — If there are no new unaddressed comments since the last round, the loop is done. Report the final status and stop.
+
+4. **Analyze each new comment**
    - Validity: Is the suggestion technically correct?
    - Value: Would it improve code quality?
    - Scope: Is it within the scope of this PR?
 
-4. **Categorize**: Will implement / Won't implement / Needs discussion
+5. **Categorize**: Will implement / Won't implement / Needs discussion
 
-5. **Implement accepted suggestions**
+6. **Implement accepted suggestions**
    - Make changes, run tests: `npx turbo test lint type-check`
    - Commit: "Address Copilot review feedback"
    - Push changes
 
-6. **Reply to each comment**
+7. **Reply to each comment**
 
    ```bash
    gh api -X POST repos/chenders/debriefer/pulls/{pr}/comments/{id}/replies -f body="Fixed in $(git rev-parse --short HEAD). Explanation."
    ```
 
-7. **Resolve implemented threads** (use PRRT* thread IDs, not PRRC* comment IDs)
+8. **Resolve implemented threads** (use PRRT* thread IDs, not PRRC* comment IDs)
 
    ```bash
    # Get thread IDs
@@ -50,14 +54,33 @@ Review and respond to GitHub Copilot review comments on a pull request.
    - Resolve threads where you implemented the fix
    - Do NOT resolve threads where you declined
 
-8. **Re-request Copilot review** after pushing fixes:
+9. **Re-request Copilot review**:
 
    ```bash
    gh api repos/chenders/debriefer/pulls/{PR_NUMBER}/requested_reviewers -X POST -f 'reviewers[]=copilot-pull-request-reviewer[bot]'
    ```
+
+10. **Wait for the new review** — Poll until a new review appears (review count increases):
+
+    ```bash
+    gh api repos/chenders/debriefer/pulls/{PR_NUMBER}/reviews --jq 'length'
+    ```
+
+    Poll every 15 seconds. Timeout after 5 minutes (assume review is delayed).
+
+11. **Loop back to step 2** — Fetch comments again and check for new ones.
+
+### Completion criteria
+
+The loop ends when:
+- Copilot's latest review has **no new comments** (clean review), OR
+- The poll in step 10 times out (report this and stop)
+
+When complete, report a summary: total rounds, comments addressed, comments declined.
 
 ## Notes
 
 - Never dismiss suggestions without explanation
 - Never defer work without explicit user approval
 - Thread IDs (PRRT*) are NOT the same as comment IDs (PRRC*)
+- Track comment IDs across rounds to distinguish new comments from previously addressed ones
