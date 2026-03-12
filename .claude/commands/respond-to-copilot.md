@@ -73,6 +73,7 @@ Review and respond to GitHub Copilot review comments on a pull request. Loops un
 ### Completion criteria
 
 The loop ends when:
+
 - Copilot's latest review has **no new comments** (clean review), OR
 - The poll in step 10 times out (report this and stop)
 
