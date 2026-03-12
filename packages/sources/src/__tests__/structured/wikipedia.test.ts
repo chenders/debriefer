@@ -861,6 +861,62 @@ describe("WikipediaSource", () => {
       expect(result).toBeNull()
     })
 
+    it("supports async validatePerson callbacks", async () => {
+      const validate = vi.fn().mockResolvedValue(true)
+      const source = new WikipediaSource({ validatePerson: validate })
+      const subject = makeSubject()
+
+      const doc = makeDocument("John Wayne", [
+        makeSection(
+          "",
+          "John Wayne (born May 26, 1907) was born Marion Robert Morrison, an American actor.",
+          0
+        ),
+      ])
+
+      mockFetch.mockResolvedValueOnce(doc)
+
+      const signal = AbortSignal.timeout(5000)
+      const result = await source.lookup(subject, signal)
+
+      expect(validate).toHaveBeenCalledTimes(1)
+      expect(result).not.toBeNull()
+    })
+
+    it("tries disambiguation suffixes when async validatePerson returns false", async () => {
+      const validate = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true)
+
+      const source = new WikipediaSource({
+        validatePerson: validate,
+        disambiguationSuffixes: ["_(actor)"],
+      })
+      const subject = makeSubject()
+
+      const wrongDoc = makeDocument("John Wayne", [
+        makeSection(
+          "",
+          "John Wayne is a city in Indiana with a population of about 30,000 people.",
+          0
+        ),
+      ])
+      const actorDoc = makeDocument("John Wayne (actor)", [
+        makeSection(
+          "",
+          "John Wayne (born May 26, 1907) was born Marion Robert Morrison, an American actor.",
+          0
+        ),
+      ])
+
+      mockFetch.mockResolvedValueOnce(wrongDoc).mockResolvedValueOnce(actorDoc)
+
+      const signal = AbortSignal.timeout(5000)
+      const result = await source.lookup(subject, signal)
+
+      expect(validate).toHaveBeenCalledTimes(2)
+      expect(result).not.toBeNull()
+      expect(result!.text).toContain("Marion Robert Morrison")
+    })
+
     it("returns null immediately when validation fails and handleDisambiguation is false", async () => {
       const validate = vi.fn().mockReturnValue(false)
 
