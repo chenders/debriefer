@@ -50,7 +50,11 @@ Review and respond to GitHub Copilot review comments on a pull request.
    - Resolve threads where you implemented the fix
    - Do NOT resolve threads where you declined
 
-8. **Notify user** to click 🔄 re-request button for Copilot re-review (no API exists for this)
+8. **Re-request Copilot review** after pushing fixes:
+
+   ```bash
+   gh api repos/chenders/debriefer/pulls/{PR_NUMBER}/requested_reviewers -X POST -f 'reviewers[]=copilot-pull-request-reviewer[bot]'
+   ```
 
 ## Notes
 
