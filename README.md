@@ -14,7 +14,7 @@ Extracted from a [production enrichment pipeline](https://github.com/chenders/de
 ## Quick Start
 
 ```bash
-# npm publish planned — for now, clone and link from the repo:
+# npm publish planned — for now, clone and build from the repo:
 git clone https://github.com/chenders/debriefer.git
 cd debriefer && npm install && npm run build
 ```
@@ -65,15 +65,15 @@ No API keys required — Wikipedia, Wikidata, and Open Library are free and open
 ## How It Works
 
 ```
-Subject ──> Orchestrator ──> Phase 1 (free) ──────> Phase 2 (API key) ──> Synthesis
-                 │                 │                       │                   │
-                 ├─ Cost Tracker   ├─ Wikidata             ├─ Google Search    v
-                 ├─ Rate Limiter   ├─ Wikipedia            ├─ Bing Search   Structured
-                 ├─ Cache          ├─ Guardian, NYT        ├─ Brave Search  output with
-                 └─ Telemetry      └─ 20+ free site-search └─ ...           citations
+Subject ──> Orchestrator ──> Phase 1 (free / free-tier) ──> Phase 2 (paid search) ──> Synthesis
+                 │                 │                              │                       │
+                 ├─ Cost Tracker   ├─ Wikidata                   ├─ Google Search         v
+                 ├─ Rate Limiter   ├─ Wikipedia                  ├─ Bing Search       Structured
+                 ├─ Cache          ├─ Guardian, NYT (free key)   ├─ Brave Search      output with
+                 └─ Telemetry      └─ 20+ site-search (no key)  └─ ...                citations
 ```
 
-The orchestrator runs phases in order. Within each phase, sources run concurrently with per-domain rate limiting. After each phase, the engine checks two things: has the **early stop threshold** been met (enough distinct source families returned high-quality findings)? Has the **cost limit** been exceeded? If either is true, remaining phases are skipped and synthesis runs on what's been collected.
+The orchestrator runs phases in order. Within each phase, sources run concurrently with per-domain rate limiting by default, or sequentially (stopping at the first non-null finding) when configured. After each phase, the engine checks two things: has the **early stop threshold** been met (enough distinct source families returned high-quality findings)? Has the **cost limit** been exceeded? If either is true, remaining phases are skipped and synthesis runs on what's been collected.
 
 Quality is measured on two independent axes. **Source reliability** (how trustworthy is the publisher?) and **content confidence** (does this particular result actually answer the query?) must both exceed their thresholds for a finding to count toward early stopping.
 
@@ -444,7 +444,7 @@ curl -X POST http://localhost:8090/api/debrief \
 ```bash
 # Run from source (npm publish planned)
 npm run build -w packages/mcp
-node packages/mcp/dist/index.js
+node packages/mcp/dist/cli.js
 ```
 
 Provides two tools: `debrief` (run multi-source research) and `list_sources` (browse available sources). Sources run in-process with zero HTTP overhead.
