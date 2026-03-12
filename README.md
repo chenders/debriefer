@@ -44,7 +44,7 @@ No API keys required — Wikipedia, Wikidata, and Open Library are free and open
 
 ## When to Use Debriefer
 
-- **RAG pipelines that need provenance** — Feed your LLM only trusted, relevant context with source reliability scores attached, so it can cite real sources instead of hallucinating URLs.
+- **[RAG](https://en.wikipedia.org/wiki/Retrieval-augmented_generation) pipelines that need provenance** — Feed your LLM only trusted, relevant context with source reliability scores attached, so it can cite real sources instead of hallucinating URLs.
 - **Database enrichment at scale** — Pull biographical data, news coverage, or archival references for thousands of records across dozens of APIs, with per-subject cost caps keeping the bill predictable.
 - **Cross-archive historical research** — Query digitized newspaper archives across multiple countries and institutions in one call instead of learning four different APIs.
 - **Fact-checking pipelines** — Verify claims against multiple independent sources ranked by editorial credibility, not just by which API returned first.
