@@ -41,10 +41,10 @@
     "url": "https://github.com/chenders/debriefer/issues"
   },
   "dependencies": {
-    "@mozilla/readability": "^0.5",
+    "@mozilla/readability": "^0.6",
     "debriefer": "^1.0.0",
     "he": "^1",
-    "jsdom": "^25",
+    "jsdom": "^28",
     "wtf_wikipedia": "^10"
   },
   "optionalDependencies": {
