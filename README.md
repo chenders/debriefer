@@ -1,13 +1,25 @@
 # Debriefer
 
-**Orchestrates dozens of research sources, scores them for reliability, and stops when it has enough.**
+**Multi-source research with built-in reliability scoring — 35+ sources, Wikipedia-grade trust ratings, and cost-controlled execution.**
 
 [![CI](https://github.com/chenders/debriefer/actions/workflows/ci.yml/badge.svg)](https://github.com/chenders/debriefer/actions/workflows/ci.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-710%2B-brightgreen)](#contributing)
 
-You need facts from the open web, but every source has a different API, a different credibility level, and a different cost. Debriefer queries 30+ sources in parallel — news wires, digital archives, structured databases, search engines — scores each one using Wikipedia's own reliability methodology, and stops early once it has enough high-quality, cross-referenced findings. You define the subject, the output shape, and the quality bar. Debriefer handles the orchestration, the budget, and the trust math.
+You need facts from the open web, but every source has a different API, a different credibility, and a different cost. Debriefer queries 35+ sources in parallel — news wires, digital archives, structured databases, search engines — scores each one using Wikipedia's [Reliable Sources](https://en.wikipedia.org/wiki/Wikipedia:Reliable_sources/Perennial_sources) editorial methodology (RSP), and stops early once it has enough high-quality findings. You define the subject, the output shape, and the quality bar. Debriefer handles the orchestration, the budget, and the trust math.
+
+Extracted from a [production enrichment pipeline](https://github.com/chenders/deadonfilm) that uses it to research thousands of records across 60+ sources.
 
 ## Quick Start
+
+```bash
+# npm publish planned — for now, clone the repo and run examples from within:
+git clone https://github.com/chenders/debriefer.git
+cd debriefer && npm install && npm run build
+```
+
+The code below runs inside the monorepo (where `debriefer` and `debriefer-sources` resolve to local workspace packages):
 
 ```typescript
 import { ResearchOrchestrator, NoopSynthesizer } from "debriefer"
@@ -24,54 +36,59 @@ console.log(`${result.findings.length} findings from ${result.sourcesSucceeded} 
 for (const finding of result.findings) {
   console.log(`[${finding.sourceName}] (reliability: ${finding.reliabilityScore}) ${finding.url}`)
 }
+// 3 findings from 3 sources
+// [Wikidata] (reliability: 1) https://www.wikidata.org/wiki/Q41282
+// [Wikipedia] (reliability: 0.85) https://en.wikipedia.org/wiki/Audrey_Hepburn
+// [Open Library] (reliability: 0.85) https://openlibrary.org/search?q=Audrey+Hepburn
 ```
 
 No API keys required — Wikipedia, Wikidata, and Open Library are free and open.
 
+## When to Use Debriefer
+
+- **[RAG](https://en.wikipedia.org/wiki/Retrieval-augmented_generation) pipelines that need provenance** — Feed your LLM only trusted, relevant context with source reliability scores attached, so it can cite real sources instead of hallucinating URLs.
+- **Database enrichment at scale** — Pull biographical data, news coverage, or archival references for thousands of records across dozens of APIs, with per-subject cost caps keeping the bill predictable.
+- **Cross-archive historical research** — Query digitized newspaper archives across multiple countries and institutions in one call instead of learning four different APIs.
+- **Fact-checking pipelines** — Verify claims against multiple independent sources ranked by editorial credibility, not just by which API returned first.
+- **Drug & pharmaceutical research** — Combine structured pharmacological data, clinical news, and published literature with reliability thresholds that exclude low-trust sources.
+- **Corporate due diligence** — Screen companies across wire services, structured databases, and web search with batch processing and per-subject cost caps.
+- **AI agent tooling** — Give AI agents structured access to 35+ research sources via the MCP server, with built-in cost guardrails so agents can't overspend.
+
 ## Key Features
 
-- **Wikipedia-grade reliability scoring** — Every source is rated on a 12-tier scale derived from the [Reliable Sources Perennial (RSP)](https://en.wikipedia.org/wiki/Wikipedia:Reliable_sources/Perennial_sources) list that Wikipedia editors use to settle disputes.
-- **Two independent quality axes** — Source reliability ("is the BBC trustworthy?") and content confidence ("does this article actually mention the person we're researching?") are scored separately. A trusted source with an irrelevant page doesn't pollute your results.
-- **Phased execution with early stopping** — Cheap, fast sources run first. Expensive ones only fire if the cheap ones didn't find enough. When the quality bar is met, remaining phases are skipped.
+- **Wikipedia-grade reliability scoring** — Every source is rated on a 12-tier scale derived from the [RSP list](https://en.wikipedia.org/wiki/Wikipedia:Reliable_sources/Perennial_sources) that Wikipedia editors use to settle disputes. Wikidata scores 1.0, AP and Reuters score 0.95, user-generated content scores 0.35.
+- **Two independent quality axes** — Source reliability ("is the BBC trustworthy?") and content confidence ("does this article actually answer the query?") are scored separately. A trusted source with an irrelevant page doesn't pollute your results.
+- **Phased execution with early stopping** — Cheap, fast sources run first. Expensive sources only run if the cheap ones fall short. When the quality bar is met, remaining phases are skipped. Within a phase, sources can also be executed sequentially, stopping at the first non-null finding — useful for keeping AI model costs down.
 - **Per-query cost budgets** — Set a dollar limit per subject and per batch. Debriefer tracks costs and stops before you overspend.
-- **Pluggable AI synthesis** — Optionally pass findings through Claude to distill raw results into structured, cited output matching your schema. Or skip synthesis entirely. The Anthropic SDK is an optional peer dependency.
-- **Fully generic engine** — `ResearchOrchestrator<TSubject, TOutput>` doesn't know or care whether you're researching people, companies, or historical events. Bring your own subject type, output schema, and synthesis prompt.
-- **No lock-in on infrastructure** — Cache, telemetry, and rate limiting are injected interfaces. Swap in Redis, Datadog, or SQLite without touching orchestration code. Core has one hard dependency (`p-limit`).
+- **Pluggable AI synthesis** — Pass findings through Claude to distill raw results into structured, cited output matching your schema. Or skip synthesis entirely. The Anthropic SDK is an optional peer dependency.
+- **Fully generic engine** — Research people, companies, drugs, or historical events — `ResearchOrchestrator<TSubject, TOutput>` has no domain assumptions built in. Bring your own subject type, output schema, and synthesis prompt.
+- **The entire core has one hard dependency: `p-limit`** — Cache, telemetry, and rate limiting are injected interfaces. Swap in Redis, Datadog, or SQLite without touching orchestration code.
+
+## How It Works
+
+```
+Subject ──> Orchestrator ──> Phase 1 (free / free-tier) ──> Phase 2 (paid search) ──> Synthesis
+                 │                 │                              │                       │
+                 ├─ Cost Tracker   ├─ Wikidata                   ├─ Google Search         v
+                 ├─ Rate Limiter   ├─ Wikipedia                  ├─ Bing Search       Structured
+                 ├─ Cache          ├─ Guardian, NYT (free key)   ├─ Brave Search      output with
+                 └─ Telemetry      └─ 20+ site-search (no key)  └─ ...                citations
+```
+
+The orchestrator runs phases in order. Within each phase, sources run concurrently with per-domain rate limiting by default, or sequentially (stopping at the first non-null finding) when configured. After each phase, the engine checks two things: has the **early stop threshold** been met (enough distinct source families returned high-quality findings)? Has the **cost limit** been exceeded? If either is true, remaining phases are skipped and synthesis runs on what's been collected.
+
+Quality is measured on two independent axes. **Source reliability** (how trustworthy is the publisher?) and **content confidence** (does this particular result actually answer the query?) must both exceed their thresholds for a finding to count toward early stopping.
 
 ## Packages
 
 | Package                                 | Description                              | Status |
 | --------------------------------------- | ---------------------------------------- | ------ |
 | [`debriefer`](packages/core)            | Core orchestration engine                | Stable |
-| [`debriefer-sources`](packages/sources) | 30+ built-in source integrations         | Stable |
+| [`debriefer-sources`](packages/sources) | 35+ built-in source integrations         | Stable |
 | [`debriefer-cli`](packages/cli)         | Command-line interface                   | Stable |
 | [`debriefer-server`](packages/server)   | REST API server + Docker                 | Stable |
 | [`debriefer-mcp`](packages/mcp)         | Model Context Protocol for AI assistants | Stable |
 | [`debriefer` (Python)](clients/python)  | Python HTTP client                       | Stable |
-
-## How It Works
-
-Debriefer runs research in **phases** that you define. You decide which sources go in which phase — typically free sources first, paid sources later. Each phase runs its sources concurrently with per-domain rate limiting. The CLI does this automatically (free phase 1, paid phase 2), and library users construct their own `SourcePhaseGroup[]`.
-
-**Early stopping** kicks in when enough distinct source families return high-quality findings. If Wikipedia, AP News, and the Library of Congress all agree, there's no reason to burn through your search API quota. The threshold is configurable, and cost limits are checked between phases.
-
-Quality is measured on **two independent axes**:
-
-- **Source reliability** — How trustworthy is the publisher? Scored 0.0–1.0 using Wikipedia's RSP list. Wikidata scores 1.0, AP and Reuters score 0.95, user-generated content scores 0.35.
-- **Content confidence** — Does this particular result actually answer the query? Computed per finding using keyword matching and source-specific heuristics.
-
-Both must exceed their thresholds for a finding to count toward early stopping.
-
-```
-Consumer App ──▶ Orchestrator ──▶ Phase 1 (free) ──▶ Phase 2 (paid) ──▶ Synthesis
-                     │                                                       │
-                     ├── Cost Tracker    ┌─ Wikipedia                        ▼
-                     ├── Rate Limiter    ├─ Wikidata        Structured output
-                     ├── Cache           ├─ Open Library    with citations
-                     └── Telemetry       ├─ AP News
-                                         ├─ Guardian
-                                         └─ ...30+ more
-```
 
 ## Reliability Scoring
 
@@ -80,8 +97,8 @@ Based on Wikipedia's [Reliable Sources Perennial](https://en.wikipedia.org/wiki/
 | Tier                    | Score | Examples                                                    |
 | ----------------------- | ----- | ----------------------------------------------------------- |
 | `STRUCTURED_DATA`       | 1.0   | Wikidata, government databases                              |
-| `TIER_1_NEWS`           | 0.95  | AP, NYT, BBC, Reuters                                       |
-| `TRADE_PRESS`           | 0.9   | Variety, Nature                                             |
+| `TIER_1_NEWS`           | 0.95  | AP, NYT, BBC, Reuters, Guardian, Washington Post            |
+| `TRADE_PRESS`           | 0.9   | Rolling Stone, Smithsonian, National Geographic             |
 | `ARCHIVAL`              | 0.9   | Library of Congress (Chronicling America), Trove, Europeana |
 | `SECONDARY_COMPILATION` | 0.85  | Wikipedia, Google Books                                     |
 | `SEARCH_AGGREGATOR`     | 0.7   | Google, Bing, DuckDuckGo                                    |
@@ -94,18 +111,239 @@ Based on Wikipedia's [Reliable Sources Perennial](https://en.wikipedia.org/wiki/
 
 ## Source Categories
 
-| Category       | Sources                                                     | Free?                     |
-| -------------- | ----------------------------------------------------------- | ------------------------- |
-| **Structured** | Wikidata, Wikipedia                                         | Yes                       |
-| **News**       | AP, Reuters, BBC, NYT, Guardian, Washington Post, + 16 more | API key required          |
-| **Search**     | Google, Bing, Brave, DuckDuckGo                             | Mixed (DDG free)          |
-| **Books**      | Google Books, Open Library                                  | Mixed (Open Library free) |
-| **Archives**   | Chronicling America, Trove, Europeana, Internet Archive     | Yes                       |
-| **Obituary**   | Legacy.com, Find a Grave                                    | Yes                       |
+| Category       | Count | Sources                                                       | Free?                     |
+| -------------- | ----- | ------------------------------------------------------------- | ------------------------- |
+| **Structured** | 2     | Wikidata, Wikipedia                                           | Yes                       |
+| **News**       | 22    | AP, Reuters, BBC, NYT, Guardian, Washington Post, NPR, + more | Mostly free (site-search) |
+| **Search**     | 4     | Google, Bing, Brave, DuckDuckGo                               | Mixed (DDG free)          |
+| **Books**      | 2     | Google Books, Open Library                                    | Mixed (Open Library free) |
+| **Archives**   | 4     | Chronicling America, Trove, Europeana, Internet Archive       | Yes                       |
+| **Obituary**   | 2     | Legacy.com, Find a Grave                                      | Yes                       |
 
-Sources requiring no API key run in the earliest phases. Basic research costs nothing and completes in seconds.
+Most news sources use free DuckDuckGo site-search (e.g., `site:apnews.com`) and need no API key. Only Guardian and NYTimes use their own APIs (free tier). Sources requiring no API key run in the earliest phases — basic research costs nothing and completes in seconds.
 
 ## Integration Examples
+
+Examples across different domains — some use AI synthesis, some don't; some batch-process, some don't; some set strict reliability thresholds, some use defaults.
+
+Jump to: [RAG Pipelines](#provenance-scored-retrieval-for-rag-pipelines) · [Historical Archives](#cross-archive-historical-research) · [Drug Research](#drug--disease-research) · [Due Diligence](#corporate-due-diligence) · [Actor Research](#actor-research-with-ai-synthesis)
+
+### Provenance-Scored Retrieval for RAG Pipelines
+
+RAG systems typically stuff all retrieved text into the LLM's context window with no way to distinguish a Reuters wire story from a random blog post. Debriefer solves this by scoring every piece of retrieved content on two axes — source reliability and content relevance — so your LLM only sees trusted, relevant context and can cite where each fact came from.
+
+```typescript
+import { ResearchOrchestrator, NoopSynthesizer, type ScoredFinding } from "debriefer"
+import {
+  wikidata,
+  wikipedia,
+  apNews,
+  bbcNews,
+  reuters,
+  guardian,
+  openLibrary,
+} from "debriefer-sources"
+
+const orchestrator = new ResearchOrchestrator(
+  [
+    { phase: 1, sources: [wikidata(), wikipedia(), openLibrary()] },
+    { phase: 2, sources: [apNews(), bbcNews(), reuters(), guardian()] },
+  ],
+  new NoopSynthesizer(),
+  { confidenceThreshold: 0.6, reliabilityThreshold: 0.7 }
+)
+
+async function buildRAGContext(query: string): Promise<string> {
+  const result = await orchestrator.debrief({ id: query, name: query })
+
+  const trusted = result.findings.filter((f) => f.reliabilityScore >= 0.7 && f.confidence >= 0.6)
+
+  return trusted
+    .map(
+      (f) => `[Source: ${f.sourceName} | Reliability: ${f.reliabilityScore} | ${f.url}]\n${f.text}`
+    )
+    .join("\n\n---\n\n")
+}
+
+// Pass to any LLM — works with Anthropic, OpenAI, or any chat completion API
+const context = await buildRAGContext("climate change effects on coral reefs")
+```
+
+Without this, you'd need to build integrations for every source API, invent your own reliability scoring system, and figure out how to compare quality across completely different response formats. Debriefer gives you a single call that returns findings already scored on reliability and relevance, ready to filter and feed into your model.
+
+### Cross-Archive Historical Research
+
+Historians and journalists researching how a person or event was documented across countries and eras run into the same wall every time: every archive has a different API, different query syntax, different authentication, and different response format. Debriefer queries them all in one call, with reliability scoring to help you weight institutional archives against mirrors.
+
+```typescript
+import { ResearchOrchestrator, NoopSynthesizer } from "debriefer"
+import {
+  chroniclingAmerica,
+  trove,
+  europeana,
+  internetArchive,
+  wikipedia,
+  openLibrary,
+} from "debriefer-sources"
+
+const orchestrator = new ResearchOrchestrator(
+  [
+    { phase: 1, name: "Reference", sources: [wikipedia(), openLibrary()] },
+    {
+      phase: 2,
+      name: "Archives",
+      sources: [chroniclingAmerica(), trove(), europeana(), internetArchive()],
+    },
+  ],
+  new NoopSynthesizer()
+)
+
+const result = await orchestrator.debrief({ id: "1918-flu", name: "1918 influenza pandemic" })
+
+const bySource = new Map<string, typeof result.findings>()
+for (const f of result.findings) {
+  const group = bySource.get(f.sourceName) ?? []
+  group.push(f)
+  bySource.set(f.sourceName, group)
+}
+for (const [source, findings] of bySource) {
+  console.log(`\n${source} (${findings.length} results):`)
+  for (const f of findings) {
+    console.log(`  [reliability: ${f.reliabilityScore}] ${f.url}`)
+  }
+}
+```
+
+One researcher, four countries' archives, one API call. Without Debriefer, this is weeks of integration work per archive.
+
+### Drug & Disease Research
+
+Pharmaceutical teams researching a drug need structured pharmacological data, recent clinical trial news, and published literature — and they need to trust the sources they're reading. Debriefer's phased execution queries Wikidata for structured facts first, then tier-1 news for recent developments, then book archives for published research.
+
+```typescript
+import { ResearchOrchestrator, ClaudeSynthesizer, type ResearchSubject } from "debriefer"
+import {
+  wikidata,
+  wikipedia,
+  apNews,
+  reuters,
+  bbcNews,
+  googleBooks,
+  openLibrary,
+} from "debriefer-sources"
+
+interface DrugProfile {
+  genericName: string
+  mechanismOfAction: string
+  approvedIndications: string[]
+  recentDevelopments: string[]
+  regulatoryStatus: string
+  sources: { name: string; url: string; reliability: number }[]
+}
+
+const synthesizer = new ClaudeSynthesizer<ResearchSubject, DrugProfile>({
+  promptBuilder: (subject, findings) => ({
+    system: `You are a medical information specialist. Produce an accurate drug profile
+from the research findings. Include mechanism of action, approved indications,
+recent regulatory or safety developments, and cite your sources.
+Return JSON: { genericName, mechanismOfAction, approvedIndications, recentDevelopments, regulatoryStatus, sources }`,
+    user: `Drug: ${subject.name}\n\nFindings:\n${findings
+      .map((f) => `[${f.sourceName}] (reliability: ${f.reliabilityScore}) ${f.url}\n${f.text}`)
+      .join("\n\n")}`,
+  }),
+  responseParser: (raw) => raw as DrugProfile,
+})
+
+const orchestrator = new ResearchOrchestrator(
+  [
+    { phase: 1, name: "Structured", sources: [wikidata(), wikipedia()] },
+    { phase: 2, name: "Clinical News", sources: [apNews(), reuters(), bbcNews()] },
+    { phase: 3, name: "Published Research", sources: [googleBooks(), openLibrary()] },
+  ],
+  synthesizer,
+  { earlyStopThreshold: 3, reliabilityThreshold: 0.85, costLimits: { maxCostPerSubject: 0.1 } }
+)
+
+const result = await orchestrator.debrief({
+  id: "semaglutide",
+  name: "semaglutide",
+  context: { brandNames: ["Ozempic", "Wegovy", "Rybelsus"] },
+})
+
+console.log(result.data!.regulatoryStatus)
+console.log(`${result.sourcesSucceeded} sources, cost: $${result.totalCostUsd.toFixed(4)}`)
+```
+
+The `reliabilityThreshold: 0.85` means only tier-1 news, structured data, and secondary compilations are _eligible_ to count toward early stopping — but they must also meet the confidence threshold. Search aggregators and user-generated content are still gathered for synthesis.
+
+### Corporate Due Diligence
+
+Screen companies for investment, compliance, or M&A due diligence by pulling structured facts from Wikidata alongside tier-1 news coverage. The batch processor researches multiple companies concurrently with lifecycle hooks for progress tracking — and reliability scoring ensures wire services outweigh aggregated or user-generated sources.
+
+```typescript
+import { ResearchOrchestrator, ClaudeSynthesizer, type ResearchSubject } from "debriefer"
+import {
+  wikidata,
+  wikipedia,
+  apNews,
+  reuters,
+  bbcNews,
+  guardian,
+  bingSearch,
+} from "debriefer-sources"
+
+interface RiskAssessment {
+  headquarters: string | null
+  recentRegulatoryActions: string[]
+  litigationRisk: "low" | "moderate" | "high"
+  reputationalFlags: string[]
+  summary: string
+}
+
+// Synthesizer follows the same pattern as above — only the output schema and prompt change
+const synthesizer = new ClaudeSynthesizer<ResearchSubject, RiskAssessment>({
+  promptBuilder: (subject, findings) => ({
+    system: `You are a corporate intelligence analyst. Summarize the research on this company.
+Flag regulatory actions, lawsuits, executive misconduct, or reputational controversies.
+Assign litigation risk as low/moderate/high based on evidence.
+Return JSON: { headquarters, recentRegulatoryActions, litigationRisk, reputationalFlags, summary }`,
+    user: `Company: ${subject.name}\n\nFindings:\n${findings
+      .map((f) => `[${f.sourceName}] (reliability: ${f.reliabilityScore}) ${f.url}\n${f.text}`)
+      .join("\n\n")}`,
+  }),
+  responseParser: (raw) => raw as RiskAssessment,
+})
+
+const orchestrator = new ResearchOrchestrator(
+  [
+    { phase: 1, name: "Company Facts", sources: [wikidata(), wikipedia()] },
+    { phase: 2, name: "News Coverage", sources: [apNews(), reuters(), bbcNews(), guardian()] },
+    { phase: 3, name: "Web Search", sources: [bingSearch()] },
+  ],
+  synthesizer,
+  { earlyStopThreshold: 4, costLimits: { maxCostPerSubject: 0.25 } }
+)
+
+const companies: ResearchSubject[] = [
+  { id: "company-a", name: "Acme Corporation", context: { ticker: "ACME" } },
+  { id: "company-b", name: "Globex Industries", context: { ticker: "GLBX" } },
+  { id: "company-c", name: "Initech Financial", context: { industry: "Fintech" } },
+]
+
+const results = await orchestrator.debriefBatch(companies, {
+  onSubjectComplete: (subject, result) =>
+    console.log(
+      `${subject.name}: risk=${result.data?.litigationRisk ?? "unknown"}, ` +
+        `cost=$${result.totalCostUsd.toFixed(3)}, ${result.durationMs}ms`
+    ),
+  onRunComplete: (stats) =>
+    console.log(
+      `\nScreened ${stats.succeeded}/${stats.total} companies, $${stats.costUsd.toFixed(3)} total`
+    ),
+})
+```
+
+The batch processor shares rate limiting across all companies — no thundering herd against any single news API — and per-subject cost caps prevent any one company from consuming the entire budget.
 
 ### Actor Research with AI Synthesis
 
@@ -172,125 +410,68 @@ console.log(
 
 Structured data runs first (free, fast). News and archives only fire if early stopping hasn't triggered. Deep archives are the last resort. The whole thing costs pennies.
 
-### Provenance-Scored Context for RAG Pipelines
+## Deployment Options
 
-RAG systems typically stuff all retrieved text into the LLM's context window with no way to distinguish a Reuters wire story from a random blog post. Debriefer solves this by scoring every piece of retrieved content on two axes — source reliability and content relevance — so your LLM only sees trusted, relevant context and can cite where each fact came from.
+Embed the library if you're in a TypeScript codebase. Use the HTTP server or Python client for polyglot environments. Use the MCP server to give AI agents research capabilities.
 
-```typescript
-import { ResearchOrchestrator, NoopSynthesizer, type ScoredFinding } from "debriefer"
-import {
-  wikidata,
-  wikipedia,
-  apNews,
-  bbcNews,
-  reuters,
-  guardian,
-  openLibrary,
-} from "debriefer-sources"
-
-const orchestrator = new ResearchOrchestrator(
-  [
-    { phase: 1, sources: [wikidata(), wikipedia(), openLibrary()] },
-    { phase: 2, sources: [apNews(), bbcNews(), reuters(), guardian()] },
-  ],
-  new NoopSynthesizer(),
-  { confidenceThreshold: 0.6, reliabilityThreshold: 0.7 }
-)
-
-async function buildRAGContext(query: string): Promise<string> {
-  const result = await orchestrator.debrief({ id: query, name: query })
-
-  // Filter to high-quality findings only
-  const trusted = result.findings.filter((f) => f.reliabilityScore >= 0.7 && f.confidence >= 0.6)
-
-  // Build context with provenance metadata the LLM can cite
-  return trusted
-    .map(
-      (f) => `[Source: ${f.sourceName} | Reliability: ${f.reliabilityScore} | ${f.url}]\n${f.text}`
-    )
-    .join("\n\n---\n\n")
-}
-
-// Feed to your LLM with full provenance
-const context = await buildRAGContext("climate change effects on coral reefs")
-const prompt = `Using ONLY the following sourced context, answer the question. Cite sources by name.\n\n${context}\n\nQuestion: ...`
-```
-
-Without this, you'd need to build and maintain integrations with every source API, implement your own reliability scoring system, and somehow correlate quality signals across different source formats. Debriefer gives you a single call that returns findings pre-scored on both axes, ready to filter and feed into your model.
-
-### Cross-Archive Historical Research
-
-Historians and journalists researching how a person or event was documented across different countries and eras face a painful problem: every archive has a different API, different query syntax, different authentication, and different response format. Chronicling America (Library of Congress), Trove (National Library of Australia), Europeana (EU cultural heritage), and the Internet Archive each require separate integration work. Debriefer queries them all in one call, with reliability scoring to help you weight institutional archives against mirrors.
-
-```typescript
-import { ResearchOrchestrator, NoopSynthesizer } from "debriefer"
-import {
-  chroniclingAmerica,
-  trove,
-  europeana,
-  internetArchive,
-  wikipedia,
-  openLibrary,
-} from "debriefer-sources"
-
-const orchestrator = new ResearchOrchestrator(
-  [
-    { phase: 1, name: "Reference", sources: [wikipedia(), openLibrary()] },
-    {
-      phase: 2,
-      name: "Archives",
-      sources: [chroniclingAmerica(), trove(), europeana(), internetArchive()],
-    },
-  ],
-  new NoopSynthesizer()
-)
-
-const result = await orchestrator.debrief({ id: "1918-flu", name: "1918 influenza pandemic" })
-
-// Group findings by source for comparative analysis
-const bySource = Object.groupBy(result.findings, (f) => f.sourceName)
-for (const [source, findings] of Object.entries(bySource)) {
-  console.log(`\n${source} (${findings!.length} results):`)
-  for (const f of findings!) {
-    console.log(`  [reliability: ${f.reliabilityScore}] ${f.url}`)
-    console.log(`  ${f.text.slice(0, 150)}...`)
-  }
-}
-```
-
-One researcher, four countries' archives, one API call. Without Debriefer, this is weeks of integration work per archive.
-
-## CLI
+### CLI
 
 ```bash
-# From the repo
+# Until published to npm, install from the repo:
 npm run build && npm link -w packages/cli
 
 # List available sources and their reliability tiers
 debriefer sources
 
-# Research an actress with free structured data sources
+# Research a subject with free structured data sources
 debriefer debrief "Audrey Hepburn" --no-synthesis --categories structured
 
 # JSON output, piped to jq
 debriefer debrief "Sidney Poitier" --categories structured,news --format json \
   | jq '.findings[] | {source: .sourceName, url: .url}'
 
-# Verbose mode shows per-source progress and early stopping
-debriefer debrief "Toshiro Mifune" --verbose --categories structured,books,archives
+# Full synthesis with Claude, $0.50 budget
+debriefer debrief "Toshiro Mifune" --budget 0.50 --verbose
 ```
 
-## When to Use Debriefer
+### HTTP Server
 
-- **Film & entertainment databases** — Enrich actor profiles, filmographies, and biographical records from news archives, structured data, and obituary sources with reliability-scored citations.
-- **RAG pipelines that need provenance** — Feed your LLM only trusted, relevant context with source reliability scores attached, so it can cite real sources instead of hallucinating URLs.
-- **Cross-archive historical research** — Query digitized newspaper archives across multiple countries and institutions in one call instead of learning four different APIs.
-- **Fact-checking pipelines** — Verify claims against multiple independent sources ranked by editorial credibility, not just by which API returned first.
-- **Database enrichment at scale** — Pull biographical data, news coverage, or archival references for thousands of records from dozens of APIs without blowing your budget.
+```bash
+# Build all packages (server depends on core + sources), then run
+npm run build
+ANTHROPIC_API_KEY=sk-... node packages/server/dist/index.js
 
-## Python Client
+curl -X POST http://localhost:8090/api/debrief \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Marie Curie", "categories": ["structured", "news"], "budget": 0.25}'
+```
 
-An async Python HTTP client wrapping `debriefer-server`:
+### MCP Server (AI Assistants)
+
+```bash
+# Run from source (npm publish planned) — requires full build first
+npm run build
+node packages/mcp/dist/cli.js
+```
+
+Provides two tools: `debrief` (run multi-source research) and `list_sources` (browse available sources). Sources run in-process with zero HTTP overhead.
+
+### Docker
+
+```bash
+cd docker && docker compose up -d
+
+curl -X POST http://localhost:8090/api/debrief \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Alan Turing", "synthesis": false}'
+```
+
+### Python Client
+
+```bash
+# Install from source (PyPI publish planned)
+cd clients/python && pip install -e ".[dev]"
+```
 
 ```python
 import asyncio
@@ -303,37 +484,29 @@ async def main():
         for finding in result.findings:
             print(f"[{finding.source_name}] {finding.url}")
 
-        sources = await db.list_sources(category="news")
-        health = await db.health()
-
 asyncio.run(main())
 ```
-
-Auth is only needed if you've set `DEBRIEFER_API_KEYS` on the server — pass `api_key="sk-..."` to enable it.
-
-Not yet published on PyPI; install from source: `cd clients/python && pip install -e ".[dev]"`
 
 ## Roadmap
 
 | Phase                      | Status   |
 | -------------------------- | -------- |
 | Core engine                | Complete |
-| 30+ built-in sources       | Complete |
+| 35+ built-in sources       | Complete |
 | CLI                        | Complete |
 | HTTP server + Docker       | Complete |
 | MCP server (AI assistants) | Complete |
 | Python client              | Complete |
-| npm publish                | Planned  |
+| npm / PyPI publish         | Planned  |
 
 ## Contributing
 
 ```bash
 git clone https://github.com/chenders/debriefer.git
 cd debriefer && npm install
-npm run build && npm test
+npm run build && npm test    # 710+ TypeScript tests
+cd clients/python && pip install -e ".[dev]" && pytest  # Python client tests
 ```
-
-See [CLAUDE.md](CLAUDE.md) for architecture details and development conventions.
 
 ## License
 
