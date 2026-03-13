@@ -1,6 +1,6 @@
 {
   "name": "debriefer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Multi-source research orchestration engine with reliability scoring, phase-based execution, and AI synthesis",
   "type": "module",
   "main": "dist/index.js",
