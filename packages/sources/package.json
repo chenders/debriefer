@@ -1,6 +1,6 @@
 {
   "name": "debriefer-sources",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Built-in research sources for debriefer: Wikipedia, Wikidata, web search, news, archives, and more",
   "type": "module",
   "main": "dist/index.js",
@@ -41,10 +41,10 @@
     "url": "https://github.com/chenders/debriefer/issues"
   },
   "dependencies": {
-    "@mozilla/readability": "^0.5",
+    "@mozilla/readability": "^0.6",
     "debriefer": "^1.0.0",
     "he": "^1",
-    "jsdom": "^25",
+    "jsdom": "^28",
     "wtf_wikipedia": "^10"
   },
   "optionalDependencies": {
