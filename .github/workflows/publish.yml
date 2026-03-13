@@ -1,0 +1,39 @@
+name: Publish to npm
+
+on:
+  release:
+    types: [published]
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for npm provenance
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org
+
+      - name: Install and build
+        run: npm ci && npx turbo build --filter=debriefer --filter=debriefer-sources
+
+      - name: Publish debriefer (core)
+        run: npm publish --provenance --access public
+        working-directory: packages/core
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish debriefer-sources
+        run: npm publish --provenance --access public
+        working-directory: packages/sources
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

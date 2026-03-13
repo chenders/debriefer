@@ -1,6 +1,7 @@
 {
   "name": "debriefer",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "Multi-source research orchestration engine with reliability scoring, phase-based execution, and AI synthesis",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,6 +20,26 @@
   "files": [
     "dist"
   ],
+  "keywords": [
+    "research",
+    "orchestration",
+    "multi-source",
+    "reliability",
+    "web-scraping",
+    "ai",
+    "enrichment"
+  ],
+  "author": "Chris Henderson",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chenders/debriefer.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/chenders/debriefer#readme",
+  "bugs": {
+    "url": "https://github.com/chenders/debriefer/issues"
+  },
   "dependencies": {
     "p-limit": "^6"
   },
