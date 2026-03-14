@@ -1,4 +1,4 @@
-# debriefer-cli
+# @debriefer/cli
 
 Command-line interface for the Debriefer multi-source research engine.
 

@@ -1,11 +1,11 @@
-# debriefer-sources
+# @debriefer/sources
 
-Built-in research source integrations for [debriefer](https://github.com/chenders/debriefer): Wikipedia, Wikidata, web search, news, archives, and more.
+Built-in research source integrations for [@debriefer/core](https://github.com/chenders/debriefer): Wikipedia, Wikidata, web search, news, archives, and more.
 
 ## Install
 
 ```bash
-npm install debriefer debriefer-sources
+npm install @debriefer/core @debriefer/sources
 ```
 
 ## Source Categories
@@ -24,8 +24,8 @@ News sources marked "mostly free" use DuckDuckGo site-search under the hood and 
 ## Example
 
 ```typescript
-import { ResearchOrchestrator } from "debriefer"
-import { wikipedia, apNews, guardian, wikidata } from "debriefer-sources"
+import { ResearchOrchestrator } from "@debriefer/core"
+import { wikipedia, apNews, guardian, wikidata } from "@debriefer/sources"
 
 const orchestrator = new ResearchOrchestrator({
   sources: [
@@ -45,7 +45,7 @@ const result = await orchestrator.debrief({ id: "ada-lovelace", name: "Ada Lovel
 
 ## Shared Utilities
 
-`debriefer-sources` exports utilities useful when building custom sources:
+`@debriefer/sources` exports utilities useful when building custom sources:
 
 | Utility                 | Description                                                |
 | ----------------------- | ---------------------------------------------------------- |

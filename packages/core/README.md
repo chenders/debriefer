@@ -1,11 +1,11 @@
-# debriefer
+# @debriefer/core
 
 Multi-source research orchestration engine with reliability scoring, phase-based execution, and AI synthesis.
 
 ## Install
 
 ```bash
-npm install debriefer
+npm install @debriefer/core
 ```
 
 To use `ClaudeSynthesizer`, also install the optional peer dependency:
@@ -17,8 +17,8 @@ npm install @anthropic-ai/sdk
 ## Quick Start
 
 ```typescript
-import { ResearchOrchestrator, NoopSynthesizer } from "debriefer"
-import { wikipedia, wikidata, openLibrary } from "debriefer-sources"
+import { ResearchOrchestrator, NoopSynthesizer } from "@debriefer/core"
+import { wikipedia, wikidata, openLibrary } from "@debriefer/sources"
 
 const orchestrator = new ResearchOrchestrator(
   [{ phase: 1, name: "Free Sources", sources: [wikidata(), wikipedia(), openLibrary()] }],

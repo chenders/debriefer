@@ -1,4 +1,4 @@
-# debriefer-server
+# @debriefer/server
 
 Express REST API exposing the debriefer research engine over HTTP.
 
