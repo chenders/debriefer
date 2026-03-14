@@ -43,7 +43,7 @@
     "@anthropic-ai/sdk": ">=0.39.0 <1"
   },
   "peerDependencies": {
-    "@debriefer/core": ">=1.0.0",
+    "@debriefer/core": ">=2.0.0",
     "@debriefer/sources": ">=1.0.0"
   },
   "peerDependenciesMeta": {

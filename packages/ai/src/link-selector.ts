@@ -6,6 +6,7 @@
  */
 
 import type { ResearchSubject } from "@debriefer/core"
+import { stripMarkdownCodeFences } from "@debriefer/core"
 import type { WebSearchResult } from "@debriefer/sources"
 import type { AIClient } from "./ai-client.js"
 import type { TelemetryProvider } from "@debriefer/core"
@@ -48,7 +49,7 @@ export function createAILinkSelector(options: {
         maxTokens: 256,
       })
 
-      const indices: unknown = JSON.parse(response.text.trim())
+      const indices: unknown = JSON.parse(stripMarkdownCodeFences(response.text))
       if (!Array.isArray(indices)) {
         throw new Error("Expected array of indices")
       }

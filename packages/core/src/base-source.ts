@@ -160,7 +160,8 @@ export abstract class BaseResearchSource<
       // Priority: confidenceScorer callback > keyword heuristics
       if (result && result.confidence === -1) {
         if (this.options.confidenceScorer) {
-          result.confidence = await this.options.confidenceScorer(result.text, subject)
+          const raw = await this.options.confidenceScorer(result.text, subject)
+          result.confidence = Math.max(0, Math.min(1, Number.isFinite(raw) ? raw : 0))
         } else if (this.options.requiredKeywords) {
           result.confidence = calculateConfidence(
             result.text,

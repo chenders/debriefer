@@ -57,7 +57,10 @@ export function createAIPersonValidator(options: {
         maxTokens: 8,
       })
 
-      const answer = response.text.trim().toLowerCase()
+      const answer = response.text
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z]/g, "")
       return answer === "true" || answer === "yes"
     } catch (error) {
       telemetry?.recordEvent("ai.call_failed", {

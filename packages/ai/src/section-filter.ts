@@ -6,6 +6,7 @@
  */
 
 import type { WikipediaSection } from "@debriefer/sources"
+import { stripMarkdownCodeFences } from "@debriefer/core"
 import type { AIClient } from "./ai-client.js"
 import type { TelemetryProvider } from "@debriefer/core"
 
@@ -46,7 +47,7 @@ export function createAISectionFilter(options: {
         maxTokens: 256,
       })
 
-      const indices: unknown = JSON.parse(response.text.trim())
+      const indices: unknown = JSON.parse(stripMarkdownCodeFences(response.text))
       if (!Array.isArray(indices)) {
         throw new Error("Expected array of indices")
       }
