@@ -5,9 +5,9 @@
  * intended person, replacing regex/date-based heuristics.
  */
 
-import type { ResearchSubject } from "debriefer"
+import type { ResearchSubject } from "@debriefer/core"
 import type { AIClient } from "./ai-client.js"
-import type { TelemetryProvider } from "debriefer"
+import type { TelemetryProvider } from "@debriefer/core"
 
 /**
  * Creates a person validator callback that uses AI to verify article matches.

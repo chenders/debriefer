@@ -16,8 +16,8 @@ import type {
   SynthesisOptions,
   SynthesisResult,
   Synthesizer,
-} from "debriefer"
-import { stripMarkdownCodeFences } from "debriefer"
+} from "@debriefer/core"
+import { stripMarkdownCodeFences } from "@debriefer/core"
 
 /**
  * Options for constructing a ClaudeSynthesizer.

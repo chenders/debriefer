@@ -5,9 +5,9 @@
  * article based on the research goal, replacing regex-based section matching.
  */
 
-import type { WikipediaSection } from "debriefer-sources"
+import type { WikipediaSection } from "@debriefer/sources"
 import type { AIClient } from "./ai-client.js"
-import type { TelemetryProvider } from "debriefer"
+import type { TelemetryProvider } from "@debriefer/core"
 
 /**
  * Creates an AsyncSectionFilter that uses AI to select relevant Wikipedia sections.

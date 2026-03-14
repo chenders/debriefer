@@ -19,11 +19,11 @@ git clone https://github.com/chenders/debriefer.git
 cd debriefer && npm install && npm run build
 ```
 
-The code below runs inside the monorepo (where `debriefer` and `debriefer-sources` resolve to local workspace packages):
+The code below runs inside the monorepo (where `@debriefer/core` and `@debriefer/sources` resolve to local workspace packages):
 
 ```typescript
-import { ResearchOrchestrator, NoopSynthesizer } from "debriefer"
-import { wikipedia, wikidata, openLibrary } from "debriefer-sources"
+import { ResearchOrchestrator, NoopSynthesizer } from "@debriefer/core"
+import { wikipedia, wikidata, openLibrary } from "@debriefer/sources"
 
 const orchestrator = new ResearchOrchestrator(
   [{ phase: 1, name: "Free Sources", sources: [wikidata(), wikipedia(), openLibrary()] }],
@@ -81,14 +81,14 @@ Quality is measured on two independent axes. **Source reliability** (how trustwo
 
 ## Packages
 
-| Package                                 | Description                              | Status |
-| --------------------------------------- | ---------------------------------------- | ------ |
-| [`debriefer`](packages/core)            | Core orchestration engine                | Stable |
-| [`debriefer-sources`](packages/sources) | 35+ built-in source integrations         | Stable |
-| [`debriefer-cli`](packages/cli)         | Command-line interface                   | Stable |
-| [`debriefer-server`](packages/server)   | REST API server + Docker                 | Stable |
-| [`debriefer-mcp`](packages/mcp)         | Model Context Protocol for AI assistants | Stable |
-| [`debriefer` (Python)](clients/python)  | Python HTTP client                       | Stable |
+| Package                                  | Description                              | Status |
+| ---------------------------------------- | ---------------------------------------- | ------ |
+| [`@debriefer/core`](packages/core)       | Core orchestration engine                | Stable |
+| [`@debriefer/sources`](packages/sources) | 35+ built-in source integrations         | Stable |
+| [`@debriefer/cli`](packages/cli)         | Command-line interface                   | Stable |
+| [`@debriefer/server`](packages/server)   | REST API server + Docker                 | Stable |
+| [`@debriefer/mcp`](packages/mcp)         | Model Context Protocol for AI assistants | Stable |
+| [`debriefer` (Python)](clients/python)   | Python HTTP client                       | Stable |
 
 ## Reliability Scoring
 
@@ -133,7 +133,7 @@ Jump to: [RAG Pipelines](#provenance-scored-retrieval-for-rag-pipelines) · [His
 RAG systems typically stuff all retrieved text into the LLM's context window with no way to distinguish a Reuters wire story from a random blog post. Debriefer solves this by scoring every piece of retrieved content on two axes — source reliability and content relevance — so your LLM only sees trusted, relevant context and can cite where each fact came from.
 
 ```typescript
-import { ResearchOrchestrator, NoopSynthesizer, type ScoredFinding } from "debriefer"
+import { ResearchOrchestrator, NoopSynthesizer, type ScoredFinding } from "@debriefer/core"
 import {
   wikidata,
   wikipedia,
@@ -142,7 +142,7 @@ import {
   reuters,
   guardian,
   openLibrary,
-} from "debriefer-sources"
+} from "@debriefer/sources"
 
 const orchestrator = new ResearchOrchestrator(
   [
@@ -176,7 +176,7 @@ Without this, you'd need to build integrations for every source API, invent your
 Historians and journalists researching how a person or event was documented across countries and eras run into the same wall every time: every archive has a different API, different query syntax, different authentication, and different response format. Debriefer queries them all in one call, with reliability scoring to help you weight institutional archives against mirrors.
 
 ```typescript
-import { ResearchOrchestrator, NoopSynthesizer } from "debriefer"
+import { ResearchOrchestrator, NoopSynthesizer } from "@debriefer/core"
 import {
   chroniclingAmerica,
   trove,
@@ -184,7 +184,7 @@ import {
   internetArchive,
   wikipedia,
   openLibrary,
-} from "debriefer-sources"
+} from "@debriefer/sources"
 
 const orchestrator = new ResearchOrchestrator(
   [
@@ -221,7 +221,7 @@ One researcher, four countries' archives, one API call. Without Debriefer, this 
 Pharmaceutical teams researching a drug need structured pharmacological data, recent clinical trial news, and published literature — and they need to trust the sources they're reading. Debriefer's phased execution queries Wikidata for structured facts first, then tier-1 news for recent developments, then book archives for published research.
 
 ```typescript
-import { ResearchOrchestrator, ClaudeSynthesizer, type ResearchSubject } from "debriefer"
+import { ResearchOrchestrator, ClaudeSynthesizer, type ResearchSubject } from "@debriefer/core"
 import {
   wikidata,
   wikipedia,
@@ -230,7 +230,7 @@ import {
   bbcNews,
   googleBooks,
   openLibrary,
-} from "debriefer-sources"
+} from "@debriefer/sources"
 
 interface DrugProfile {
   genericName: string
@@ -281,7 +281,7 @@ The `reliabilityThreshold: 0.85` means only tier-1 news, structured data, and se
 Screen companies for investment, compliance, or M&A due diligence by pulling structured facts from Wikidata alongside tier-1 news coverage. The batch processor researches multiple companies concurrently with lifecycle hooks for progress tracking — and reliability scoring ensures wire services outweigh aggregated or user-generated sources.
 
 ```typescript
-import { ResearchOrchestrator, ClaudeSynthesizer, type ResearchSubject } from "debriefer"
+import { ResearchOrchestrator, ClaudeSynthesizer, type ResearchSubject } from "@debriefer/core"
 import {
   wikidata,
   wikipedia,
@@ -290,7 +290,7 @@ import {
   bbcNews,
   guardian,
   bingSearch,
-} from "debriefer-sources"
+} from "@debriefer/sources"
 
 interface RiskAssessment {
   headquarters: string | null
@@ -350,7 +350,7 @@ The batch processor shares rate limiting across all companies — no thundering 
 Build a film database that enriches actor profiles from news, archives, and structured data — then synthesizes a cited biography with Claude:
 
 ```typescript
-import { ResearchOrchestrator, ClaudeSynthesizer, type ResearchSubject } from "debriefer"
+import { ResearchOrchestrator, ClaudeSynthesizer, type ResearchSubject } from "@debriefer/core"
 import {
   wikidata,
   wikipedia,
@@ -360,7 +360,7 @@ import {
   chroniclingAmerica,
   internetArchive,
   legacy,
-} from "debriefer-sources"
+} from "@debriefer/sources"
 
 interface ActorProfile {
   biography: string

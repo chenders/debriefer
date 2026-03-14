@@ -5,7 +5,12 @@
  * raw findings, or structured data) and source list tables.
  */
 
-import type { DebriefResult, ScoredFinding, ResearchSubject, BaseResearchSource } from "debriefer"
+import type {
+  DebriefResult,
+  ScoredFinding,
+  ResearchSubject,
+  BaseResearchSource,
+} from "@debriefer/core"
 
 // ============================================================================
 // Type guards

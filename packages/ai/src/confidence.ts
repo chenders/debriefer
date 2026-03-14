@@ -5,9 +5,9 @@
  * to the research subject and goal, replacing keyword-based heuristics.
  */
 
-import type { ResearchSubject } from "debriefer"
+import type { ResearchSubject } from "@debriefer/core"
 import type { AIClient } from "./ai-client.js"
-import type { TelemetryProvider } from "debriefer"
+import type { TelemetryProvider } from "@debriefer/core"
 
 /**
  * Creates a confidence scorer callback that uses AI to assess content relevance.

@@ -13,7 +13,7 @@ import {
   type BaseSourceOptions,
   type ResearchSubject,
   type RawFinding,
-} from "debriefer"
+} from "@debriefer/core"
 import { sanitizeSourceText } from "../shared/sanitize-text.js"
 
 const NYT_API_URL = "https://api.nytimes.com/svc/search/v2/articlesearch.json"

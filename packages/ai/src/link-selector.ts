@@ -5,10 +5,10 @@
  * to the research subject, replacing heuristic domain/keyword scoring.
  */
 
-import type { ResearchSubject } from "debriefer"
-import type { WebSearchResult } from "debriefer-sources"
+import type { ResearchSubject } from "@debriefer/core"
+import type { WebSearchResult } from "@debriefer/sources"
 import type { AIClient } from "./ai-client.js"
-import type { TelemetryProvider } from "debriefer"
+import type { TelemetryProvider } from "@debriefer/core"
 
 /**
  * Creates a link selector callback that uses AI to rank search results.

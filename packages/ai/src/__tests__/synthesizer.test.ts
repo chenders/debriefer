@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { ReliabilityTier } from "debriefer"
-import type { ScoredFinding, ResearchSubject } from "debriefer"
+import { ReliabilityTier } from "@debriefer/core"
+import type { ScoredFinding, ResearchSubject } from "@debriefer/core"
 
 vi.mock("@anthropic-ai/sdk", () => {
   return {

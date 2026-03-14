@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import type { ResearchSubject, TelemetryProvider } from "debriefer"
-import type { WikipediaSection, WebSearchResult } from "debriefer-sources"
+import type { ResearchSubject, TelemetryProvider } from "@debriefer/core"
+import type { WikipediaSection, WebSearchResult } from "@debriefer/sources"
 import type { AIClient, AICompletionRequest, AICompletionResponse } from "../ai-client.js"
 import { createAISectionFilter } from "../section-filter.js"
 import { createAIConfidenceScorer } from "../confidence.js"

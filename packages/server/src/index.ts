@@ -13,7 +13,7 @@ const app = createApp(config)
 
 app.listen(config.port, () => {
   // eslint-disable-next-line no-console
-  console.log(`debriefer-server listening on port ${config.port}`)
+  console.log(`@debriefer/server listening on port ${config.port}`)
   if (config.authEnabled) {
     // eslint-disable-next-line no-console
     console.log(`Auth enabled (${config.apiKeys.length} API key(s) configured)`)

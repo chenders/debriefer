@@ -6,7 +6,7 @@
  * source is paired with its category for downstream filtering/logging.
  */
 
-import type { BaseResearchSource, ResearchSubject } from "debriefer"
+import type { BaseResearchSource, ResearchSubject } from "@debriefer/core"
 import {
   // Structured
   wikidata,
@@ -50,7 +50,7 @@ import {
   // Obituary
   legacy,
   findAGrave,
-} from "debriefer-sources"
+} from "@debriefer/sources"
 
 export type SourceFactory = () => BaseResearchSource<ResearchSubject>
 

@@ -14,7 +14,7 @@ import {
   type BaseSourceOptions,
   type ResearchSubject,
   type RawFinding,
-} from "debriefer"
+} from "@debriefer/core"
 
 // ============================================================================
 // Constants

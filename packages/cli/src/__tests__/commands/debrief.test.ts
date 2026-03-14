@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest"
-import type { SourcePhaseGroup, ResearchSubject } from "debriefer"
+import type { SourcePhaseGroup, ResearchSubject } from "@debriefer/core"
 
 // ============================================================================
 // Module mock — must be before any import of the module under test
@@ -32,8 +32,8 @@ const MOCK_RESULT = {
   durationMs: 2500,
 }
 
-vi.mock("debriefer", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("debriefer")>()
+vi.mock("@debriefer/core", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@debriefer/core")>()
   return {
     ...actual,
     ResearchOrchestrator: vi.fn().mockImplementation(() => ({
@@ -48,7 +48,7 @@ vi.mock("@debriefer/ai", () => ({
 }))
 
 import { buildDebriefCommand } from "../../commands/debrief.js"
-import { ResearchOrchestrator, NoopSynthesizer } from "debriefer"
+import { ResearchOrchestrator, NoopSynthesizer } from "@debriefer/core"
 
 // ============================================================================
 // Setup

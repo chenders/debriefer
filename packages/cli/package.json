@@ -1,5 +1,5 @@
 {
-  "name": "debriefer-cli",
+  "name": "@debriefer/cli",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
@@ -24,8 +24,8 @@
   },
   "dependencies": {
     "@debriefer/ai": "*",
-    "debriefer": "*",
-    "debriefer-sources": "*",
+    "@debriefer/core": "*",
+    "@debriefer/sources": "*",
     "commander": "^13"
   }
 }

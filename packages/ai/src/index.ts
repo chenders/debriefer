@@ -9,8 +9,8 @@
  * @packageDocumentation
  */
 
-import type { ResearchSubject, TelemetryProvider } from "debriefer"
-import type { AsyncSectionFilter, WebSearchResult, WikipediaSection } from "debriefer-sources"
+import type { ResearchSubject, TelemetryProvider } from "@debriefer/core"
+import type { AsyncSectionFilter, WebSearchResult, WikipediaSection } from "@debriefer/sources"
 import type { AIClient } from "./ai-client.js"
 import { HaikuClient } from "./ai-client.js"
 import { createAISectionFilter } from "./section-filter.js"

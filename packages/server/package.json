@@ -1,5 +1,5 @@
 {
-  "name": "debriefer-server",
+  "name": "@debriefer/server",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
@@ -22,8 +22,8 @@
   "dependencies": {
     "@debriefer/ai": "*",
     "cors": "^2",
-    "debriefer": "*",
-    "debriefer-sources": "*",
+    "@debriefer/core": "*",
+    "@debriefer/sources": "*",
     "express": "^4",
     "zod": "^3"
   },

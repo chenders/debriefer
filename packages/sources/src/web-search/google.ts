@@ -1,4 +1,4 @@
-import { ReliabilityTier } from "debriefer"
+import { ReliabilityTier } from "@debriefer/core"
 import { WebSearchBase, type WebSearchOptions, type WebSearchResult } from "./base.js"
 
 const GOOGLE_CSE_URL = "https://www.googleapis.com/customsearch/v1"

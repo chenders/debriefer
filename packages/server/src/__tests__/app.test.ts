@@ -12,8 +12,8 @@ import request from "supertest"
 // Module mock — must be before any import of the module under test
 // ============================================================================
 
-vi.mock("debriefer", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("debriefer")>()
+vi.mock("@debriefer/core", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@debriefer/core")>()
   return {
     ...actual,
     ResearchOrchestrator: vi.fn().mockImplementation(() => ({

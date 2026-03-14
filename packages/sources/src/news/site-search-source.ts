@@ -15,7 +15,7 @@ import {
   type ResearchSubject,
   type RawFinding,
   type ReliabilityTier,
-} from "debriefer"
+} from "@debriefer/core"
 import { searchDuckDuckGo, type SearchResult } from "../shared/duckduckgo-search.js"
 import { fetchPage } from "../shared/fetch-page.js"
 import { extractArticleContent } from "../shared/readability-extract.js"
