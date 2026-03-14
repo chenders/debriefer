@@ -5,7 +5,7 @@ Multi-source research orchestration engine with reliability scoring, phase-based
 ## Install
 
 ```bash
-npm install @debriefer/core
+npm install @debriefer/core @debriefer/sources
 ```
 
 To use `ClaudeSynthesizer`, also install the optional peer dependency:

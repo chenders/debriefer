@@ -28,7 +28,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ### `debrief`
 
-Run multi-source research on a subject. Orchestrates 60+ data sources with reliability scoring, phased execution, and optional AI synthesis.
+Run multi-source research on a subject. Orchestrates 35+ data sources with reliability scoring, phased execution, and optional AI synthesis.
 
 | Parameter    | Type     | Required | Description                                                    |
 | ------------ | -------- | -------- | -------------------------------------------------------------- |
