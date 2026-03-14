@@ -16,10 +16,10 @@
 | --------------------------------------- | ---------------------------------------- |
 | `docker/docker-compose.yml`             | Remove unused Redis service              |
 | `packages/core/README.md`               | npm page for debriefer core              |
-| `packages/sources/README.md`            | npm page for debriefer-sources           |
-| `packages/cli/README.md`                | npm page for debriefer-cli               |
-| `packages/server/README.md`             | npm page for debriefer-server            |
-| `packages/mcp/README.md`                | npm page for debriefer-mcp               |
+| `packages/sources/README.md`            | npm page for @debriefer/sources          |
+| `packages/cli/README.md`                | npm page for @debriefer/cli              |
+| `packages/server/README.md`             | npm page for @debriefer/server           |
+| `packages/mcp/README.md`                | npm page for @debriefer/mcp              |
 | `clients/python/README.md`              | PyPI page for debriefer Python client    |
 | `packages/server/src/schemas.ts`        | Add batch and new source option fields   |
 | `packages/server/src/routes/debrief.ts` | Wire new schema fields into orchestrator |
@@ -114,7 +114,7 @@ git commit -m "docs: add core package README for npm"
 Content should cover:
 
 - One-line description
-- Install: `npm install @debriefer/core debriefer-sources`
+- Install: `npm install @debriefer/core @debriefer/sources`
 - Source categories table (from root README — structured, news, search, books, archives, obituary with counts)
 - Example: creating sources with factory functions
 - Link to root README
@@ -289,7 +289,7 @@ Create `routes/batch.ts` following the same pattern as `routes/debrief.ts` but c
 - [ ] **Step 5: Run tests, commit**
 
 ```bash
-npx turbo test --filter=debriefer-server
+npx turbo test --filter=@debriefer/server
 git add packages/server/src/
 git commit -m "feat(server): add POST /api/batch endpoint for multi-subject research"
 ```
@@ -328,7 +328,7 @@ Pass through to `ResearchConfig` in the orchestrator constructor.
 - [ ] **Step 4: Run tests, commit**
 
 ```bash
-npx turbo test --filter=debriefer-server
+npx turbo test --filter=@debriefer/server
 git commit -m "feat(server): expose earlyStopThreshold, reliabilityThreshold, confidenceThreshold"
 ```
 
@@ -351,7 +351,7 @@ Same three fields as server.
 - [ ] **Step 3: Write tests, run, commit**
 
 ```bash
-npx turbo test --filter=debriefer-mcp
+npx turbo test --filter=@debriefer/mcp
 git commit -m "feat(mcp): expose earlyStopThreshold, reliabilityThreshold, confidenceThreshold"
 ```
 
