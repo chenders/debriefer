@@ -1,5 +1,5 @@
 /**
- * debriefer-mcp — MCP server library entry point.
+ * @debriefer/mcp — MCP server library entry point.
  *
  * Exports a `createServer()` factory that returns an McpServer with two
  * registered tools: `debrief` (single-subject research orchestration)

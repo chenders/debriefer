@@ -2,7 +2,7 @@
 /**
  * CLI entry point — connects the MCP server over stdio transport.
  *
- * Run: npx debriefer-mcp
+ * Run: npx @debriefer/mcp
  */
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
