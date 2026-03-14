@@ -65,7 +65,7 @@ debriefer sources --category news --format json
 
 ## Documentation
 
-See the [full documentation](../../docs/plans/2026-03-07-debriefer-design.md) for architecture details and configuration options.
+See the [monorepo README](https://github.com/chenders/debriefer) for full documentation.
 
 ## License
 

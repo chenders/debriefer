@@ -57,7 +57,7 @@ List available research sources with metadata including reliability tier, cost, 
 
 ## Documentation
 
-See the [project docs](../../docs/plans/) for design specs, implementation plans, and architecture notes.
+See the [monorepo README](https://github.com/chenders/debriefer) for full documentation.
 
 ## License
 

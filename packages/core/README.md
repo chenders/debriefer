@@ -83,4 +83,4 @@ See the [monorepo README](https://github.com/chenders/debriefer) for full docume
 
 ## License
 
-[MIT](../../LICENSE)
+[MIT](https://github.com/chenders/debriefer/blob/main/LICENSE)

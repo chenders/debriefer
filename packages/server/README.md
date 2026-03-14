@@ -109,7 +109,7 @@ See `docker/` directory for Docker and docker-compose setup.
 
 ## Documentation
 
-Full design and API documentation: `docs/plans/2026-03-09-server-design.md`
+See the [monorepo README](https://github.com/chenders/debriefer) for full documentation.
 
 ## License
 
