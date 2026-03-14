@@ -1,5 +1,5 @@
 {
-  "name": "debriefer-cli",
+  "name": "@debriefer/cli",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
@@ -23,8 +23,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "debriefer": "*",
-    "debriefer-sources": "*",
+    "@debriefer/core": "*",
+    "@debriefer/sources": "*",
     "commander": "^13",
     "@anthropic-ai/sdk": ">=0.39.0 <1"
   }

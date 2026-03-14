@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { ReliabilityTier, type ResearchSubject } from "debriefer"
+import { ReliabilityTier, type ResearchSubject } from "@debriefer/core"
 import { WebSearchBase, type WebSearchResult } from "../../web-search/base.js"
 
 // ============================================================================
@@ -65,7 +65,7 @@ class TestSearchSource extends WebSearchBase {
   async doFetch(
     subject: ResearchSubject,
     signal: AbortSignal
-  ): Promise<import("debriefer").RawFinding | null> {
+  ): Promise<import("@debriefer/core").RawFinding | null> {
     return this.fetchResult(subject, signal)
   }
 }

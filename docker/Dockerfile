@@ -7,7 +7,7 @@ COPY package.json package-lock.json turbo.json tsconfig.base.json ./
 COPY packages/ packages/
 
 RUN npm ci
-RUN npx turbo build --filter=debriefer-server
+RUN npx turbo build --filter=@debriefer/server
 
 # Stage 2: Runtime
 FROM node:22-alpine AS runtime

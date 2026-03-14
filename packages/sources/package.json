@@ -1,5 +1,5 @@
 {
-  "name": "debriefer-sources",
+  "name": "@debriefer/sources",
   "version": "1.0.1",
   "description": "Built-in research sources for debriefer: Wikipedia, Wikidata, web search, news, archives, and more",
   "type": "module",
@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@mozilla/readability": "^0.6",
-    "debriefer": "^1.0.0",
+    "@debriefer/core": "^1.0.0",
     "he": "^1",
     "jsdom": "^28",
     "wtf_wikipedia": "^10"

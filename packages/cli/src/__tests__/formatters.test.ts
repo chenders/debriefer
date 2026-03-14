@@ -6,8 +6,13 @@
  */
 
 import { describe, it, expect } from "vitest"
-import { ReliabilityTier, RELIABILITY_SCORES } from "debriefer"
-import type { DebriefResult, ScoredFinding, ResearchSubject, BaseResearchSource } from "debriefer"
+import { ReliabilityTier, RELIABILITY_SCORES } from "@debriefer/core"
+import type {
+  DebriefResult,
+  ScoredFinding,
+  ResearchSubject,
+  BaseResearchSource,
+} from "@debriefer/core"
 import { formatDebriefResult, formatSourceList } from "../formatters.js"
 
 // ============================================================================

@@ -7,7 +7,7 @@
  */
 
 import { Command } from "commander"
-import type { BaseResearchSource, ResearchSubject } from "debriefer"
+import type { BaseResearchSource, ResearchSubject } from "@debriefer/core"
 import { SOURCE_CATEGORIES, type SourceCategory } from "../source-registry.js"
 import { formatSourceList } from "../formatters.js"
 

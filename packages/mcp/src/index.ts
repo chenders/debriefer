@@ -25,7 +25,7 @@ export function createServer(): McpServer {
   const config = loadConfig()
 
   const server = new McpServer({
-    name: "debriefer-mcp",
+    name: "@debriefer/mcp",
     version: "0.1.0",
   })
 
