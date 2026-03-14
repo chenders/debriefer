@@ -89,8 +89,16 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Cache node_modules
+        id: cache-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-22-modules-v2-${{ hashFiles('package-lock.json') }}
+
       - name: Install dependencies
-        run: rm -rf node_modules && npm install
+        if: steps.cache-modules.outputs.cache-hit != 'true'
+        run: npm ci
 
       - uses: actions/cache/restore@v4
         with:
