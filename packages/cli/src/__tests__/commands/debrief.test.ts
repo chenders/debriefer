@@ -39,10 +39,13 @@ vi.mock("debriefer", async (importOriginal) => {
     ResearchOrchestrator: vi.fn().mockImplementation(() => ({
       debrief: vi.fn().mockResolvedValue(MOCK_RESULT),
     })),
-    ClaudeSynthesizer: vi.fn().mockImplementation(() => ({})),
     NoopSynthesizer: vi.fn().mockImplementation(() => ({})),
   }
 })
+
+vi.mock("@debriefer/ai", () => ({
+  ClaudeSynthesizer: vi.fn().mockImplementation(() => ({})),
+}))
 
 import { buildDebriefCommand } from "../../commands/debrief.js"
 import { ResearchOrchestrator, NoopSynthesizer } from "debriefer"

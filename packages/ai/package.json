@@ -1,7 +1,7 @@
 {
-  "name": "debriefer",
-  "version": "2.0.0",
-  "description": "Multi-source research orchestration engine with reliability scoring, phase-based execution, and AI synthesis",
+  "name": "@debriefer/ai",
+  "version": "1.0.0",
+  "description": "AI-first defaults for debriefer: Claude-powered synthesis, section filtering, confidence scoring, link selection, and person validation",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -11,36 +11,44 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
     "lint": "eslint src/",
     "type-check": "tsc --noEmit"
   },
-  "files": [
-    "dist"
-  ],
   "keywords": [
-    "research",
-    "orchestration",
-    "multi-source",
-    "reliability",
-    "web-scraping",
+    "debriefer",
     "ai",
-    "enrichment"
+    "claude",
+    "anthropic",
+    "research",
+    "synthesis"
   ],
   "author": "Chris Henderson",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/chenders/debriefer.git",
-    "directory": "packages/core"
+    "directory": "packages/ai"
   },
   "homepage": "https://github.com/chenders/debriefer#readme",
   "bugs": {
     "url": "https://github.com/chenders/debriefer/issues"
   },
   "dependencies": {
-    "p-limit": "^6"
+    "@anthropic-ai/sdk": ">=0.39.0 <1"
+  },
+  "peerDependencies": {
+    "debriefer": ">=1.0.0",
+    "debriefer-sources": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "debriefer-sources": {
+      "optional": true
+    }
   }
 }

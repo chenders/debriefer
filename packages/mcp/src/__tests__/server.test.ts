@@ -36,10 +36,13 @@ vi.mock("debriefer", async (importOriginal) => {
         durationMs: 150,
       }),
     })),
-    ClaudeSynthesizer: vi.fn().mockImplementation(() => ({})),
     NoopSynthesizer: vi.fn().mockImplementation(() => ({})),
   }
 })
+
+vi.mock("@debriefer/ai", () => ({
+  ClaudeSynthesizer: vi.fn().mockImplementation(() => ({})),
+}))
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js"

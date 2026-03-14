@@ -43,6 +43,16 @@ export interface BaseSourceOptions {
   ignoreCache?: boolean
   /** Cache TTL in seconds (default: 86400 = 24 hours) */
   cacheTtlSeconds?: number
+  /**
+   * Custom confidence scorer that replaces keyword-based heuristics.
+   * Called when result.confidence is -1 (source delegated scoring).
+   * Takes precedence over keyword-based scoring when provided.
+   *
+   * @param text - The extracted text content from the source
+   * @param subject - The research subject being investigated
+   * @returns Confidence score from 0.0 to 1.0
+   */
+  confidenceScorer?: (text: string, subject: ResearchSubject) => Promise<number> | number
 }
 
 // ============================================================================
@@ -146,13 +156,18 @@ export abstract class BaseResearchSource<
     try {
       const result = await this.fetchResult(subject, combinedSignal)
 
-      // Calculate confidence if not already set and keywords are configured
-      if (result && result.confidence === -1 && this.options.requiredKeywords) {
-        result.confidence = calculateConfidence(
-          result.text,
-          this.options.requiredKeywords,
-          this.options.bonusKeywords
-        )
+      // Calculate confidence if not already set by the source (confidence === -1)
+      // Priority: confidenceScorer callback > keyword heuristics
+      if (result && result.confidence === -1) {
+        if (this.options.confidenceScorer) {
+          result.confidence = await this.options.confidenceScorer(result.text, subject)
+        } else if (this.options.requiredKeywords) {
+          result.confidence = calculateConfidence(
+            result.text,
+            this.options.requiredKeywords,
+            this.options.bonusKeywords
+          )
+        }
       }
 
       // Cache successful result

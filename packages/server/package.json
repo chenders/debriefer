@@ -20,7 +20,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
+    "@debriefer/ai": "*",
     "cors": "^2",
     "debriefer": "*",
     "debriefer-sources": "*",

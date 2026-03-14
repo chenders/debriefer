@@ -24,7 +24,7 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Install and build
-        run: npm ci && npx turbo build --filter=debriefer --filter=debriefer-sources
+        run: npm ci && npx turbo build --filter=debriefer --filter=debriefer-sources --filter=@debriefer/ai
 
       - name: Publish debriefer (core)
         run: npm publish --provenance --access public
@@ -35,5 +35,11 @@ jobs:
       - name: Publish debriefer-sources
         run: npm publish --provenance --access public
         working-directory: packages/sources
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @debriefer/ai
+        run: npm publish --provenance --access public
+        working-directory: packages/ai
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
