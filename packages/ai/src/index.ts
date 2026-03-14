@@ -95,7 +95,8 @@ export function createAIDefaults(options: AIDefaultsOptions = {}): AIDefaults {
   const { apiKey, model, researchGoal, telemetry, fallbackToHeuristics = true } = options
 
   // Determine availability
-  const hasApiKey = !!(apiKey ?? process.env.ANTHROPIC_API_KEY)
+  const effectiveKey = apiKey || process.env.ANTHROPIC_API_KEY
+  const hasApiKey = !!effectiveKey
   const hasCustomClient = !!options.client
   const available = hasApiKey || hasCustomClient
 

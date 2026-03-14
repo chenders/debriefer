@@ -418,7 +418,11 @@ describe("createAIDefaults", () => {
   const originalEnv = process.env.ANTHROPIC_API_KEY
 
   beforeEach(() => {
-    process.env.ANTHROPIC_API_KEY = originalEnv
+    if (originalEnv === undefined) {
+      delete process.env.ANTHROPIC_API_KEY
+    } else {
+      process.env.ANTHROPIC_API_KEY = originalEnv
+    }
   })
 
   it("creates all four callbacks with a custom client", () => {
