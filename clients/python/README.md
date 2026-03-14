@@ -19,7 +19,7 @@ import asyncio
 from debriefer import AsyncDebriefer
 
 async def main():
-    async with AsyncDebriefer("http://localhost:3000") as client:
+    async with AsyncDebriefer("http://localhost:8090") as client:
         # Check server health
         health = await client.health()
         print(health.status, health.version)

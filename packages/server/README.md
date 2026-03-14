@@ -75,7 +75,7 @@ curl http://localhost:8090/api/sources
 **List sources filtered by category**
 
 ```bash
-curl "http://localhost:8090/api/sources?category=news&category=encyclopedic"
+curl "http://localhost:8090/api/sources?category=news"
 ```
 
 **Debrief with synthesis (requires ANTHROPIC_API_KEY)**

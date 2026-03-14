@@ -86,7 +86,7 @@ These READMEs appear on npm package pages. Each should be concise (not a copy of
 Content should cover:
 
 - One-line description
-- Install command: `npm install debriefer`
+- Install command: `npm install @debriefer/core`
 - Minimal code example (create orchestrator, run debrief, print findings — same as root Quick Start)
 - Link to the monorepo root README for full docs
 - Key exports list (ResearchOrchestrator, BaseResearchSource, ClaudeSynthesizer, NoopSynthesizer, ReliabilityTier)
@@ -114,7 +114,7 @@ git commit -m "docs: add core package README for npm"
 Content should cover:
 
 - One-line description
-- Install: `npm install debriefer debriefer-sources`
+- Install: `npm install @debriefer/core debriefer-sources`
 - Source categories table (from root README — structured, news, search, books, archives, obituary with counts)
 - Example: creating sources with factory functions
 - Link to root README
@@ -139,7 +139,7 @@ git commit -m "docs: add sources package README for npm"
 Content should cover:
 
 - One-line description
-- Install: `npm install -g debriefer-cli` (once published) or build from repo
+- Install: `npm install -g @debriefer/cli` (once published) or build from repo
 - Command reference: `debriefer debrief <name>` with all flags (--budget, --categories, --model, --prompt, --no-synthesis, --format, --verbose)
 - Command reference: `debriefer sources` with flags (--category, --format)
 - Example output

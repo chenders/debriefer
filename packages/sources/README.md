@@ -24,21 +24,16 @@ News sources marked "mostly free" use DuckDuckGo site-search under the hood and 
 ## Example
 
 ```typescript
-import { ResearchOrchestrator } from "@debriefer/core"
+import { ResearchOrchestrator, NoopSynthesizer } from "@debriefer/core"
 import { wikipedia, apNews, guardian, wikidata } from "@debriefer/sources"
 
-const orchestrator = new ResearchOrchestrator({
-  sources: [
-    wikipedia(),
-    wikidata({
-      sparqlQuery: (subject) =>
-        `SELECT ?item WHERE { ?item wdt:P31 wd:Q5; rdfs:label "${subject.name}"@en }`,
-    }),
-    apNews(),
-    guardian({ apiKey: process.env.GUARDIAN_API_KEY }),
+const orchestrator = new ResearchOrchestrator(
+  [
+    { phase: 1, name: "Structured", sources: [wikidata(), wikipedia()] },
+    { phase: 2, name: "News", sources: [apNews(), guardian()] },
   ],
-  synthesizer: mySynthesizer,
-})
+  new NoopSynthesizer()
+)
 
 const result = await orchestrator.debrief({ id: "ada-lovelace", name: "Ada Lovelace" })
 ```
