@@ -1,8 +1,8 @@
 /**
  * Debriefer — Multi-source research orchestration engine.
  *
- * Orchestrates 60+ data sources with Wikipedia RSP-based reliability scoring,
- * phased execution with early stopping, per-query cost control, and AI synthesis.
+ * Orchestrates data sources with Wikipedia RSP-based reliability scoring,
+ * phased execution with early stopping, per-query cost control, and pluggable synthesis.
  *
  * @packageDocumentation
  */

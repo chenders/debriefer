@@ -426,19 +426,30 @@ describe("BaseResearchSource", () => {
     expect(result!.confidence).toBe(0.75)
   })
 
-  it("returns null when confidenceScorer throws", async () => {
-    const finding = makeFinding({ text: "Test text", confidence: -1 })
+  it("falls through to keyword heuristics when confidenceScorer throws", async () => {
+    const finding = makeFinding({ text: "John Wayne died in 1979.", confidence: -1 })
     const scorer = vi.fn().mockRejectedValue(new Error("Scorer failed"))
-    const telemetry = makeTelemetry()
-    const source = new TestSource(finding, { confidenceScorer: scorer })
-    source.setTelemetry(telemetry)
+    const source = new TestSource(finding, {
+      confidenceScorer: scorer,
+      requiredKeywords: ["died"],
+    })
 
     const result = await source.lookup(testSubject, abortController.signal)
 
-    expect(result).toBeNull()
-    expect(telemetry.recordError).toHaveBeenCalledWith(
-      expect.objectContaining({ message: "Scorer failed" }),
-      expect.any(Object)
-    )
+    // Result is preserved, confidence set by keyword heuristics
+    expect(result).not.toBeNull()
+    expect(result!.confidence).toBeGreaterThan(0)
+  })
+
+  it("preserves result with confidence -1 when scorer throws and no keywords", async () => {
+    const finding = makeFinding({ text: "Test text", confidence: -1 })
+    const scorer = vi.fn().mockRejectedValue(new Error("Scorer failed"))
+    const source = new TestSource(finding, { confidenceScorer: scorer })
+
+    const result = await source.lookup(testSubject, abortController.signal)
+
+    // Result preserved but confidence stays -1 (no fallback available)
+    expect(result).not.toBeNull()
+    expect(result!.confidence).toBe(-1)
   })
 })

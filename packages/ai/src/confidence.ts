@@ -6,6 +6,7 @@
  */
 
 import type { ResearchSubject } from "@debriefer/core"
+import { stripMarkdownCodeFences } from "@debriefer/core"
 import type { AIClient } from "./ai-client.js"
 import type { TelemetryProvider } from "@debriefer/core"
 
@@ -43,9 +44,10 @@ export function createAIConfidenceScorer(options: {
         maxTokens: 32,
       })
 
-      const score = parseFloat(response.text.trim())
+      const cleaned = stripMarkdownCodeFences(response.text)
+      const score = parseFloat(cleaned)
       if (!Number.isFinite(score) || score < 0 || score > 1) {
-        throw new Error(`Invalid score: ${response.text.trim()}`)
+        throw new Error(`Invalid score: ${cleaned}`)
       }
 
       return score
