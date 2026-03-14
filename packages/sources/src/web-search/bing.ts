@@ -1,4 +1,4 @@
-import { ReliabilityTier } from "debriefer"
+import { ReliabilityTier } from "@debriefer/core"
 import { WebSearchBase, type WebSearchOptions, type WebSearchResult } from "./base.js"
 
 const BING_SEARCH_URL = "https://api.bing.microsoft.com/v7.0/search"

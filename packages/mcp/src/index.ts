@@ -1,5 +1,5 @@
 /**
- * debriefer-mcp — MCP server library entry point.
+ * @debriefer/mcp — MCP server library entry point.
  *
  * Exports a `createServer()` factory that returns an McpServer with two
  * registered tools: `debrief` (single-subject research orchestration)
@@ -25,7 +25,7 @@ export function createServer(): McpServer {
   const config = loadConfig()
 
   const server = new McpServer({
-    name: "debriefer-mcp",
+    name: "@debriefer/mcp",
     version: "0.1.0",
   })
 

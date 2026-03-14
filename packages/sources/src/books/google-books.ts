@@ -14,7 +14,7 @@ import {
   type BaseSourceOptions,
   type ResearchSubject,
   type RawFinding,
-} from "debriefer"
+} from "@debriefer/core"
 import { decodeHtmlEntities } from "../shared/html-utils.js"
 import { sanitizeSourceText } from "../shared/sanitize-text.js"
 

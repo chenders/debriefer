@@ -6,7 +6,7 @@
  * preferences, and query terms.
  */
 
-import { ReliabilityTier, type BaseSourceOptions } from "debriefer"
+import { ReliabilityTier, type BaseSourceOptions } from "@debriefer/core"
 import { SiteSearchSource } from "./site-search-source.js"
 
 // ============================================================================

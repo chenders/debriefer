@@ -11,11 +11,11 @@ Debriefer is a standalone multi-source research orchestration engine. It orchest
 ```
 debriefer/
 ├── packages/
-│   ├── core/       # "debriefer" — orchestration engine (COMPLETE)
-│   ├── sources/    # "debriefer-sources" — 60+ built-in source integrations
-│   ├── cli/        # "debriefer-cli" — CLI tool (bin: debriefer)
-│   ├── server/     # "debriefer-server" — HTTP service
-│   └── mcp/        # "debriefer-mcp" — MCP server for AI assistants
+│   ├── core/       # "@debriefer/core" — orchestration engine (COMPLETE)
+│   ├── sources/    # "@debriefer/sources" — 60+ built-in source integrations
+│   ├── cli/        # "@debriefer/cli" — CLI tool (bin: debriefer)
+│   ├── server/     # "@debriefer/server" — HTTP service
+│   └── mcp/        # "@debriefer/mcp" — MCP server for AI assistants
 ├── clients/
 │   └── python/     # PyPI "debriefer" — Python HTTP client
 ├── docker/         # Dockerfile + docker-compose.yml
@@ -93,7 +93,7 @@ After pushing fixes for Copilot review comments, re-request a review and keep lo
 
 ## Architecture
 
-### Core Package (`packages/core/` — "debriefer")
+### Core Package (`packages/core/` — "@debriefer/core")
 
 The core is generic via TypeScript generics: `ResearchOrchestrator<TSubject, TOutput>`.
 
@@ -127,7 +127,7 @@ A "source family" is a unique `sourceType` string. Early stopping counts distinc
 
 ## Dependencies Policy
 
-### Core package (`debriefer`)
+### Core package (`@debriefer/core`)
 
 The core has ONE hard dependency: `p-limit`. Everything else is optional or injected:
 
@@ -137,7 +137,7 @@ The core has ONE hard dependency: `p-limit`. Everything else is optional or inje
 
 **Rule**: Do not add hard dependencies to the core package unless absolutely necessary. Every dependency is an install-size and security-audit burden for all consumers.
 
-### Sources package (`debriefer-sources`)
+### Sources package (`@debriefer/sources`)
 
 Heavier dependencies are acceptable here: `@mozilla/readability`, `jsdom`, `he`, `wtf_wikipedia`, `playwright-core` (optional). Consumers who only use the core with custom sources never install these.
 

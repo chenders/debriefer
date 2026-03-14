@@ -11,8 +11,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 // Module mock — must be before any import of the module under test
 // ============================================================================
 
-vi.mock("debriefer", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("debriefer")>()
+vi.mock("@debriefer/core", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@debriefer/core")>()
   return {
     ...actual,
     ResearchOrchestrator: vi.fn().mockImplementation(() => ({
@@ -32,7 +32,7 @@ vi.mock("debriefer", async (importOriginal) => {
 })
 
 import { debriefHandler } from "../../tools/debrief.js"
-import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "debriefer"
+import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "@debriefer/core"
 import type { McpConfig } from "../../config.js"
 
 // ============================================================================

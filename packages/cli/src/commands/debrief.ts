@@ -7,7 +7,7 @@
  */
 
 import { Command, InvalidArgumentError } from "commander"
-import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "debriefer"
+import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "@debriefer/core"
 import type {
   ResearchSubject,
   ResearchConfig,
@@ -15,7 +15,7 @@ import type {
   LifecycleHooks,
   Synthesizer,
   RawFinding,
-} from "debriefer"
+} from "@debriefer/core"
 import { createSources, SOURCE_CATEGORIES } from "../source-registry.js"
 import { formatDebriefResult } from "../formatters.js"
 

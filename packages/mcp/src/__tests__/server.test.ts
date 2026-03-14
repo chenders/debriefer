@@ -12,8 +12,8 @@ import { describe, it, expect, vi, beforeAll, afterAll } from "vitest"
 // Module mock — must precede imports of module under test
 // ============================================================================
 
-vi.mock("debriefer", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("debriefer")>()
+vi.mock("@debriefer/core", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@debriefer/core")>()
   return {
     ...actual,
     ResearchOrchestrator: vi.fn().mockImplementation(() => ({

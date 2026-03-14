@@ -1,5 +1,5 @@
 {
-  "name": "debriefer-mcp",
+  "name": "@debriefer/mcp",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
@@ -24,8 +24,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1",
-    "debriefer": "*",
-    "debriefer-sources": "*",
+    "@debriefer/core": "*",
+    "@debriefer/sources": "*",
     "zod": "^3"
   }
 }

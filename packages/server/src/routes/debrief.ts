@@ -8,8 +8,13 @@
 
 import { Router } from "express"
 import type { Request, Response } from "express"
-import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "debriefer"
-import type { ResearchSubject, ResearchConfig, SourcePhaseGroup, Synthesizer } from "debriefer"
+import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "@debriefer/core"
+import type {
+  ResearchSubject,
+  ResearchConfig,
+  SourcePhaseGroup,
+  Synthesizer,
+} from "@debriefer/core"
 import { debriefRequestSchema } from "../schemas.js"
 import { createSourcesWithCategory, VALID_CATEGORIES } from "../source-registry.js"
 import type { ServerConfig } from "../config.js"

@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { ReliabilityTier } from "debriefer"
+import { ReliabilityTier } from "@debriefer/core"
 
 import { OpenLibrarySource, openLibrary } from "../../books/open-library.js"
 

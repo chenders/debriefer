@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { ReliabilityTier, type ResearchSubject } from "debriefer"
+import { ReliabilityTier, type ResearchSubject } from "@debriefer/core"
 import { WikipediaSource, wikipedia } from "../../structured/wikipedia.js"
 import type { WikipediaSection } from "../../structured/wikipedia.js"
 

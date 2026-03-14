@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { ReliabilityTier } from "debriefer"
+import { ReliabilityTier } from "@debriefer/core"
 
 // ============================================================================
 // Mocks — must come before imports of the module under test

@@ -6,8 +6,13 @@
  * free/paid phases, and runs the orchestrator.
  */
 
-import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "debriefer"
-import type { ResearchSubject, ResearchConfig, SourcePhaseGroup, Synthesizer } from "debriefer"
+import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "@debriefer/core"
+import type {
+  ResearchSubject,
+  ResearchConfig,
+  SourcePhaseGroup,
+  Synthesizer,
+} from "@debriefer/core"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 import { createSourcesWithCategory, VALID_CATEGORIES } from "../source-registry.js"
 import type { McpConfig } from "../config.js"

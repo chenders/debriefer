@@ -1,4 +1,4 @@
-import { ReliabilityTier } from "debriefer"
+import { ReliabilityTier } from "@debriefer/core"
 import { WebSearchBase, type WebSearchOptions, type WebSearchResult } from "./base.js"
 
 const BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search"
