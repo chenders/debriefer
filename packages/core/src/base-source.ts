@@ -163,8 +163,12 @@ export abstract class BaseResearchSource<
           try {
             const raw = await this.options.confidenceScorer(result.text, subject)
             result.confidence = Math.max(0, Math.min(1, Number.isFinite(raw) ? raw : 0))
-          } catch {
-            // Scorer failed — leave confidence as -1 and fall through to keyword heuristics
+          } catch (scorerError) {
+            // Scorer failed — record via telemetry and fall through to keyword heuristics
+            this.telemetry?.recordError(
+              scorerError instanceof Error ? scorerError : new Error(String(scorerError)),
+              { source: this.name, subject: subject.name, phase: "confidenceScorer" }
+            )
             if (this.options.requiredKeywords) {
               result.confidence = calculateConfidence(
                 result.text,

@@ -117,7 +117,7 @@ export function createAIDefaults(options: AIDefaultsOptions = {}): AIDefaults {
   }
 
   // Create AI client (or use custom)
-  const client: AIClient = options.client ?? new HaikuClient({ apiKey, model })
+  const client: AIClient = options.client ?? new HaikuClient({ apiKey: effectiveKey, model })
   const commonOptions = { client, researchGoal, telemetry, fallbackToHeuristics }
 
   return {
