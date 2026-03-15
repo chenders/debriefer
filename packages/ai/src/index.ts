@@ -100,11 +100,11 @@ export function createAIDefaults(options: AIDefaultsOptions = {}): AIDefaults {
   const hasCustomClient = !!options.client
   const available = hasApiKey || hasCustomClient
 
-  // If unavailable, warn and return passthrough callbacks
+  // If unavailable, log via telemetry and return passthrough callbacks
   if (!available) {
-    console.warn(
-      "[debriefer-ai] ANTHROPIC_API_KEY not set. AI features disabled — using heuristic fallbacks."
-    )
+    telemetry?.recordEvent("ai.unavailable", {
+      reason: "ANTHROPIC_API_KEY not set. AI features disabled — using heuristic fallbacks.",
+    })
     return {
       sectionFilter: async (sections: WikipediaSection[]) => sections,
       confidenceScorer: async () => 0.5,

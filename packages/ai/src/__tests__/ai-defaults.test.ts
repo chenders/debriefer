@@ -438,19 +438,19 @@ describe("createAIDefaults", () => {
 
   it("reports unavailable when no API key and no custom client", () => {
     delete process.env.ANTHROPIC_API_KEY
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const telemetry = mockTelemetry()
 
-    const ai = createAIDefaults()
+    const ai = createAIDefaults({ telemetry })
 
     expect(ai.isAvailable).toBe(false)
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("ANTHROPIC_API_KEY not set"))
-
-    warnSpy.mockRestore()
+    expect(telemetry.recordEvent).toHaveBeenCalledWith(
+      "ai.unavailable",
+      expect.objectContaining({ reason: expect.stringContaining("ANTHROPIC_API_KEY not set") })
+    )
   })
 
   it("provides passthrough callbacks when unavailable", async () => {
     delete process.env.ANTHROPIC_API_KEY
-    vi.spyOn(console, "warn").mockImplementation(() => {})
 
     const ai = createAIDefaults()
 
