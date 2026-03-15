@@ -6,7 +6,8 @@
  * free/paid phases, and runs the orchestrator.
  */
 
-import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "@debriefer/core"
+import { ResearchOrchestrator, NoopSynthesizer } from "@debriefer/core"
+import { ClaudeSynthesizer } from "@debriefer/ai"
 import type {
   ResearchSubject,
   ResearchConfig,

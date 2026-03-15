@@ -1,7 +1,7 @@
 {
   "name": "@debriefer/core",
-  "version": "1.0.1",
-  "description": "Multi-source research orchestration engine with reliability scoring, phase-based execution, and AI synthesis",
+  "version": "2.0.0",
+  "description": "Multi-source research orchestration engine with reliability scoring, phase-based execution, and pluggable synthesis",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -42,13 +42,5 @@
   },
   "dependencies": {
     "p-limit": "^6"
-  },
-  "peerDependencies": {
-    "@anthropic-ai/sdk": ">=0.39.0 <1"
-  },
-  "peerDependenciesMeta": {
-    "@anthropic-ai/sdk": {
-      "optional": true
-    }
   }
 }

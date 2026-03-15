@@ -8,7 +8,8 @@
 
 import { Router } from "express"
 import type { Request, Response } from "express"
-import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "@debriefer/core"
+import { ResearchOrchestrator, NoopSynthesizer } from "@debriefer/core"
+import { ClaudeSynthesizer } from "@debriefer/ai"
 import type {
   ResearchSubject,
   ResearchConfig,

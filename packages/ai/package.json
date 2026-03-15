@@ -1,7 +1,7 @@
 {
-  "name": "@debriefer/sources",
-  "version": "1.0.1",
-  "description": "Built-in research sources for debriefer: Wikipedia, Wikidata, web search, news, archives, and more",
+  "name": "@debriefer/ai",
+  "version": "1.0.0",
+  "description": "AI-first defaults for debriefer: Claude-powered synthesis, section filtering, confidence scoring, link selection, and person validation",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,43 +16,39 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "lint": "eslint src/",
     "type-check": "tsc --noEmit"
   },
   "keywords": [
+    "debriefer",
+    "ai",
+    "claude",
+    "anthropic",
     "research",
-    "wikipedia",
-    "wikidata",
-    "web-scraping",
-    "news",
-    "archives",
-    "debriefer"
+    "synthesis"
   ],
   "author": "Chris Henderson",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/chenders/debriefer.git",
-    "directory": "packages/sources"
+    "directory": "packages/ai"
   },
   "homepage": "https://github.com/chenders/debriefer#readme",
   "bugs": {
     "url": "https://github.com/chenders/debriefer/issues"
   },
   "dependencies": {
-    "@mozilla/readability": "^0.6",
-    "@debriefer/core": ">=1.0.0",
-    "he": "^1",
-    "jsdom": "^28",
-    "wtf_wikipedia": "^10"
+    "@anthropic-ai/sdk": ">=0.39.0 <1"
   },
-  "optionalDependencies": {
-    "fingerprint-injector": "^2",
-    "playwright-core": "^1.50"
+  "peerDependencies": {
+    "@debriefer/core": ">=2.0.0",
+    "@debriefer/sources": ">=1.0.0"
   },
-  "devDependencies": {
-    "@types/he": "^1.2.3",
-    "@types/jsdom": "^28.0.0"
+  "peerDependenciesMeta": {
+    "@debriefer/sources": {
+      "optional": true
+    }
   }
 }

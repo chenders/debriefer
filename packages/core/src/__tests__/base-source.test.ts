@@ -376,4 +376,87 @@ describe("BaseResearchSource", () => {
     expect(cacheKey).toContain("test_source")
     expect(cacheKey).toContain("42")
   })
+
+  // confidenceScorer callback tests
+
+  it("uses confidenceScorer callback when result.confidence is -1", async () => {
+    const finding = makeFinding({ text: "Marie Curie won two Nobel Prizes.", confidence: -1 })
+    const scorer = vi.fn().mockResolvedValue(0.92)
+    const source = new TestSource(finding, { confidenceScorer: scorer })
+
+    const result = await source.lookup(testSubject, abortController.signal)
+
+    expect(scorer).toHaveBeenCalledWith("Marie Curie won two Nobel Prizes.", testSubject)
+    expect(result!.confidence).toBe(0.92)
+  })
+
+  it("confidenceScorer takes precedence over keyword heuristics", async () => {
+    const finding = makeFinding({ text: "John Wayne died in 1979.", confidence: -1 })
+    const scorer = vi.fn().mockReturnValue(0.99)
+    const source = new TestSource(finding, {
+      confidenceScorer: scorer,
+      requiredKeywords: ["died"],
+      bonusKeywords: ["cancer"],
+    })
+
+    const result = await source.lookup(testSubject, abortController.signal)
+
+    expect(scorer).toHaveBeenCalled()
+    expect(result!.confidence).toBe(0.99)
+  })
+
+  it("does not call confidenceScorer when confidence is already set", async () => {
+    const finding = makeFinding({ text: "Some text", confidence: 0.7 })
+    const scorer = vi.fn().mockReturnValue(0.99)
+    const source = new TestSource(finding, { confidenceScorer: scorer })
+
+    const result = await source.lookup(testSubject, abortController.signal)
+
+    expect(scorer).not.toHaveBeenCalled()
+    expect(result!.confidence).toBe(0.7)
+  })
+
+  it("supports synchronous confidenceScorer", async () => {
+    const finding = makeFinding({ text: "Test text", confidence: -1 })
+    const scorer = vi.fn().mockReturnValue(0.75)
+    const source = new TestSource(finding, { confidenceScorer: scorer })
+
+    const result = await source.lookup(testSubject, abortController.signal)
+
+    expect(result!.confidence).toBe(0.75)
+  })
+
+  it("falls through to keyword heuristics when confidenceScorer throws", async () => {
+    const finding = makeFinding({ text: "John Wayne died in 1979.", confidence: -1 })
+    const scorer = vi.fn().mockRejectedValue(new Error("Scorer failed"))
+    const telemetry = makeTelemetry()
+    const source = new TestSource(finding, {
+      confidenceScorer: scorer,
+      requiredKeywords: ["died"],
+    })
+    source.setTelemetry(telemetry)
+
+    const result = await source.lookup(testSubject, abortController.signal)
+
+    // Result is preserved, confidence set by keyword heuristics
+    expect(result).not.toBeNull()
+    expect(result!.confidence).toBeGreaterThan(0)
+    // Scorer error recorded via telemetry
+    expect(telemetry.recordError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "Scorer failed" }),
+      expect.objectContaining({ phase: "confidenceScorer" })
+    )
+  })
+
+  it("preserves result with confidence -1 when scorer throws and no keywords", async () => {
+    const finding = makeFinding({ text: "Test text", confidence: -1 })
+    const scorer = vi.fn().mockRejectedValue(new Error("Scorer failed"))
+    const source = new TestSource(finding, { confidenceScorer: scorer })
+
+    const result = await source.lookup(testSubject, abortController.signal)
+
+    // Result preserved but confidence stays -1 (no fallback available)
+    expect(result).not.toBeNull()
+    expect(result!.confidence).toBe(-1)
+  })
 })

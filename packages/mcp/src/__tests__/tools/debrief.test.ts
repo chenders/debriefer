@@ -1,8 +1,8 @@
 /**
  * Tests for the debrief tool handler.
  *
- * Mocks the core `debriefer` module to avoid real API calls and
- * verifies synthesizer selection, config passing, and error handling.
+ * Mocks the core `debriefer` module and `@debriefer/ai` to avoid real API
+ * calls and verifies synthesizer selection, config passing, and error handling.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest"
@@ -26,13 +26,17 @@ vi.mock("@debriefer/core", async (importOriginal) => {
         durationMs: 100,
       }),
     })),
-    ClaudeSynthesizer: vi.fn().mockImplementation(() => ({})),
     NoopSynthesizer: vi.fn().mockImplementation(() => ({})),
   }
 })
 
+vi.mock("@debriefer/ai", () => ({
+  ClaudeSynthesizer: vi.fn().mockImplementation(() => ({})),
+}))
+
 import { debriefHandler } from "../../tools/debrief.js"
-import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "@debriefer/core"
+import { ResearchOrchestrator, NoopSynthesizer } from "@debriefer/core"
+import { ClaudeSynthesizer } from "@debriefer/ai"
 import type { McpConfig } from "../../config.js"
 
 // ============================================================================

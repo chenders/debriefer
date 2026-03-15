@@ -1,8 +1,8 @@
 /**
  * Debriefer — Multi-source research orchestration engine.
  *
- * Orchestrates 60+ data sources with Wikipedia RSP-based reliability scoring,
- * phased execution with early stopping, per-query cost control, and AI synthesis.
+ * Orchestrates data sources with Wikipedia RSP-based reliability scoring,
+ * phased execution with early stopping, per-query cost control, and pluggable synthesis.
  *
  * @packageDocumentation
  */
@@ -12,9 +12,8 @@ export { ResearchOrchestrator } from "./orchestrator.js"
 export { BaseResearchSource } from "./base-source.js"
 export type { BaseSourceOptions } from "./base-source.js"
 
-// AI synthesis
-export { ClaudeSynthesizer, NoopSynthesizer, stripMarkdownCodeFences } from "./synthesizer.js"
-export type { ClaudeSynthesizerOptions } from "./synthesizer.js"
+// Synthesis (ClaudeSynthesizer moved to @debriefer/ai)
+export { NoopSynthesizer, stripMarkdownCodeFences } from "./synthesizer.js"
 
 // Reliability scoring
 export {

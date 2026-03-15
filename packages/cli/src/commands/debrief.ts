@@ -7,7 +7,8 @@
  */
 
 import { Command, InvalidArgumentError } from "commander"
-import { ResearchOrchestrator, ClaudeSynthesizer, NoopSynthesizer } from "@debriefer/core"
+import { ResearchOrchestrator, NoopSynthesizer } from "@debriefer/core"
+import { ClaudeSynthesizer } from "@debriefer/ai"
 import type {
   ResearchSubject,
   ResearchConfig,

@@ -22,11 +22,13 @@ RUN if [ "$INSTALL_BROWSERS" = "true" ]; then \
 
 COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/packages/core/package.json packages/core/package.json
+COPY --from=builder /app/packages/ai/package.json packages/ai/package.json
 COPY --from=builder /app/packages/sources/package.json packages/sources/package.json
 COPY --from=builder /app/packages/server/package.json packages/server/package.json
 
 COPY --from=builder /app/node_modules node_modules
 COPY --from=builder /app/packages/core/dist packages/core/dist
+COPY --from=builder /app/packages/ai/dist packages/ai/dist
 COPY --from=builder /app/packages/sources/dist packages/sources/dist
 COPY --from=builder /app/packages/server/dist packages/server/dist
 

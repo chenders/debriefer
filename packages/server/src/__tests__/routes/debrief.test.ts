@@ -28,10 +28,13 @@ vi.mock("@debriefer/core", async (importOriginal) => {
         durationMs: 100,
       }),
     })),
-    ClaudeSynthesizer: vi.fn().mockImplementation(() => ({})),
     NoopSynthesizer: vi.fn().mockImplementation(() => ({})),
   }
 })
+
+vi.mock("@debriefer/ai", () => ({
+  ClaudeSynthesizer: vi.fn().mockImplementation(() => ({})),
+}))
 
 import { createDebriefRouter } from "../../routes/debrief.js"
 import { ResearchOrchestrator, NoopSynthesizer } from "@debriefer/core"

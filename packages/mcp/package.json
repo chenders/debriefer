@@ -23,6 +23,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@debriefer/ai": "*",
     "@modelcontextprotocol/sdk": "^1",
     "@debriefer/core": "*",
     "@debriefer/sources": "*",

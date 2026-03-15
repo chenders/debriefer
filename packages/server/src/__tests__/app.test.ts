@@ -27,10 +27,13 @@ vi.mock("@debriefer/core", async (importOriginal) => {
         durationMs: 100,
       }),
     })),
-    ClaudeSynthesizer: vi.fn().mockImplementation(() => ({})),
     NoopSynthesizer: vi.fn().mockImplementation(() => ({})),
   }
 })
+
+vi.mock("@debriefer/ai", () => ({
+  ClaudeSynthesizer: vi.fn().mockImplementation(() => ({})),
+}))
 
 import { createApp } from "../app.js"
 import type { ServerConfig } from "../config.js"
