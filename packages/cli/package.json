@@ -1,6 +1,7 @@
 {
   "name": "@debriefer/cli",
-  "version": "0.1.0",
+  "version": "2.0.0",
+  "description": "CLI tool for multi-source research with reliability scoring and AI synthesis",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,10 +23,27 @@
     "lint": "eslint src/",
     "type-check": "tsc --noEmit"
   },
+  "keywords": [
+    "debriefer",
+    "cli",
+    "research",
+    "multi-source"
+  ],
+  "author": "Chris Henderson",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chenders/debriefer.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/chenders/debriefer#readme",
+  "bugs": {
+    "url": "https://github.com/chenders/debriefer/issues"
+  },
   "dependencies": {
-    "@debriefer/ai": "*",
-    "@debriefer/core": "*",
-    "@debriefer/sources": "*",
+    "@debriefer/ai": "^2.0.0",
+    "@debriefer/core": "^2.0.0",
+    "@debriefer/sources": "^2.0.0",
     "commander": "^13"
   }
 }

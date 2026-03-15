@@ -24,7 +24,7 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Install and build
-        run: npm ci && npx turbo build --filter=@debriefer/core --filter=@debriefer/sources --filter=@debriefer/ai
+        run: npm ci && npx turbo build
 
       - name: Publish @debriefer/core
         run: npm publish --provenance --access public || echo "Already published, skipping"
@@ -41,5 +41,23 @@ jobs:
       - name: Publish @debriefer/ai
         run: npm publish --provenance --access public || echo "Already published, skipping"
         working-directory: packages/ai
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @debriefer/cli
+        run: npm publish --provenance --access public || echo "Already published, skipping"
+        working-directory: packages/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @debriefer/server
+        run: npm publish --provenance --access public || echo "Already published, skipping"
+        working-directory: packages/server
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @debriefer/mcp
+        run: npm publish --provenance --access public || echo "Already published, skipping"
+        working-directory: packages/mcp
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
