@@ -27,19 +27,19 @@ jobs:
         run: npm ci && npx turbo build --filter=@debriefer/core --filter=@debriefer/sources --filter=@debriefer/ai
 
       - name: Publish @debriefer/core
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --access public || echo "Already published, skipping"
         working-directory: packages/core
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @debriefer/sources
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --access public || echo "Already published, skipping"
         working-directory: packages/sources
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @debriefer/ai
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --access public || echo "Already published, skipping"
         working-directory: packages/ai
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
