@@ -73,7 +73,8 @@ export interface AIDefaults {
  * Returns pre-built callbacks using Claude Haiku for section filtering,
  * confidence scoring, link selection, and person validation. When
  * `ANTHROPIC_API_KEY` is not set and no custom client is provided,
- * logs a warning and all callbacks fall through to heuristic behavior.
+ * records an `ai.unavailable` telemetry event and all callbacks fall
+ * through to heuristic behavior.
  *
  * @example
  * ```typescript
