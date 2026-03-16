@@ -302,7 +302,7 @@ export async function clearExpiredSessions(
 }
 
 /**
- * Get session info without loading full cookies.
+ * Get session metadata (created/last used timestamps, cookie count).
  *
  * @param domain - Domain to get info for
  * @param config - Optional configuration override
