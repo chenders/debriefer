@@ -40,7 +40,7 @@ const DEFAULT_CONFIG = {
   concurrency: 5,
   confidenceThreshold: 0.6,
   reliabilityThreshold: 0.6,
-  earlyStopThreshold: 3,
+  earlyStopThreshold: Infinity,
 } as const
 
 /**

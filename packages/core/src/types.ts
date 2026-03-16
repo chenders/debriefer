@@ -253,9 +253,9 @@ export interface ResearchConfig {
   /** Minimum source reliability to count as a quality finding (default: 0.6) */
   reliabilityThreshold?: number
   /**
-   * Number of high-quality source families needed before early stopping (default: 3).
-   * A "source family" is a unique sourceType — multiple findings from the same
-   * source type count as one family.
+   * Number of high-quality source families needed before early stopping (default: Infinity, disabled).
+   * Set to a finite number (e.g., 3) to stop after that many distinct source types
+   * produce high-quality findings. A "source family" is a unique sourceType.
    */
   earlyStopThreshold?: number
   /** Cost limits to prevent runaway spending */
