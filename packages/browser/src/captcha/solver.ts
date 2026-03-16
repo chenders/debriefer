@@ -307,7 +307,7 @@ export async function solveCaptcha(
       type,
       costUsd: 0,
       solveTimeMs: Date.now() - startTime,
-      error: `CAPTCHA cost ($${estimatedCost}) exceeds limit ($${config.maxCostPerSolve})`,
+      error: `CAPTCHA cost ($${estimatedCost}) exceeds limit ($${resolved.maxCostPerSolve})`,
     }
   }
 

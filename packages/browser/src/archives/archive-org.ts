@@ -38,6 +38,7 @@ export async function checkArchiveAvailability(url: string): Promise<ArchiveAvai
     const apiUrl = `https://archive.org/wayback/available?url=${encodeURIComponent(url)}`
     const response = await fetch(apiUrl, {
       headers: { ...BROWSER_HEADERS, Accept: "application/json, text/plain, */*" },
+      signal: AbortSignal.timeout(15000),
     })
 
     if (!response.ok) {
@@ -96,7 +97,10 @@ export async function fetchFromArchiveOrg(url: string): Promise<ArchiveFetchResu
   try {
     await waitForRateLimit()
 
-    const response = await fetch(availability.url, { headers: BROWSER_HEADERS })
+    const response = await fetch(availability.url, {
+      headers: BROWSER_HEADERS,
+      signal: AbortSignal.timeout(15000),
+    })
 
     if (!response.ok) {
       return {

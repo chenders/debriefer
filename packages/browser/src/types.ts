@@ -84,10 +84,10 @@ export interface StoredSession {
 
 /** Session manager configuration. */
 export interface SessionManagerConfig {
-  /** Directory to store session files (default: ~/.debriefer/sessions/) */
-  storagePath: string
-  /** Session TTL in hours (default: 24) */
-  ttlHours: number
+  /** Directory to store session files. Default: ~/.debriefer/sessions/ */
+  storagePath?: string
+  /** Session TTL in hours. Default: 24. */
+  ttlHours?: number
 }
 
 // ============================================================================

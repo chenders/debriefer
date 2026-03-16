@@ -44,8 +44,7 @@ packages/browser/
     "fingerprint-injector": "^2"
   },
   "peerDependencies": {
-    "@debriefer/core": ">=2.0.0",
-    "@debriefer/sources": ">=2.0.0"
+    "@debriefer/core": ">=2.0.0"
   }
 }
 ```

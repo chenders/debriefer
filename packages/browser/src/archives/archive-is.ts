@@ -47,6 +47,7 @@ export async function checkArchiveIsAvailability(url: string): Promise<ArchiveAv
       method: "HEAD",
       headers: BROWSER_HEADERS,
       redirect: "manual",
+      signal: AbortSignal.timeout(15000),
     })
 
     if (response.status === 302) {
@@ -55,7 +56,6 @@ export async function checkArchiveIsAvailability(url: string): Promise<ArchiveAv
     }
 
     if (response.status === 429) {
-      console.warn("Archive.is rate limited, increasing delay...")
       archiveIsRateLimitMs = Math.min(archiveIsRateLimitMs * 2, 30000)
       return { available: false, url: null, timestamp: null, status: 429 }
     }
@@ -91,7 +91,10 @@ export async function fetchFromArchiveIs(url: string): Promise<ArchiveFetchResul
   try {
     await waitForRateLimit()
 
-    const response = await fetch(availability.url, { headers: BROWSER_HEADERS })
+    const response = await fetch(availability.url, {
+      headers: BROWSER_HEADERS,
+      signal: AbortSignal.timeout(15000),
+    })
 
     if (response.status === 429) {
       archiveIsRateLimitMs = Math.min(archiveIsRateLimitMs * 2, 30000)

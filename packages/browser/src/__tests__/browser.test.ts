@@ -1,12 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { createBrowserFetchPage } from "../index.js"
 
-// Mock global fetch for archive tests
+const originalFetch = globalThis.fetch
 const mockFetch = vi.fn()
-vi.stubGlobal("fetch", mockFetch)
 
 beforeEach(() => {
+  vi.stubGlobal("fetch", mockFetch)
   mockFetch.mockReset()
+})
+
+afterEach(() => {
+  globalThis.fetch = originalFetch
 })
 
 describe("createBrowserFetchPage", () => {
