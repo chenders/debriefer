@@ -1,6 +1,6 @@
 {
   "name": "@debriefer/ai",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "AI-first defaults for debriefer: Claude-powered synthesis, section filtering, confidence scoring, link selection, and person validation",
   "type": "module",
   "main": "dist/index.js",

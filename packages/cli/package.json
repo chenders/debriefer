@@ -1,6 +1,6 @@
 {
   "name": "@debriefer/cli",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "CLI tool for multi-source research with reliability scoring and AI synthesis",
   "type": "module",
   "main": "dist/index.js",

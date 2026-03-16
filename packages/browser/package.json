@@ -1,6 +1,6 @@
 {
   "name": "@debriefer/browser",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Browser stealth, CAPTCHA solving, and archive fallbacks for debriefer research sources",
   "type": "module",
   "main": "dist/index.js",
