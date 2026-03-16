@@ -214,7 +214,11 @@ async function pollCapSolver(
     }
 
     if (data.status === "ready" && data.solution) {
-      return data.solution.gRecaptchaResponse || data.solution.token || ""
+      const token = data.solution.gRecaptchaResponse || data.solution.token
+      if (!token) {
+        throw new Error("CapSolver returned ready status but no token")
+      }
+      return token
     }
 
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
