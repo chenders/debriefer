@@ -11,7 +11,7 @@
 import type { CaptchaSolverConfig, CaptchaSolverProvider } from "./types.js"
 import { fetchPageWithFallbacks } from "./archives/fallback-chain.js"
 import { htmlToText } from "./html-utils.js"
-import { setBrowserAuthConfig } from "./auth/config.js"
+import { setBrowserAuthConfig, expandHomePath } from "./auth/config.js"
 
 // Re-export types
 export type {
@@ -63,6 +63,7 @@ export { fetchPageWithFallbacks } from "./archives/fallback-chain.js"
 
 // Re-export auth utilities
 export {
+  expandHomePath,
   loadBrowserAuthConfig,
   getBrowserAuthConfig,
   setBrowserAuthConfig,
@@ -220,7 +221,7 @@ export function createBrowserDefaults(options: BrowserDefaultsOptions = {}): Bro
   if (options.credentials) {
     setBrowserAuthConfig({
       enabled: true,
-      sessionStoragePath: options.sessionPath ?? "~/.debriefer/sessions",
+      sessionStoragePath: expandHomePath(options.sessionPath ?? "~/.debriefer/sessions"),
       sessionTtlHours: options.sessionTtlHours ?? 24,
       credentials: {
         nytimes: options.credentials["nytimes.com"],

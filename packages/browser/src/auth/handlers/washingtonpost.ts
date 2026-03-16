@@ -1,9 +1,9 @@
 /**
  * Washington Post login handler.
  *
- * Washington Post uses a single-page login form:
- * - Email and password on same page
- * - May have CAPTCHA protection
+ * Washington Post uses a two-step login flow:
+ * 1. Enter email, click continue
+ * 2. Enter password, click sign in
  *
  * Login URL: https://www.washingtonpost.com/subscribe/signin
  */

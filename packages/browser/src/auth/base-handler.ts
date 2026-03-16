@@ -2,7 +2,7 @@
  * Base class for site-specific login handlers.
  *
  * Provides common functionality for:
- * - Form filling with retry logic
+ * - Form filling (navigation, email, password, submit)
  * - CAPTCHA detection and solving
  * - Success verification
  */

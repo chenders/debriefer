@@ -106,9 +106,13 @@ export async function loadSession(
 
     return session
   } catch (error) {
-    // File doesn't exist or is corrupted
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-      // Corrupted file — silently return null
+      // Corrupted file — delete it so clearExpiredSessions doesn't retry
+      try {
+        await fs.unlink(filePath)
+      } catch {
+        // Ignore delete failure
+      }
     }
     return null
   }
@@ -157,7 +161,7 @@ export async function saveSession(
 
   const filePath = getSessionFilePath(storagePath, domain)
 
-  await fs.writeFile(filePath, JSON.stringify(session, null, 2), "utf-8")
+  await fs.writeFile(filePath, JSON.stringify(session, null, 2), { encoding: "utf-8", mode: 0o600 })
 }
 
 /**
@@ -218,7 +222,10 @@ export async function touchSession(
 
     session.lastUsedAt = new Date().toISOString()
 
-    await fs.writeFile(filePath, JSON.stringify(session, null, 2), "utf-8")
+    await fs.writeFile(filePath, JSON.stringify(session, null, 2), {
+      encoding: "utf-8",
+      mode: 0o600,
+    })
   } catch {
     // Silently ignore if file doesn't exist or read fails
   }
