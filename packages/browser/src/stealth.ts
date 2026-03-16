@@ -28,11 +28,11 @@ delete navigator.__proto__.webdriver;
 // Fix permissions API to not leak automation
 if (navigator.permissions) {
   const originalQuery = navigator.permissions.query;
-  navigator.permissions.query = (parameters) => (
-    parameters.name === 'notifications' ?
+  navigator.permissions.query = function(parameters) {
+    return parameters.name === 'notifications' ?
       Promise.resolve({ state: Notification.permission }) :
-      originalQuery(parameters)
-  );
+      originalQuery.call(this, parameters);
+  };
 }
 
 // Hide automation indicators in window (ChromeDriver variables)

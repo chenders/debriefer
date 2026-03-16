@@ -63,7 +63,7 @@ async function submit2Captcha(
   const params = new URLSearchParams({
     key: config.apiKey,
     method: type === "hcaptcha" ? "hcaptcha" : "userrecaptcha",
-    googlekey: siteKey,
+    ...(type === "hcaptcha" ? { sitekey: siteKey } : { googlekey: siteKey }),
     pageurl: pageUrl,
     json: "1",
   })
