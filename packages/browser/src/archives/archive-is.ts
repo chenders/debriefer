@@ -42,7 +42,7 @@ export async function checkArchiveIsAvailability(url: string): Promise<ArchiveAv
   try {
     await waitForRateLimit()
 
-    const checkUrl = `https://archive.is/newest/${url}`
+    const checkUrl = `https://archive.is/newest/${encodeURIComponent(url)}`
     const response = await fetch(checkUrl, {
       method: "HEAD",
       headers: BROWSER_HEADERS,
@@ -52,6 +52,9 @@ export async function checkArchiveIsAvailability(url: string): Promise<ArchiveAv
 
     if (response.status === 302) {
       const archiveUrl = response.headers.get("location")
+      if (!archiveUrl) {
+        return { available: false, url: null, timestamp: null, status: 302 }
+      }
       return { available: true, url: archiveUrl, timestamp: null, status: 200 }
     }
 
@@ -177,10 +180,34 @@ export async function searchArchiveIsWithBrowser(
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { chromium } = require("playwright-extra")
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { RecaptchaPlugin } = require("@extra/recaptcha")
+  // playwright-extra and @extra/recaptcha are not declared as dependencies — install
+  // them manually if you need archive.is browser CAPTCHA solving:
+  //   npm install playwright-extra @extra/recaptcha
+  let chromium: {
+    use: (p: unknown) => void
+    launch: (
+      opts: unknown
+    ) => Promise<{ close(): Promise<void>; newPage(): Promise<import("playwright-core").Page> }>
+  }
+  let RecaptchaPlugin: new (opts: unknown) => unknown
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    chromium = require("playwright-extra").chromium
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    RecaptchaPlugin = require("@extra/recaptcha").RecaptchaPlugin
+  } catch {
+    return {
+      success: false,
+      url,
+      archiveUrl: null,
+      title: "",
+      content: "",
+      contentLength: 0,
+      timestamp: null,
+      error:
+        "archive.is browser CAPTCHA solving requires: npm install playwright-extra @extra/recaptcha",
+    }
+  }
 
   const plugin = new RecaptchaPlugin({
     visualFeedback: true,
@@ -192,7 +219,9 @@ export async function searchArchiveIsWithBrowser(
 
   const searchUrl = `https://archive.is/search/?q=${encodeURIComponent(url)}`
 
-  let browser: { close(): Promise<void> } | undefined
+  let browser:
+    | { close(): Promise<void>; newPage(): Promise<import("playwright-core").Page> }
+    | undefined
   try {
     browser = await chromium.launch({
       headless: true,
@@ -200,9 +229,7 @@ export async function searchArchiveIsWithBrowser(
       args: ["--no-sandbox", "--disable-dev-shm-usage"],
     })
 
-    const page = await (
-      browser as unknown as { newPage(): Promise<import("playwright-core").Page> }
-    ).newPage()
+    const page = await browser.newPage()
     await page.setViewportSize({ width: 1920, height: 1080 })
 
     await page.goto("https://archive.is/", { waitUntil: "domcontentloaded" })
