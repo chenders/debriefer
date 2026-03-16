@@ -217,26 +217,28 @@ export interface BrowserDefaults {
  * ```
  */
 export function createBrowserDefaults(options: BrowserDefaultsOptions = {}): BrowserDefaults {
-  // Configure auth if credentials provided
-  if (options.credentials) {
-    setBrowserAuthConfig({
-      enabled: true,
-      sessionStoragePath: expandHomePath(options.sessionPath ?? "~/.debriefer/sessions"),
-      sessionTtlHours: options.sessionTtlHours ?? 24,
-      credentials: {
-        nytimes: options.credentials["nytimes.com"],
-        washingtonpost: options.credentials["washingtonpost.com"],
-      },
-      captchaSolver: options.captchaSolver?.apiKey
-        ? {
-            provider: options.captchaSolver.provider,
-            apiKey: options.captchaSolver.apiKey,
-            timeoutMs: options.captchaSolver.timeoutMs,
-            maxCostPerSolve: options.captchaSolver.maxCostPerSolve,
-          }
-        : undefined,
-    })
+  // Configure auth settings — applies even without inline credentials
+  // (credentials may be loaded from env vars via loadBrowserAuthConfig)
+  const configOverride: Partial<import("./types.js").BrowserAuthConfig> = {
+    enabled: true,
+    sessionStoragePath: expandHomePath(options.sessionPath ?? "~/.debriefer/sessions"),
+    sessionTtlHours: options.sessionTtlHours ?? 24,
   }
+  if (options.credentials) {
+    configOverride.credentials = {
+      nytimes: options.credentials["nytimes.com"],
+      washingtonpost: options.credentials["washingtonpost.com"],
+    }
+  }
+  if (options.captchaSolver?.apiKey) {
+    configOverride.captchaSolver = {
+      provider: options.captchaSolver.provider,
+      apiKey: options.captchaSolver.apiKey,
+      timeoutMs: options.captchaSolver.timeoutMs,
+      maxCostPerSolve: options.captchaSolver.maxCostPerSolve,
+    }
+  }
+  setBrowserAuthConfig(configOverride)
 
   const fetchPage = createBrowserFetchPage(options)
 

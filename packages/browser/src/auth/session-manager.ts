@@ -36,7 +36,7 @@ function getSessionFilePath(storagePath: string, domain: string): string {
  */
 async function ensureStorageDir(storagePath: string): Promise<void> {
   try {
-    await fs.mkdir(storagePath, { recursive: true })
+    await fs.mkdir(storagePath, { recursive: true, mode: 0o700 })
   } catch (error) {
     // Ignore EEXIST errors
     if ((error as NodeJS.ErrnoException).code !== "EEXIST") {
