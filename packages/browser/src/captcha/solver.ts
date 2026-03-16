@@ -32,6 +32,18 @@ const CAPSOLVER_API = {
 
 const POLL_INTERVAL_MS = 5000
 const INITIAL_WAIT_MS = 10000
+const DEFAULT_TIMEOUT_MS = 120000
+const DEFAULT_MAX_COST = 0.01
+
+/** Resolve optional config fields to concrete values. */
+function resolveConfig(config: CaptchaSolverConfig): Required<CaptchaSolverConfig> {
+  return {
+    provider: config.provider,
+    apiKey: config.apiKey,
+    timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+    maxCostPerSolve: config.maxCostPerSolve ?? DEFAULT_MAX_COST,
+  }
+}
 
 const CAPTCHA_COSTS: Record<CaptchaType, number> = {
   recaptcha_v2: 0.003,
@@ -43,7 +55,7 @@ const CAPTCHA_COSTS: Record<CaptchaType, number> = {
 }
 
 async function submit2Captcha(
-  config: CaptchaSolverConfig,
+  config: Required<CaptchaSolverConfig>,
   type: CaptchaType,
   siteKey: string,
   pageUrl: string
@@ -62,7 +74,9 @@ async function submit2Captcha(
     params.append("min_score", "0.3")
   }
 
-  const response = await fetch(`${TWOCAPTCHA_API.submit}?${params}`)
+  const response = await fetch(`${TWOCAPTCHA_API.submit}?${params}`, {
+    signal: AbortSignal.timeout(30000),
+  })
   const data = (await response.json()) as { status: number; request: string }
 
   if (data.status !== 1) {
@@ -73,7 +87,7 @@ async function submit2Captcha(
 }
 
 async function submit2CaptchaDataDome(
-  config: CaptchaSolverConfig,
+  config: Required<CaptchaSolverConfig>,
   captchaUrl: string,
   pageUrl: string,
   userAgent: string
@@ -87,7 +101,9 @@ async function submit2CaptchaDataDome(
     json: "1",
   })
 
-  const response = await fetch(`${TWOCAPTCHA_API.submit}?${params}`)
+  const response = await fetch(`${TWOCAPTCHA_API.submit}?${params}`, {
+    signal: AbortSignal.timeout(30000),
+  })
   const data = (await response.json()) as { status: number; request: string }
 
   if (data.status !== 1) {
@@ -98,7 +114,7 @@ async function submit2CaptchaDataDome(
 }
 
 async function poll2Captcha(
-  config: CaptchaSolverConfig,
+  config: Required<CaptchaSolverConfig>,
   taskId: string,
   startTime: number
 ): Promise<string> {
@@ -110,7 +126,9 @@ async function poll2Captcha(
   })
 
   while (Date.now() - startTime < config.timeoutMs) {
-    const response = await fetch(`${TWOCAPTCHA_API.result}?${params}`)
+    const response = await fetch(`${TWOCAPTCHA_API.result}?${params}`, {
+      signal: AbortSignal.timeout(30000),
+    })
     const data = (await response.json()) as { status: number; request: string }
 
     if (data.status === 1) {
@@ -128,7 +146,7 @@ async function poll2Captcha(
 }
 
 async function submitCapSolver(
-  config: CaptchaSolverConfig,
+  config: Required<CaptchaSolverConfig>,
   type: CaptchaType,
   siteKey: string,
   pageUrl: string
@@ -155,6 +173,7 @@ async function submitCapSolver(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ clientKey: config.apiKey, task }),
+    signal: AbortSignal.timeout(30000),
   })
 
   const data = (await response.json()) as {
@@ -171,7 +190,7 @@ async function submitCapSolver(
 }
 
 async function pollCapSolver(
-  config: CaptchaSolverConfig,
+  config: Required<CaptchaSolverConfig>,
   taskId: string,
   startTime: number
 ): Promise<string> {
@@ -180,6 +199,7 @@ async function pollCapSolver(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ clientKey: config.apiKey, taskId }),
+      signal: AbortSignal.timeout(30000),
     })
 
     const data = (await response.json()) as {
@@ -275,11 +295,12 @@ export async function solveCaptcha(
   detection: CaptchaDetectionResult,
   config: CaptchaSolverConfig
 ): Promise<CaptchaSolveResult> {
+  const resolved = resolveConfig(config)
   const startTime = Date.now()
   const type = detection.type || "unknown"
   const estimatedCost = CAPTCHA_COSTS[type]
 
-  if (estimatedCost > config.maxCostPerSolve) {
+  if (estimatedCost > resolved.maxCostPerSolve) {
     return {
       success: false,
       token: null,
@@ -293,7 +314,7 @@ export async function solveCaptcha(
   const pageUrl = page.url()
 
   if (type === "datadome") {
-    return solveDataDome(page, detection, config, pageUrl, startTime, estimatedCost)
+    return solveDataDome(page, detection, resolved, pageUrl, startTime, estimatedCost)
   }
 
   if (!detection.siteKey) {
@@ -312,12 +333,12 @@ export async function solveCaptcha(
 
     let token: string
 
-    if (config.provider === "2captcha") {
-      const taskId = await submit2Captcha(config, type, detection.siteKey, pageUrl)
-      token = await poll2Captcha(config, taskId, startTime)
+    if (resolved.provider === "2captcha") {
+      const taskId = await submit2Captcha(resolved, type, detection.siteKey, pageUrl)
+      token = await poll2Captcha(resolved, taskId, startTime)
     } else {
-      const taskId = await submitCapSolver(config, type, detection.siteKey, pageUrl)
-      token = await pollCapSolver(config, taskId, startTime)
+      const taskId = await submitCapSolver(resolved, type, detection.siteKey, pageUrl)
+      token = await pollCapSolver(resolved, taskId, startTime)
     }
 
     await injectCaptchaToken(page, token, type)
@@ -344,7 +365,7 @@ export async function solveCaptcha(
 async function solveDataDome(
   page: Page,
   detection: CaptchaDetectionResult,
-  config: CaptchaSolverConfig,
+  config: Required<CaptchaSolverConfig>,
   pageUrl: string,
   startTime: number,
   estimatedCost: number
@@ -415,14 +436,17 @@ async function solveDataDome(
  * Check the balance of the solving service account.
  */
 export async function getBalance(config: CaptchaSolverConfig): Promise<number> {
-  if (config.provider === "2captcha") {
+  const resolved = resolveConfig(config)
+  if (resolved.provider === "2captcha") {
     const params = new URLSearchParams({
       key: config.apiKey,
       action: "getbalance",
       json: "1",
     })
 
-    const response = await fetch(`${TWOCAPTCHA_API.result}?${params}`)
+    const response = await fetch(`${TWOCAPTCHA_API.result}?${params}`, {
+      signal: AbortSignal.timeout(30000),
+    })
     const data = (await response.json()) as { status: number; request: string }
 
     if (data.status !== 1) {

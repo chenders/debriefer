@@ -39,10 +39,10 @@ export type CaptchaSolverProvider = "2captcha" | "capsolver"
 export interface CaptchaSolverConfig {
   provider: CaptchaSolverProvider
   apiKey: string
-  /** Timeout in milliseconds for solving (default: 120000) */
-  timeoutMs: number
-  /** Maximum cost per solve in USD (default: 0.01) */
-  maxCostPerSolve: number
+  /** Timeout in milliseconds for solving. Default: 120000. */
+  timeoutMs?: number
+  /** Maximum cost per solve in USD. Default: 0.01. */
+  maxCostPerSolve?: number
 }
 
 /** Result from CAPTCHA solving. */

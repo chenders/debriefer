@@ -158,6 +158,22 @@ export async function searchArchiveIsWithBrowser(
   url: string,
   captchaSolver: CaptchaSolverConfig
 ): Promise<ArchiveFetchResult> {
+  // archive.is CAPTCHA solving requires playwright-extra + @extra/recaptcha.
+  // The RecaptchaPlugin only supports 2captcha as a provider.
+  if (captchaSolver.provider !== "2captcha") {
+    return {
+      success: false,
+      url,
+      archiveUrl: null,
+      title: "",
+      content: "",
+      contentLength: 0,
+      timestamp: null,
+      error:
+        "archive.is browser CAPTCHA solving requires provider: '2captcha' (RecaptchaPlugin limitation)",
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { chromium } = require("playwright-extra")
   // eslint-disable-next-line @typescript-eslint/no-require-imports

@@ -10,6 +10,7 @@
 
 import type { CaptchaSolverConfig, CaptchaSolverProvider } from "./types.js"
 import { fetchPageWithFallbacks } from "./archives/fallback-chain.js"
+import { htmlToText } from "./html-utils.js"
 
 // Re-export types
 export type {
@@ -126,6 +127,13 @@ export function createBrowserFetchPage(
 
     if (result.fetchMethod === "none" || !result.content) {
       return null
+    }
+
+    // WebSearchBase.fetchPage expects extracted text (it skips extractArticleContent
+    // when a custom fetchPage is provided). Direct fetch returns raw HTML, so strip it.
+    // Archive fallbacks already return extracted text.
+    if (result.fetchMethod === "direct") {
+      return htmlToText(result.content)
     }
 
     return result.content

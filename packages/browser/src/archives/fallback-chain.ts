@@ -73,6 +73,11 @@ function extractTitle(html: string): string {
 /**
  * Fetch a page with automatic archive fallbacks when blocked.
  *
+ * The caller's AbortSignal is checked between each fallback step. The direct
+ * fetch uses AbortSignal for in-flight cancellation. Archive fallbacks use
+ * short HTTP requests with internal rate limiting — cancellation is checked
+ * between steps rather than during each archive fetch.
+ *
  * @param url - URL to fetch
  * @param options - Fetch options
  * @param captchaSolver - Optional CAPTCHA solver for archive.is browser fallback
