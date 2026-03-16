@@ -171,8 +171,9 @@ export function getBrowserAuthConfig(): BrowserAuthConfig {
  * Useful for testing or programmatic configuration.
  */
 export function setBrowserAuthConfig(config: Partial<BrowserAuthConfig>): void {
+  const base = configInstance ?? loadBrowserAuthConfig()
   configInstance = {
-    ...DEFAULT_BROWSER_AUTH_CONFIG,
+    ...base,
     ...config,
   }
 }
