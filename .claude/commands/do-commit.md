@@ -21,7 +21,6 @@ Prepare and commit the current work with proper tests and documentation.
 
 4. **Update documentation if needed**
    - Review `CLAUDE.md` — update if there are new patterns, modules, or architectural changes
-   - Review `docs/plans/` — update implementation status if completing a planned task
 
 5. **Create the commit**
    - Stage relevant changes with `git add` (specific files, not `-A`)

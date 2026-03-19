@@ -2,7 +2,7 @@
 
 Focused guidance for GitHub Copilot code review on the Debriefer repository.
 
-**Full context**: `CLAUDE.md` | **Plans**: `docs/plans/`
+**Full context**: `CLAUDE.md`
 
 ---
 
