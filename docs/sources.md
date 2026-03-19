@@ -41,9 +41,6 @@ Most news sources use free DuckDuckGo site-search (e.g., `site:apnews.com`) and 
 When configuring the orchestrator, you set thresholds that control quality and stopping behavior:
 
 ```typescript
-import { ResearchOrchestrator, NoopSynthesizer } from "@debriefer/core"
-import { wikidata, wikipedia, apNews, reuters } from "@debriefer/sources"
-
 const orchestrator = new ResearchOrchestrator(
   [
     { phase: 1, sources: [wikidata(), wikipedia()] },
