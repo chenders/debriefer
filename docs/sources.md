@@ -6,6 +6,8 @@ Source reliability tiers are derived from Wikipedia's [Reliable Sources Perennia
 
 ## Reliability Tiers
 
+Tier names correspond to members of the `ReliabilityTier` enum exported from `@debriefer/core` (e.g., `ReliabilityTier.TIER_1_NEWS`).
+
 | Tier                    | Score | RSP Equivalent                | Examples                                                    |
 | ----------------------- | ----- | ----------------------------- | ----------------------------------------------------------- |
 | `STRUCTURED_DATA`       | 1.0   | N/A                           | Wikidata, government databases                              |
