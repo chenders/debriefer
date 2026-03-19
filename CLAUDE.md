@@ -18,6 +18,8 @@ debriefer/
 │   └── mcp/        # "@debriefer/mcp" — MCP server for AI assistants
 ├── clients/
 │   └── python/     # PyPI "debriefer" — Python HTTP client
+├── docs/
+│   └── plans/      # Implementation plans (future use)
 └── docker/         # Dockerfile + docker-compose.yml
 ```
 
