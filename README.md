@@ -39,9 +39,8 @@ Phase 3: Archives ━━━━━━━━━━━━━━━━━━━━�
   ✓ Europeana           reliability: 0.90  https://api.europeana.eu/record/v2/search?...
   ✗ Internet Archive (timeout)
 
-Early stop: 8 source families met threshold (needed 3)
+Early stop: threshold met
 
-Results: 10 findings from 10 sources across 3 countries
 Cost: $0.0000 (all free sources)
 Duration: 2.3s
 ```
