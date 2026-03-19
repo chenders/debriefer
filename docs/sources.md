@@ -36,14 +36,21 @@ Most news sources use free DuckDuckGo site-search (e.g., `site:apnews.com`) and 
 
 ## How Quality Thresholds Work
 
-When configuring the orchestrator, you set two thresholds:
+When configuring the orchestrator, you set thresholds that control quality and stopping behavior:
 
 ```typescript
-const orchestrator = new ResearchOrchestrator(sources, synthesizer, {
-  confidenceThreshold: 0.6, // content relevance minimum
-  reliabilityThreshold: 0.7, // source trust minimum
-  earlyStopThreshold: 3, // distinct source families needed
-})
+const orchestrator = new ResearchOrchestrator(
+  [
+    { phase: 1, sources: [wikidata(), wikipedia()] },
+    { phase: 2, sources: [apNews(), reuters()] },
+  ],
+  new NoopSynthesizer(),
+  {
+    confidenceThreshold: 0.6, // content relevance minimum
+    reliabilityThreshold: 0.7, // source trust minimum
+    earlyStopThreshold: 3, // distinct source families needed
+  }
+)
 ```
 
 A finding counts toward early stopping only when **both** its content confidence and its source reliability exceed their respective thresholds. Setting `reliabilityThreshold: 0.85` means only tier-1 news, structured data, archival sources, and secondary compilations can trigger early stopping — but lower-tier sources are still queried and their findings are still available for synthesis.

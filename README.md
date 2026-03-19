@@ -16,7 +16,7 @@ Extracted from a [production enrichment pipeline](https://github.com/chenders/de
 
 ## The Hook
 
-What does a research run actually look like? Here's the CLI researching Audrey Hepburn across free structured-data sources:
+What does a research run actually look like? Here's the CLI researching Audrey Hepburn across structured data, news, and archives:
 
 ```
 $ debriefer debrief "Audrey Hepburn" --no-synthesis --categories structured,news,archives

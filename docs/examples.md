@@ -97,7 +97,8 @@ One researcher, four countries' archives, one API call. Without Debriefer, this 
 Pharmaceutical teams researching a drug need structured pharmacological data, recent clinical trial news, and published literature — and they need to trust the sources they're reading. Debriefer's phased execution queries Wikidata for structured facts first, then tier-1 news for recent developments, then book archives for published research.
 
 ```typescript
-import { ResearchOrchestrator, ClaudeSynthesizer, type ResearchSubject } from "@debriefer/core"
+import { ResearchOrchestrator, type ResearchSubject } from "@debriefer/core"
+import { ClaudeSynthesizer } from "@debriefer/ai"
 import {
   wikidata,
   wikipedia,
@@ -157,7 +158,8 @@ The `reliabilityThreshold: 0.85` means only tier-1 news, structured data, and se
 Screen companies for investment, compliance, or M&A due diligence by pulling structured facts from Wikidata alongside tier-1 news coverage. The batch processor researches multiple companies concurrently with lifecycle hooks for progress tracking — and reliability scoring ensures wire services outweigh aggregated or user-generated sources.
 
 ```typescript
-import { ResearchOrchestrator, ClaudeSynthesizer, type ResearchSubject } from "@debriefer/core"
+import { ResearchOrchestrator, type ResearchSubject } from "@debriefer/core"
+import { ClaudeSynthesizer } from "@debriefer/ai"
 import {
   wikidata,
   wikipedia,
@@ -226,7 +228,8 @@ The batch processor shares rate limiting across all companies — no thundering 
 Build a film database that enriches actor profiles from news, archives, and structured data — then synthesizes a cited biography with Claude:
 
 ```typescript
-import { ResearchOrchestrator, ClaudeSynthesizer, type ResearchSubject } from "@debriefer/core"
+import { ResearchOrchestrator, type ResearchSubject } from "@debriefer/core"
+import { ClaudeSynthesizer } from "@debriefer/ai"
 import {
   wikidata,
   wikipedia,
