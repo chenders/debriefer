@@ -18,8 +18,9 @@ debriefer/
 │   └── mcp/        # "@debriefer/mcp" — MCP server for AI assistants
 ├── clients/
 │   └── python/     # PyPI "debriefer" — Python HTTP client
-├── docker/         # Dockerfile + docker-compose.yml
-└── docs/plans/     # Design spec, implementation plan, platform vision
+├── docs/
+│   └── plans/      # Implementation plans (future use)
+└── docker/         # Dockerfile + docker-compose.yml
 ```
 
 **Tooling**: npm workspaces, turborepo, TypeScript 5.x, vitest, Node.js 22
@@ -87,7 +88,7 @@ After pushing fixes for Copilot review comments, re-request a review and keep lo
 
 **Common CI failures to avoid:**
 
-- **Format Check**: Prettier runs at root level (`prettier --check .`) and checks ALL files including `docs/plans/*.md`, `CLAUDE.md`, etc. — not just `src/`. Always run `npx prettier --write .` before committing.
+- **Format Check**: Prettier runs at root level (`prettier --check .`) and checks ALL files including `CLAUDE.md`, etc. — not just `src/`. Always run `npx prettier --write .` before committing.
 - **Lint**: ESLint catches issues like empty interfaces (`@typescript-eslint/no-empty-object-type`). Use `type Foo = Bar` instead of `interface Foo extends Bar {}` when adding no members.
 - **Subagent output**: Subagents don't run prettier or lint. After cherry-picking or merging subagent work, always run `npx prettier --write` on their files and `npx turbo lint` before committing.
 
@@ -236,12 +237,9 @@ Based on Wikipedia's Reliable Sources Perennial list (RSP). When adding new sour
 | 7. HTTP server             | Complete | Express REST API + Docker                                              |
 | 8. MCP server              | Complete | Model Context Protocol for AI assistants                               |
 | 9. Python client           | Complete | httpx + Pydantic HTTP wrapper                                          |
-| 10. Deadonfilm integration | Pending  | Refactor deadonfilm to consume debriefer                               |
-| 11. Polish + publish       | Pending  | npm publish, PyPI, Docker Hub                                          |
+| 10. Deadonfilm integration | Complete | Refactor deadonfilm to consume debriefer                               |
+| 11. Polish + publish       | Complete | npm publish, PyPI, Docker Hub                                          |
 
 ## Reference Documents
 
-- Design spec: `docs/plans/2026-03-07-debriefer-design.md`
-- Implementation plan: `docs/plans/2026-03-07-debriefer-implementation-plan.md`
-- Platform vision: `docs/plans/2026-03-07-debriefer-platform-vision.md`
 - Deadonfilm source: `/Users/chris/Source/deadonfilm/server/src/lib/`
