@@ -126,7 +126,7 @@ See [Integration Examples](docs/examples.md) for full code examples across RAG p
 - **One hard dependency** — The entire core package depends only on `p-limit`. Cache, telemetry, rate limiting, and synthesis are all injected interfaces. Swap in Redis, Datadog, or your own implementation without touching orchestration code.
 - **Wikipedia RSP scoring** — Reliability tiers are derived from the same [Perennial Sources](https://en.wikipedia.org/wiki/Wikipedia:Reliable_sources/Perennial_sources) classification system that Wikipedia editors use to settle sourcing disputes. Not invented metrics — borrowed editorial standards.
 - **AI is optional** — The Anthropic SDK is an optional peer dependency. Use `ClaudeSynthesizer` to distill findings into structured output, or use `NoopSynthesizer` and process raw findings yourself. The engine doesn't care.
-- **Browser fallback chain** — When a source blocks automated requests, `@debriefer/browser` provides a stealth browser with CAPTCHA solving and archive-specific fallback strategies. Playwright is an optional dependency — sources degrade gracefully without it.
+- **Browser fallback chain** — When a source blocks automated requests, `@debriefer/browser` provides a stealth browser with CAPTCHA solving and archive-specific fallback strategies. The browser package itself is optional — sources degrade gracefully without it.
 - **Supply chain provenance** — Published via GitHub Releases with provenance attestations. What you see is what you get.
 
 ## Project History

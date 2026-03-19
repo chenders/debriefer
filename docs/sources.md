@@ -15,7 +15,7 @@ Tier names correspond to members of the `ReliabilityTier` enum exported from `@d
 | `TRADE_PRESS`           | 0.9   | "Generally reliable" (domain) | Rolling Stone, Smithsonian, National Geographic             |
 | `ARCHIVAL`              | 0.9   | Primary sources               | Library of Congress (Chronicling America), Trove, Europeana |
 | `SECONDARY_COMPILATION` | 0.85  | Wikipedia self-assessment     | Wikipedia, Google Books                                     |
-| `SEARCH_AGGREGATOR`     | 0.7   | Depends on linked sources     | Google, Bing, DuckDuckGo                                    |
+| `SEARCH_AGGREGATOR`     | 0.7   | Depends on linked sources     | Google, Bing, Brave, DuckDuckGo                             |
 | `ARCHIVE_MIRROR`        | 0.7   | Mirrors                       | Internet Archive                                            |
 | `MARGINAL_EDITORIAL`    | 0.65  | "Use with caution"            | People Magazine                                             |
 | `MARGINAL_MIXED`        | 0.6   | Mixed editorial + UGC         | Legacy.com                                                  |
