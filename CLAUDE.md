@@ -235,8 +235,8 @@ Based on Wikipedia's Reliable Sources Perennial list (RSP). When adding new sour
 | 7. HTTP server             | Complete | Express REST API + Docker                                              |
 | 8. MCP server              | Complete | Model Context Protocol for AI assistants                               |
 | 9. Python client           | Complete | httpx + Pydantic HTTP wrapper                                          |
-| 10. Deadonfilm integration | Pending  | Refactor deadonfilm to consume debriefer                               |
-| 11. Polish + publish       | Pending  | npm publish, PyPI, Docker Hub                                          |
+| 10. Deadonfilm integration | Complete | Refactor deadonfilm to consume debriefer                               |
+| 11. Polish + publish       | Complete | npm publish, PyPI, Docker Hub                                          |
 
 ## Reference Documents
 
