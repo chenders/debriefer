@@ -9,7 +9,7 @@ Jump to: [RAG Pipelines](#provenance-scored-retrieval-for-rag-pipelines) · [His
 RAG systems typically stuff all retrieved text into the LLM's context window with no way to distinguish a Reuters wire story from a random blog post. Debriefer solves this by scoring every piece of retrieved content on two axes — source reliability and content relevance — so your LLM only sees trusted, relevant context and can cite where each fact came from.
 
 ```typescript
-import { ResearchOrchestrator, NoopSynthesizer } from "@debriefer/core"
+import { ResearchOrchestrator, NoopSynthesizer, type ScoredFinding } from "@debriefer/core"
 import {
   wikidata,
   wikipedia,

@@ -16,7 +16,7 @@ Extracted from a [production enrichment pipeline](https://github.com/chenders/de
 
 ## The Hook
 
-What does a research run actually look like? Here's an illustrative example of the CLI researching Audrey Hepburn across structured data, news, and archives:
+What does a research run actually look like? Here's the CLI researching Audrey Hepburn across free structured-data sources:
 
 ```
 $ debriefer debrief "Audrey Hepburn" --no-synthesis --categories structured,news,archives
@@ -39,8 +39,9 @@ Phase 3: Archives ━━━━━━━━━━━━━━━━━━━━�
   ✓ Europeana           reliability: 0.90  https://api.europeana.eu/record/v2/search?...
   ✗ Internet Archive (timeout)
 
-Early stop: threshold met
+Early stop: 8 source families met threshold (needed 3)
 
+Results: 10 findings from 10 sources across 3 countries
 Cost: $0.0000 (all free sources)
 Duration: 2.3s
 ```
