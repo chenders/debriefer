@@ -58,6 +58,6 @@ const orchestrator = new ResearchOrchestrator(
 )
 ```
 
-A finding counts toward early stopping only when **both** its content confidence and its source reliability exceed their respective thresholds. Setting `reliabilityThreshold: 0.85` means only tier-1 news, structured data, archival sources, and secondary compilations can trigger early stopping — but lower-tier sources are still queried and their findings are still available for synthesis.
+A finding counts toward early stopping only when **both** its content confidence and its source reliability exceed their respective thresholds. Setting `reliabilityThreshold: 0.85` means only tier-1 news, trade press, structured data, archival sources, and secondary compilations can trigger early stopping — but lower-tier sources are still queried and their findings are still available for synthesis.
 
 Early stopping counts distinct **source families** (unique `sourceType` strings), not individual findings. Three findings from the same source count as one family. This ensures breadth of coverage before the orchestrator stops searching.
