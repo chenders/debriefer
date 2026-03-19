@@ -13,6 +13,8 @@ debriefer/
 ├── packages/
 │   ├── core/       # "@debriefer/core" — orchestration engine (COMPLETE)
 │   ├── sources/    # "@debriefer/sources" — built-in source integrations
+│   ├── ai/         # "@debriefer/ai" — AI-first defaults (Claude synthesis, confidence)
+│   ├── browser/    # "@debriefer/browser" — browser stealth, CAPTCHA, archive fallbacks
 │   ├── cli/        # "@debriefer/cli" — CLI tool (bin: debriefer)
 │   ├── server/     # "@debriefer/server" — HTTP service
 │   └── mcp/        # "@debriefer/mcp" — MCP server for AI assistants
