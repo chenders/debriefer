@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ## Project Overview
 
-Debriefer is a standalone multi-source research orchestration engine. It orchestrates 60+ data sources with Wikipedia RSP-based reliability scoring, phased execution with early stopping, per-query cost control, and pluggable AI synthesis. Originally extracted from the [deadonfilm](https://github.com/chenders/deadonfilm) enrichment pipeline.
+Debriefer is a standalone multi-source research orchestration engine. It orchestrates dozens of data sources with Wikipedia RSP-based reliability scoring, phased execution with early stopping, per-query cost control, and pluggable AI synthesis. Originally extracted from the [deadonfilm](https://github.com/chenders/deadonfilm) enrichment pipeline.
 
 ## Monorepo Structure
 
@@ -12,7 +12,7 @@ Debriefer is a standalone multi-source research orchestration engine. It orchest
 debriefer/
 ├── packages/
 │   ├── core/       # "@debriefer/core" — orchestration engine (COMPLETE)
-│   ├── sources/    # "@debriefer/sources" — 60+ built-in source integrations
+│   ├── sources/    # "@debriefer/sources" — built-in source integrations
 │   ├── cli/        # "@debriefer/cli" — CLI tool (bin: debriefer)
 │   ├── server/     # "@debriefer/server" — HTTP service
 │   └── mcp/        # "@debriefer/mcp" — MCP server for AI assistants
@@ -158,7 +158,7 @@ Heavier dependencies are acceptable here: `@mozilla/readability`, `jsdom`, `he`,
 - **Test files**: `src/__tests__/*.test.ts` alongside source
 - **Mock patterns**: use `vi.fn()` and `vi.mock()`, never real API calls in unit tests
 - **Coverage targets**: happy path + error handling + edge cases for every module
-- Hundreds of tests across all TypeScript packages and the Python client (see CI for current counts)
+- See CI for current test counts across all TypeScript packages and the Python client
 
 ### Error Handling
 
@@ -232,7 +232,7 @@ Based on Wikipedia's Reliable Sources Perennial list (RSP). When adding new sour
 | 2. Core types              | Complete | 19 types, 3 error classes, ReliabilityTier                             |
 | 3. Infrastructure          | Complete | Rate limiter, cost tracker, batch runner, cache, telemetry, confidence |
 | 4. Engine                  | Complete | BaseResearchSource, ClaudeSynthesizer, ResearchOrchestrator            |
-| 5. Built-in sources        | Complete | 30+ sources migrated from deadonfilm                                   |
+| 5. Built-in sources        | Complete | Sources migrated from deadonfilm                                       |
 | 6. CLI                     | Complete | Commander.js CLI                                                       |
 | 7. HTTP server             | Complete | Express REST API + Docker                                              |
 | 8. MCP server              | Complete | Model Context Protocol for AI assistants                               |
