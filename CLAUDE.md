@@ -74,7 +74,7 @@ npx turbo test lint type-check        # all packages
 npx prettier --check .                # formatting (root-level, catches docs too)
 ```
 
-CI runs Format Check (`prettier --check .`), Lint, Build, Test, Type Check, and Dependency Audit. All six must pass before merging.
+CI runs Build, Test, Type Check, Lint, and Format Check (`prettier --check .`). A separate Security workflow runs Dependency Audit and CodeQL. All must pass before merging.
 
 ### Copilot Review Loop
 
@@ -100,19 +100,19 @@ After pushing fixes for Copilot review comments, re-request a review and keep lo
 
 The core is generic via TypeScript generics: `ResearchOrchestrator<TSubject, TOutput>`.
 
-| Module              | File                                        | Purpose                                                                           |
-| ------------------- | ------------------------------------------- | --------------------------------------------------------------------------------- |
-| Orchestrator        | `orchestrator.ts`                           | Phased execution, early stopping, batch processing, lifecycle hooks               |
-| BaseResearchSource  | `base-source.ts`                            | Abstract base class for all sources (caching, rate limiting, timeout, confidence) |
-| ClaudeSynthesizer   | `synthesizer.ts`                            | AI synthesis via Anthropic SDK; also NoopSynthesizer for raw findings             |
-| ReliabilityTier     | `reliability.ts`                            | 12-tier scoring based on Wikipedia RSP (0.0–1.0)                                  |
-| SourceRateLimiter   | `rate-limiter.ts`                           | Per-domain async queue preventing thundering herd                                 |
-| BatchCostTracker    | `cost-tracker.ts`                           | Per-subject and total cost limits                                                 |
-| ParallelBatchRunner | `batch-runner.ts`                           | Concurrency-limited batch processor with p-limit                                  |
-| InMemoryCache       | `cache/in-memory.ts`                        | CacheProvider with TTL and optional maxSize eviction                              |
-| Telemetry           | `telemetry/console.ts`, `telemetry/noop.ts` | Pluggable observability                                                           |
-| Confidence          | `confidence.ts`                             | Generic keyword-based confidence scoring                                          |
-| Types               | `types.ts`                                  | All core interfaces, error classes                                                |
+| Module              | File                                        | Purpose                                                                                      |
+| ------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Orchestrator        | `orchestrator.ts`                           | Phased execution, early stopping, batch processing, lifecycle hooks                          |
+| BaseResearchSource  | `base-source.ts`                            | Abstract base class for all sources (caching, rate limiting, timeout, confidence)            |
+| NoopSynthesizer     | `synthesizer.ts`                            | Pass-through synthesizer returning raw findings (ClaudeSynthesizer moved to `@debriefer/ai`) |
+| ReliabilityTier     | `reliability.ts`                            | 12-tier scoring based on Wikipedia RSP (0.0–1.0)                                             |
+| SourceRateLimiter   | `rate-limiter.ts`                           | Per-domain async queue preventing thundering herd                                            |
+| BatchCostTracker    | `cost-tracker.ts`                           | Per-subject and total cost limits                                                            |
+| ParallelBatchRunner | `batch-runner.ts`                           | Concurrency-limited batch processor with p-limit                                             |
+| InMemoryCache       | `cache/in-memory.ts`                        | CacheProvider with TTL and optional maxSize eviction                                         |
+| Telemetry           | `telemetry/console.ts`, `telemetry/noop.ts` | Pluggable observability                                                                      |
+| Confidence          | `confidence.ts`                             | Generic keyword-based confidence scoring                                                     |
+| Types               | `types.ts`                                  | All core interfaces, error classes                                                           |
 
 ### Key Design Principles
 
@@ -128,13 +128,41 @@ The core is generic via TypeScript generics: `ResearchOrchestrator<TSubject, TOu
 
 A "source family" is a unique `sourceType` string. Early stopping counts distinct source types whose findings meet BOTH the confidence threshold AND the reliability threshold. Do NOT count by `reliabilityTier` — multiple different sources can share the same tier.
 
+### AI Package (`packages/ai/` — "@debriefer/ai")
+
+Houses all Claude/Anthropic integration, keeping `@debriefer/core` fully zero-AI.
+
+| Module            | File                  | Purpose                                           |
+| ----------------- | --------------------- | ------------------------------------------------- |
+| ClaudeSynthesizer | `synthesizer.ts`      | AI synthesis via Anthropic SDK (moved from core)  |
+| AIClient          | `ai-client.ts`        | `HaikuClient` — lightweight Anthropic API wrapper |
+| Confidence        | `confidence.ts`       | AI-powered confidence scoring for findings        |
+| SectionFilter     | `section-filter.ts`   | AI-driven Wikipedia section relevance filtering   |
+| LinkSelector      | `link-selector.ts`    | AI-based web search result link selection         |
+| PersonValidator   | `person-validator.ts` | AI validation of person-entity matches            |
+
+Entry point: `createAIDefaults()` returns pre-built AI callbacks for section filtering, confidence scoring, link selection, and person validation.
+
+### Browser Package (`packages/browser/` — "@debriefer/browser")
+
+Browser stealth, CAPTCHA solving, authentication, and archive fallbacks.
+
+| Module        | File                         | Purpose                                                                   |
+| ------------- | ---------------------------- | ------------------------------------------------------------------------- |
+| FallbackChain | `archives/fallback-chain.ts` | 4-step chain: direct fetch → archive.org → archive.is → browser + CAPTCHA |
+| Stealth       | `stealth.ts`                 | Fingerprint injection via `fingerprint-injector`                          |
+| CAPTCHA       | `captcha/`                   | CAPTCHA detection and solver provider interface                           |
+| Auth          | `auth/`                      | Cookie/session persistence and site credentials                           |
+| HTML Utils    | `html-utils.ts`              | `htmlToText` conversion utility                                           |
+
+Entry point: `createBrowserFetchPage()` returns a `fetchPage` callback compatible with `@debriefer/sources` `WebSearchOptions`.
+
 ## Dependencies Policy
 
 ### Core package (`@debriefer/core`)
 
-The core has ONE hard dependency: `p-limit`. Everything else is optional or injected:
+The core has ONE hard dependency: `p-limit`. Everything else is injected:
 
-- `@anthropic-ai/sdk` — **optional peer dependency**. Only needed if using `ClaudeSynthesizer`. Consumers using their own synthesizer don't need it.
 - `ioredis`, `better-sqlite3`, etc. — NOT dependencies. Cache implementations that need them go in separate packages or consumers provide their own.
 - `zod` — NOT a dependency. Consumers bring their own validation in `responseParser` callbacks.
 
@@ -142,7 +170,15 @@ The core has ONE hard dependency: `p-limit`. Everything else is optional or inje
 
 ### Sources package (`@debriefer/sources`)
 
-Heavier dependencies are acceptable here: `@mozilla/readability`, `jsdom`, `he`, `wtf_wikipedia`, `playwright-core` (optional). Consumers who only use the core with custom sources never install these.
+Heavier dependencies are acceptable here: `@mozilla/readability`, `jsdom`, `he`, `wtf_wikipedia`. Consumers who only use the core with custom sources never install these.
+
+### AI package (`@debriefer/ai`)
+
+Hard dependency on `@anthropic-ai/sdk`. Peer-depends on `@debriefer/core` and `@debriefer/sources`. Consumers who don't need Claude synthesis or AI callbacks never install this.
+
+### Browser package (`@debriefer/browser`)
+
+Hard dependencies on `playwright-core` and `fingerprint-injector`. Peer-depends on `@debriefer/core`. Only needed if using browser-based fetching, CAPTCHA solving, or archive fallbacks.
 
 ## Code Quality
 
@@ -193,7 +229,7 @@ const signal = callerSignal ?? AbortSignal.timeout(30000)
 
 - `"files": ["dist"]` in package.json — only ship compiled output
 - Hard dependencies must be truly necessary (currently only `p-limit` in core)
-- Optional peer dependencies for provider-specific SDKs (`@anthropic-ai/sdk`)
+- Heavy SDKs belong in leaf packages (`@anthropic-ai/sdk` in `@debriefer/ai`, `playwright-core` in `@debriefer/browser`)
 
 ## Reliability Scoring
 
@@ -226,22 +262,27 @@ Based on Wikipedia's Reliable Sources Perennial list (RSP). When adding new sour
 8. Register in `packages/sources/src/index.ts`
 9. Write tests with mocked HTTP (never call real APIs in tests)
 
-## Implementation Status
+## Maintaining This File
 
-| Phase                      | Status   | Description                                                            |
-| -------------------------- | -------- | ---------------------------------------------------------------------- |
-| 1. Scaffold                | Complete | Monorepo, 5 packages, Docker, Python stub                              |
-| 2. Core types              | Complete | 19 types, 3 error classes, ReliabilityTier                             |
-| 3. Infrastructure          | Complete | Rate limiter, cost tracker, batch runner, cache, telemetry, confidence |
-| 4. Engine                  | Complete | BaseResearchSource, ClaudeSynthesizer, ResearchOrchestrator            |
-| 5. Built-in sources        | Complete | Sources migrated from deadonfilm                                       |
-| 6. CLI                     | Complete | Commander.js CLI                                                       |
-| 7. HTTP server             | Complete | Express REST API + Docker                                              |
-| 8. MCP server              | Complete | Model Context Protocol for AI assistants                               |
-| 9. Python client           | Complete | httpx + Pydantic HTTP wrapper                                          |
-| 10. Deadonfilm integration | Complete | Refactor deadonfilm to consume debriefer                               |
-| 11. Polish + publish       | Complete | npm publish, PyPI, Docker Hub                                          |
+Claude is the sole author of all code in this repo. CLAUDE.md must stay in sync with the codebase — stale instructions actively mislead future sessions.
 
-## Reference Documents
+**Update CLAUDE.md in the same commit when you:**
 
-- Deadonfilm source: `/Users/chris/Source/deadonfilm/server/src/lib/`
+- Add, remove, or rename a package → update Monorepo Structure
+- Move a module between packages (like ClaudeSynthesizer core→ai) → update both Architecture sections
+- Add or change a hard/peer dependency → update Dependencies Policy
+- Change CI workflow jobs or checks → update Pre-Push Verification / CI description
+- Add a new command or change an existing script → update Common Commands
+- Change a pattern documented in Code Quality (error handling, caching, AbortSignal, etc.)
+
+**Do not let these sections go stale:**
+
+- Architecture module tables — must match actual exports
+- Dependencies Policy — must match actual `package.json` files
+- Monorepo Structure tree — must match actual directory layout
+
+When in doubt, update. A 30-second edit now prevents confusion across every future session.
+
+## Cross-Repo References
+
+- Deadonfilm (upstream consumer): `/Users/chris/Source/deadonfilm/server/src/lib/`

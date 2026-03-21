@@ -19,8 +19,14 @@ Prepare and commit the current work with proper tests and documentation.
    - Run `npx turbo build lint type-check` and `npx prettier --check .`
    - Fix any issues before committing
 
-4. **Update documentation if needed**
-   - Review `CLAUDE.md` — update if there are new patterns, modules, or architectural changes
+4. **Update CLAUDE.md if any of these apply**
+   - Added, removed, or renamed a package → update Monorepo Structure + Architecture
+   - Moved a module between packages → update both Architecture sections
+   - Changed a hard/peer dependency → update Dependencies Policy
+   - Changed CI workflows → update Pre-Push Verification section
+   - Changed a root or per-package script → update Common Commands
+   - Changed an error handling, caching, or AbortSignal pattern → update Code Quality
+   - If none apply, skip this step
 
 5. **Create the commit**
    - Stage relevant changes with `git add` (specific files, not `-A`)
