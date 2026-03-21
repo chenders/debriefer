@@ -132,14 +132,14 @@ A "source family" is a unique `sourceType` string. Early stopping counts distinc
 
 Houses all Claude/Anthropic integration, keeping `@debriefer/core` fully zero-AI.
 
-| Module            | File                  | Purpose                                           |
-| ----------------- | --------------------- | ------------------------------------------------- |
-| ClaudeSynthesizer | `synthesizer.ts`      | AI synthesis via Anthropic SDK (moved from core)  |
-| AIClient          | `ai-client.ts`        | `HaikuClient` — lightweight Anthropic API wrapper |
-| Confidence        | `confidence.ts`       | AI-powered confidence scoring for findings        |
-| SectionFilter     | `section-filter.ts`   | AI-driven Wikipedia section relevance filtering   |
-| LinkSelector      | `link-selector.ts`    | AI-based web search result link selection         |
-| PersonValidator   | `person-validator.ts` | AI validation of person-entity matches            |
+| Module                 | File                  | Purpose                                                                 |
+| ---------------------- | --------------------- | ----------------------------------------------------------------------- |
+| ClaudeSynthesizer      | `synthesizer.ts`      | AI synthesis via Anthropic SDK (moved from core)                        |
+| HaikuClient / AIClient | `ai-client.ts`        | `AIClient` provider interface + `HaikuClient` default Anthropic wrapper |
+| Confidence             | `confidence.ts`       | AI-powered confidence scoring for findings                              |
+| SectionFilter          | `section-filter.ts`   | AI-driven Wikipedia section relevance filtering                         |
+| LinkSelector           | `link-selector.ts`    | AI-based web search result link selection                               |
+| PersonValidator        | `person-validator.ts` | AI validation of person-entity matches                                  |
 
 Entry point: `createAIDefaults()` returns pre-built AI callbacks for section filtering, confidence scoring, link selection, and person validation.
 
@@ -147,13 +147,13 @@ Entry point: `createAIDefaults()` returns pre-built AI callbacks for section fil
 
 Browser stealth, CAPTCHA solving, authentication, and archive fallbacks.
 
-| Module        | File                         | Purpose                                                                   |
-| ------------- | ---------------------------- | ------------------------------------------------------------------------- |
-| FallbackChain | `archives/fallback-chain.ts` | 4-step chain: direct fetch → archive.org → archive.is → browser + CAPTCHA |
-| Stealth       | `stealth.ts`                 | Fingerprint injection via `fingerprint-injector`                          |
-| CAPTCHA       | `captcha/`                   | CAPTCHA detection and solver provider interface                           |
-| Auth          | `auth/`                      | Cookie/session persistence and site credentials                           |
-| HTML Utils    | `html-utils.ts`              | `htmlToText` conversion utility                                           |
+| Module                 | File                         | Purpose                                                                   |
+| ---------------------- | ---------------------------- | ------------------------------------------------------------------------- |
+| fetchPageWithFallbacks | `archives/fallback-chain.ts` | 4-step chain: direct fetch → archive.org → archive.is → browser + CAPTCHA |
+| Stealth                | `stealth.ts`                 | Fingerprint injection via `fingerprint-injector`                          |
+| CAPTCHA                | `captcha/`                   | CAPTCHA detection and solver provider interface                           |
+| Auth                   | `auth/`                      | Cookie/session persistence and site credentials                           |
+| HTML Utils             | `html-utils.ts`              | `htmlToText` conversion utility                                           |
 
 Entry point: `createBrowserFetchPage()` returns a `fetchPage` callback compatible with `@debriefer/sources` `WebSearchOptions`.
 
