@@ -16,36 +16,34 @@ Extracted from a [production enrichment pipeline](https://github.com/chenders/de
 
 ## The Hook
 
-What does a research run actually look like? Here's an illustrative example of the CLI researching Audrey Hepburn across structured data, news, and archives:
+What does a research run actually look like? Here's the CLI researching Audrey Hepburn across structured data and news sources (all free, no API keys needed):
 
 ```
-$ debriefer debrief "Audrey Hepburn" --no-synthesis --categories structured,news,archives
+$ debriefer debrief "Audrey Hepburn" --no-synthesis --categories structured,news
 
-Phase 1: Structured ━━━━━━━━━━━━━━━━━━━━━━━━ 3/3 sources
-  ✓ Wikidata          reliability: 1.00   https://www.wikidata.org/wiki/Q41282
-  ✓ Wikipedia          reliability: 0.85   https://en.wikipedia.org/wiki/Audrey_Hepburn
-  ✓ Open Library       reliability: 0.85   https://openlibrary.org/search?q=Audrey+Hepburn
+Subject: Audrey Hepburn
+Sources: 18/20  Cost: $0.0000  Duration: 3.1s
+Stopped at phase 1
 
-Phase 2: News ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4/5 sources
-  ✓ AP News            reliability: 0.95   https://apnews.com/search?q=Audrey+Hepburn
-  ✓ BBC News           reliability: 0.95   https://www.bbc.co.uk/search?q=Audrey+Hepburn
-  ✓ The Guardian       reliability: 0.95   https://content.guardianapis.com/search?q=...
-  ✓ Reuters            reliability: 0.95   https://www.reuters.com/site-search/...
-  ✗ NYT (rate limited)
+--- Findings (18) ---
 
-Phase 3: Archives ━━━━━━━━━━━━━━━━━━━━━━━━━━ 3/4 sources
-  ✓ Chronicling America reliability: 0.90  https://chroniclingamerica.loc.gov/search/...
-  ✓ Trove (AU)          reliability: 0.90  https://api.trove.nla.gov.au/v3/result?...
-  ✓ Europeana           reliability: 0.90  https://api.europeana.eu/record/v2/search?...
-  ✗ Internet Archive (timeout)
+  Source: Wikidata
+  Tier: structured_data  Confidence: 0.95
+  URL: https://www.wikidata.org/wiki/Q41282
+  Belgian-British actress (1929-1993). Known for Roman Holiday, Breakfast at...
 
-Early stop: threshold met
+  Source: Wikipedia
+  Tier: secondary  Confidence: 0.92
+  URL: https://en.wikipedia.org/wiki/Audrey_Hepburn
+  Audrey Hepburn (born Audrey Kathleen Ruston; 4 May 1929 – 20 January 1993)...
 
-Cost: $0.0000 (all free sources)
-Duration: 2.3s
+  Source: AP News
+  Tier: tier_1_news  Confidence: 0.88
+  URL: https://apnews.com/search?q=Audrey+Hepburn
+  ...
 ```
 
-Structured data from Wikidata. Tier-1 news coverage from AP and Reuters. Historical newspaper archives from the Library of Congress, Australia's Trove, and Europeana. Each scored for reliability. All in one call.
+Structured data from Wikidata. Tier-1 news from AP, BBC, and Reuters. Wikipedia compilation. Twenty sources scored for reliability and queried in parallel — all in one call. Add API keys for Guardian, NYT, and archive sources to expand coverage further.
 
 ## How It Works
 
