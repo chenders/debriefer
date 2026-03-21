@@ -28,17 +28,17 @@ Stopped at phase 1
 --- Findings (18) ---
 
   Source: Wikidata
-  Tier: STRUCTURED_DATA  Confidence: 0.95
+  Tier: structured_data  Confidence: 0.95
   URL: https://www.wikidata.org/wiki/Q41282
   Belgian-British actress (1929-1993). Known for Roman Holiday, Breakfast at...
 
   Source: Wikipedia
-  Tier: SECONDARY_COMPILATION  Confidence: 0.92
+  Tier: secondary  Confidence: 0.92
   URL: https://en.wikipedia.org/wiki/Audrey_Hepburn
   Audrey Hepburn (born Audrey Kathleen Ruston; 4 May 1929 – 20 January 1993)...
 
   Source: AP News
-  Tier: TIER_1_NEWS  Confidence: 0.88
+  Tier: tier_1_news  Confidence: 0.88
   URL: https://apnews.com/search?q=Audrey+Hepburn
   ...
 ```

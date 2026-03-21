@@ -2,6 +2,8 @@
 
 Debriefer works across domains — people, companies, drugs, historical events, anything you can express as a research subject. These examples show different combinations of sources, synthesis, batching, and quality thresholds.
 
+> **Note:** Some sources in these examples (e.g., `guardian`, `trove`, `europeana`, `googleBooks`, `bingSearch`) require API keys via environment variables. Without those keys, those sources are skipped by `isAvailable()` and you'll see fewer results than shown. See each source's documentation for required env vars.
+
 Jump to: [RAG Pipelines](#provenance-scored-retrieval-for-rag-pipelines) · [Historical Archives](#cross-archive-historical-research) · [Drug Research](#drug--disease-research) · [Due Diligence](#corporate-due-diligence) · [Actor Research](#actor-research-with-ai-synthesis)
 
 ## Provenance-Scored Retrieval for RAG Pipelines
