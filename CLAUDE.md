@@ -174,7 +174,7 @@ Heavier dependencies are acceptable here: `@mozilla/readability`, `jsdom`, `he`,
 
 ### AI package (`@debriefer/ai`)
 
-Hard dependency on `@anthropic-ai/sdk`. Peer-depends on `@debriefer/core` and `@debriefer/sources`. Consumers who don't need Claude synthesis or AI callbacks never install this.
+Hard dependency on `@anthropic-ai/sdk`. Peer-depends on `@debriefer/core` and optionally on `@debriefer/sources` (marked as an optional peer dependency in `package.json`). Consumers who don't need Claude synthesis or AI callbacks never install this.
 
 ### Browser package (`@debriefer/browser`)
 
@@ -264,7 +264,7 @@ Based on Wikipedia's Reliable Sources Perennial list (RSP). When adding new sour
 
 ## Maintaining This File
 
-Claude is the sole author of all code in this repo. CLAUDE.md must stay in sync with the codebase — stale instructions actively mislead future sessions.
+This file is maintained to guide Claude Code sessions when working on this repo. CLAUDE.md must stay in sync with the codebase — stale instructions actively mislead future sessions.
 
 **Update CLAUDE.md in the same commit when you:**
 

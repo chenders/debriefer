@@ -43,7 +43,7 @@ Stopped at phase 1
   ...
 ```
 
-Structured data from Wikidata. Tier-1 news from AP, BBC, and Reuters. Wikipedia compilation. Twenty sources scored for reliability and queried in parallel — all in one call. Add API keys for Guardian, NYT, and archive sources to expand coverage further.
+Structured data from Wikidata. Tier-1 news from AP, BBC, and Reuters. Wikipedia compilation. All scored for reliability and queried in parallel — one call. Add API keys for Guardian, NYT, and archive sources to expand coverage further.
 
 ## How It Works
 
