@@ -74,7 +74,7 @@ npx turbo test lint type-check        # all packages
 npx prettier --check .                # formatting (root-level, catches docs too)
 ```
 
-CI runs Build, Test, Type Check, Lint, and Format Check (`prettier --check .`). A separate Security workflow runs Dependency Audit and CodeQL. All must pass before merging.
+CI (`.github/workflows/ci.yml`) runs Build, Test, Type Check, Lint, Format Check (`prettier --check .`), and CodeQL (on `push`). The separate Security workflow (`.github/workflows/security.yml`) runs Dependency Audit (`npm audit`). All required checks must pass before merging.
 
 ### Copilot Review Loop
 
@@ -285,4 +285,4 @@ When in doubt, update. A 30-second edit now prevents confusion across every futu
 
 ## Cross-Repo References
 
-- Deadonfilm (upstream consumer): `/Users/chris/Source/deadonfilm/server/src/lib/`
+- Deadonfilm (upstream consumer): https://github.com/chenders/deadonfilm/tree/main/server/src/lib
