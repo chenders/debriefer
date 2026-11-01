@@ -14,7 +14,8 @@ Focused guidance for GitHub Copilot code review on the Debriefer repository.
 4. **NEVER count early-stop families by `reliabilityTier`** — count by `sourceType`. Multiple sources share tiers.
 5. **NEVER fire `onRunFailed` for per-subject errors** — use `onSubjectComplete` with `data: null`. `onRunFailed` is for unrecoverable batch-level failures only.
 6. **NEVER skip tests** — ship tests with code in the same commit.
-7. **Review ALL files thoroughly and surface ALL issues in a single pass.**
+7. **NEVER bypass or weaken the PII/secrets checks** — no `--no-verify`, no `core.hooksPath` changes, no gitleaks baseline, no lowered thresholds, no widened allowlists to make a scan pass. See `AGENTS.md`.
+8. **Review ALL files thoroughly and surface ALL issues in a single pass.**
 
 ---
 

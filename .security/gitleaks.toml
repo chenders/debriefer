@@ -1,0 +1,81 @@
+# gitleaks configuration for the debriefer repository.
+# Schema: https://github.com/gitleaks/gitleaks#configuration
+#
+# Passed explicitly via `--config .security/gitleaks.toml` by the hooks, the
+# audit script and CI. gitleaks would otherwise auto-discover only
+# ./.gitleaks.toml at the scan target root.
+#
+# gitleaks covers CREDENTIALS. PII detection is ferret-scan's job
+# (.security/ferret-scan.yaml). The two are complementary and both run at
+# every checkpoint.
+
+title = "debriefer credential detection"
+
+# Inherit the full upstream rule set (~180 rules) and add to it, rather than
+# replacing it. Pinned gitleaks version: see .security/policy.sh.
+[extend]
+useDefault = true
+
+# ---------------------------------------------------------------------------
+# Default exclusion review
+# ---------------------------------------------------------------------------
+# The upstream default config carries a GLOBAL allowlist that skips matching
+# paths before any rule is evaluated. Reviewed, and reported in
+# .security/README.md as a coverage gap rather than silently accepted:
+#
+#   NOT scanned by gitleaks (upstream default):
+#     * lockfiles -- package-lock.json, yarn.lock, pnpm-lock.yaml,
+#       npm-shrinkwrap.json, deno.lock, go.sum, Pipfile.lock, poetry.lock
+#     * images    -- .png .jpg .jpeg .gif .bmp .svg .tiff
+#     * fonts     -- .ttf .otf .woff .woff2 .eot
+#     * binaries and documents -- .pdf .docx .xlsx .bin .dll .exe .pdb
+#     * node_modules/, bower_components/, vendor/ for several ecosystems
+#     * common minified vendored JS bundles
+#
+#   This matters for debriefer specifically because package-lock.json is a
+#   tracked file that can carry a credential inside a registry URL. gitleaks
+#   has no mechanism to subtract a path from an inherited global allowlist, so
+#   coverage of those paths comes from ferret-scan, which scans them (its
+#   SECRETS / EMAIL checks do fire on package-lock.json today at MEDIUM).
+#
+#   Tests, fixtures, documentation, CSV, JSON, YAML and .log files are NOT
+#   excluded by the upstream default and are NOT excluded here.
+
+# ---------------------------------------------------------------------------
+# Repository-specific exceptions
+# ---------------------------------------------------------------------------
+# Rules for adding one:
+#   * Scope it as narrowly as the schema allows -- rule id AND path AND the
+#     literal placeholder text, joined with condition = "AND".
+#   * State why the value is not a live credential.
+#   * Never add a bare path pattern, and never add an entry merely to make a
+#     failing scan pass.
+#   * Prefer an inline `gitleaks:allow` comment when the exception can live at
+#     the point of use without harming the surrounding file.
+#
+# There is deliberately no baseline file (`--baseline-path`). A baseline
+# records every current finding as acceptable, which is exactly the
+# "automatically baseline findings" behaviour this repository's policy forbids.
+
+# Reviewed 2026-11-01. The server README documents how to call the authenticated
+# endpoint, and the example header carries the literal placeholder
+# "your-token-here". gitleaks' curl-auth-header rule matches any
+# `-H "Authorization: Bearer <8+ chars>"`, so the placeholder trips it.
+#
+# An inline `gitleaks:allow` was rejected here because the finding sits inside
+# a fenced bash block that readers copy and paste; the comment would end up in
+# the command they run. Scoped instead to this rule, this path and this exact
+# placeholder string, so any real token added to that file still fails.
+[[rules]]
+id = "curl-auth-header"
+# Every other attribute (regex, entropy, keywords) is inherited from the
+# upstream default rule.
+
+  [[rules.allowlists]]
+  description = "Documentation placeholder 'your-token-here' in the server README curl example"
+  condition = "AND"
+  regexTarget = "line"
+  regexes = ['''your-token-here''']
+  # Unanchored on purpose: the hooks scan a materialised copy of the git
+  # objects, so the path gitleaks sees is prefixed by a temporary directory.
+  paths = ['''packages/server/README\.md$''']

@@ -10,3 +10,8 @@ __pycache__
 .venv
 .DS_Store
 .idea/
+
+# Pinned scanner binaries installed by .security/install-tools.sh
+.security/.tools/
+# Audit reports are masked but still belong outside version control
+.security/audit-report/

@@ -1,0 +1,102 @@
+# ferret-scan configuration for the debriefer repository.
+# Schema: https://github.com/awslabs/ferret-scan/blob/main/docs/configuration.md
+#
+# Passed explicitly via `--config .security/ferret-scan.yaml`; it is NOT
+# auto-discovered, because auto-discovery only looks for ./ferret.yaml or
+# ./.ferret-scan.yaml in the current directory.
+#
+# The authoritative policy (which checks block, at what confidence) lives in
+# .security/policy.sh and is passed on the command line, because command-line
+# flags outrank both this file and any profile. This file sets the things a
+# flag cannot express and documents the exclusion review.
+
+defaults:
+  # ---------------------------------------------------------------------
+  # Exclusion review (required by the repository's security policy)
+  # ---------------------------------------------------------------------
+  # Only git internals, vendored dependencies and generated build output are
+  # excluded. Deliberately NOT excluded, because they are among the likeliest
+  # places for personal data to land:
+  #
+  #   tests and fixtures   packages/*/src/__tests__/**
+  #   documentation        *.md, docs/**
+  #   data formats         *.csv, *.json, *.yaml, *.ndjson
+  #   logs                 *.log        <-- ferret-scan's own documented
+  #                                        example config excludes "*.log";
+  #                                        that exclusion is intentionally
+  #                                        omitted here.
+  #
+  # ferret-scan treats these as globs, not regexes; '**' is not supported.
+  exclude_patterns:
+    - .git
+    - node_modules
+    - dist
+    - coverage
+    - .turbo
+    - .venv
+    - __pycache__
+    - "*.tsbuildinfo"
+
+  # .gitignore hides exactly the files most worth scanning -- .env, *.pem,
+  # credential dumps and local config. ferret-scan's own CLI help warns
+  # "leave off for deep audits". Forced off here so that neither an audit nor
+  # a hook can be narrowed by a gitignore entry.
+  respect_gitignore: false
+
+  # Extract text from PDF and Office documents so they are scanned as text
+  # rather than skipped. See the coverage caveats in .security/README.md:
+  # extraction is not the same as scanning the container, and image, archive
+  # and database formats are NOT covered.
+  enable_preprocessors: true
+
+  # Never write a matched value into a report, a log, or a terminal.
+  show_match: false
+
+  # Coverage cut short by a timeout, a budget, or an unreadable file must fail
+  # the scan rather than warn on stderr where a hook would never see it.
+  fail_on_incomplete: true
+
+  no_color: true
+  recursive: true
+  generate_suppressions: false
+
+# ---------------------------------------------------------------------------
+# precommit profile
+# ---------------------------------------------------------------------------
+# ferret-scan infers "pre-commit mode" from the environment (PRE_COMMIT,
+# _PRE_COMMIT_RUNNING, PRE_COMMIT_HOOK, GIT_HOOK_TYPE) and then selects a
+# profile named `precommit`. When no such profile is defined it supplies a
+# BUILT-IN one whose check set is only:
+#
+#     CREDIT_CARD, SECRETS, SSN, EMAIL, PHONE, IP_ADDRESS
+#
+# That silently drops PHYSICAL_ADDRESS, DATE_OF_BIRTH, PASSPORT,
+# DRIVERS_LICENSE, MEDICAL_ID and BANK_ACCOUNT. Verified: a 95%-confidence US
+# street address passes `--pre-commit-mode` at exit 0.
+#
+# This repository's hooks defend against that twice over: they pass --checks
+# explicitly (flags outrank profiles) and they export FERRET_PRECOMMIT=0. This
+# profile is the third layer, so that any other tool in the environment that
+# trips the inference still gets full coverage rather than the narrow default.
+profiles:
+  precommit:
+    checks: all
+    confidence_levels: all
+    format: text
+    no_color: true
+    quiet: true
+    show_match: false
+    respect_gitignore: false
+    enable_preprocessors: true
+    fail_on_incomplete: true
+
+  # Used by .security/audit-history.sh. Same coverage, JSON output.
+  audit:
+    checks: all
+    confidence_levels: all
+    format: json
+    no_color: true
+    show_match: false
+    respect_gitignore: false
+    enable_preprocessors: true
+    fail_on_incomplete: true

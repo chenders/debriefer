@@ -22,7 +22,7 @@ class AsyncDebriefer:
 
     Args:
         base_url: Base URL of the debriefer server (e.g. ``http://localhost:3000``).
-        api_key: Optional Bearer token for authenticated servers.
+        api_key: Bearer token for authenticated servers (default None).
         timeout: Request timeout in seconds (default 120.0).
     """
 
