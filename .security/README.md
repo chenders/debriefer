@@ -236,6 +236,30 @@ core.hooksPath` writes, and attempts to delete or chmod `.githooks/`. A human
 can still bypass from their own shell; that decision is not delegated to an
 agent. See [`../AGENTS.md`](../AGENTS.md).
 
+### A CI check can stop running without anyone noticing
+
+GitHub **disables an entire workflow after 60 days of repository inactivity if
+it contains a `schedule:` trigger** — including that workflow's `push` and
+`pull_request` triggers. The scheduled job is not the only casualty; every
+trigger in the file goes silent.
+
+This repository was found in exactly that state: `Security` was
+`disabled_inactivity` while `Dependency Audit` was still configured as a
+**required** status check. The failure happened to be loud (every PR showed
+`BLOCKED` because a required check could never report), but a non-required
+check in the same position would simply have stopped scanning, silently.
+
+Both scheduled workflows now declare `workflow_dispatch`, so a manual run can
+recover them and reset the inactivity timer. To check the current state:
+
+```bash
+gh workflow list --all          # look for 'disabled_inactivity'
+gh workflow enable <name>       # re-enable
+gh workflow run <name>          # manual run, resets the timer
+```
+
+Worth checking whenever the repository has been quiet for a couple of months.
+
 ### Paths that bypass git hooks entirely
 
 Hooks only see `git commit` and `git push`. These do not go through them:
