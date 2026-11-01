@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
+// vitest 4 widened `ReturnType<typeof vi.fn>` to Mock<Procedure>, which is no
+// longer assignable to a specific signature. Parameterise Mock<> instead.
+import type { Mock } from "vitest"
 import { ReliabilityTier } from "@debriefer/core"
 import type { ScoredFinding, ResearchSubject } from "@debriefer/core"
 
@@ -41,7 +44,12 @@ const testSubject: ResearchSubject = {
 }
 
 describe("ClaudeSynthesizer", () => {
-  let promptBuilderSpy: ReturnType<typeof vi.fn>
+  // Must declare the real parameter types: the spy drives TSubject inference
+  // for ClaudeSynthesizer<TSubject>, so a placeholder here makes TSubject
+  // infer as `never` and breaks every synthesize(testSubject, ...) call.
+  let promptBuilderSpy: Mock<
+    (subject: ResearchSubject, findings: ScoredFinding[]) => { system: string; user: string }
+  >
 
   beforeEach(() => {
     vi.clearAllMocks()
