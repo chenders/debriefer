@@ -1,0 +1,229 @@
+#!/usr/bin/env bash
+# debriefer pre-push checkpoint: PII (ferret-scan) + credentials (gitleaks).
+#
+# Scans EVERY OUTGOING COMMIT, not the working tree and not the range's final
+# diff. The distinction matters: a secret added in one commit and deleted in a
+# later one is absent from the final diff but still present in the history
+# being published, and still recoverable from the remote forever.
+#
+# This is implemented with `git rev-list --objects <new> --not <already-on-remote>`,
+# which enumerates every object reachable from the pushed commits. An
+# add-then-delete blob stays reachable from the intermediate commit, so it is
+# included.
+#
+# Handles: new branches with no remote ancestor, several refs pushed at once,
+# annotated and lightweight tags that introduce history, force pushes (where
+# the remote oid is not an ancestor), and ref deletions (nothing to scan).
+#
+# stdin format, per `githooks(5)`:  <local ref> <local oid> <remote ref> <remote oid>
+# argv:                             $1 = remote name, $2 = remote URL
+#
+# This hook only ever BLOCKS. It never edits files or rewrites commits.
+
+set -uo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)" || exit 1
+SECURITY_DIR="${REPO_ROOT}/.security"
+
+# shellcheck source=../.security/policy.sh
+. "${SECURITY_DIR}/policy.sh" || {
+	printf 'error: cannot load .security/policy.sh; refusing to push unscanned.\n' >&2
+	exit 1
+}
+# shellcheck source=../.security/lib/scan.sh
+. "${SECURITY_DIR}/lib/scan.sh" || {
+	printf 'error: cannot load .security/lib/scan.sh; refusing to push unscanned.\n' >&2
+	exit 1
+}
+
+REMOTE_NAME="${1:-origin}"
+ZERO="0000000000000000000000000000000000000000"
+
+# stdin is consumed by the ref loop, so the pre-existing hook must get its own
+# copy of it. Buffer it first.
+REFS_INPUT="$(mktemp)" || exit 1
+cat >"$REFS_INPUT"
+
+# ---------------------------------------------------------------------------
+# Preserve any hook that existed before core.hooksPath was redirected here.
+# ---------------------------------------------------------------------------
+run_preexisting_hook() {
+	local git_dir legacy
+	git_dir="$(git rev-parse --git-dir)" || return 0
+	legacy="${git_dir}/hooks/pre-push"
+	[ -x "$legacy" ] || return 0
+	scan_dim "running pre-existing hook: ${legacy}"
+	"$legacy" "$@" <"$REFS_INPUT" || {
+		local rc=$?
+		scan_err "pre-existing pre-push hook failed (exit ${rc}); not overriding it."
+		rm -f -- "$REFS_INPUT"
+		exit "$rc"
+	}
+}
+run_preexisting_hook "$@"
+
+resolve_ferret || { rm -f -- "$REFS_INPUT"; exit 1; }
+resolve_gitleaks || { rm -f -- "$REFS_INPUT"; exit 1; }
+resolve_node || { rm -f -- "$REFS_INPUT"; exit 1; }
+
+export FERRET_PRECOMMIT=0
+
+WORK_DIR="$(mktemp -d)" || exit 1
+HIST_TREE="${WORK_DIR}/history"
+mkdir -p "$HIST_TREE"
+cleanup() { rm -rf -- "$WORK_DIR"; rm -f -- "$REFS_INPUT"; }
+trap cleanup EXIT INT TERM
+
+scan_info ""
+scan_info "pre-push: scanning outgoing commits for PII and credentials"
+
+# ---------------------------------------------------------------------------
+# Work out what is actually outgoing.
+# ---------------------------------------------------------------------------
+INCLUDE=()  # positive revisions: the tips being pushed
+EXCLUDE=()  # revisions already on the remote
+pushed_desc=()
+saw_ref=0
+
+while read -r local_ref local_oid remote_ref remote_oid; do
+	[ -n "${local_ref:-}" ] || continue
+	saw_ref=1
+
+	# A deletion pushes the zero oid: no new content is published.
+	if [ "$local_oid" = "$ZERO" ]; then
+		scan_dim "  ${remote_ref:-?}: deletion, no content to scan"
+		continue
+	fi
+
+	# The tip must exist locally, or we cannot scan what we are publishing.
+	if ! git cat-file -e "${local_oid}^{object}" 2>/dev/null; then
+		scan_err "local object ${local_oid} for ${local_ref} is missing from this repository."
+		scan_info "  Cannot determine what would be pushed; refusing to push unscanned."
+		exit 1
+	fi
+
+	INCLUDE+=("$local_oid")
+	if [ "$remote_oid" = "$ZERO" ]; then
+		pushed_desc+=("${local_ref} -> ${remote_ref} (new ref)")
+	else
+		pushed_desc+=("${local_ref} -> ${remote_ref}")
+		# A force push can leave remote_oid as a commit we no longer reference,
+		# and a concurrent push can leave it absent locally. Only exclude it if
+		# we actually have it; `rev-list` errors out on an unknown oid.
+		if git cat-file -e "${remote_oid}^{object}" 2>/dev/null; then
+			EXCLUDE+=("$remote_oid")
+		else
+			scan_warn "remote oid ${remote_oid:0:12} for ${remote_ref} is not present locally;"
+			scan_info "    scanning a wider range rather than assuming it is already published."
+		fi
+	fi
+done <"$REFS_INPUT"
+
+if [ "$saw_ref" -eq 0 ]; then
+	# git can invoke pre-push with no refs (e.g. everything up to date).
+	scan_dim "  no refs to push; nothing to scan"
+	exit 0
+fi
+
+if [ "${#INCLUDE[@]}" -eq 0 ]; then
+	scan_dim "  only deletions; nothing to scan"
+	exit 0
+fi
+
+for d in "${pushed_desc[@]}"; do scan_dim "  pushing ${d}"; done
+
+# Everything the remote is already known to hold is excluded, so a routine
+# push scans only its own new commits. On a first push to an empty remote
+# nothing is excluded and the whole history is scanned -- correct, if slow.
+REV_ARGS=("${INCLUDE[@]}")
+REV_ARGS+=(--not "--remotes=${REMOTE_NAME}")
+for e in "${EXCLUDE[@]:-}"; do [ -n "$e" ] && REV_ARGS+=("$e"); done
+
+# Validate the range ourselves before any scanner sees it. gitleaks exits 0
+# when its own `git log` fails, so an invalid range would read as "clean".
+if ! commit_count="$(git rev-list --count "${REV_ARGS[@]}" 2>/dev/null)"; then
+	scan_err "could not resolve the outgoing commit range."
+	scan_info "  Refusing to push on an unverifiable range."
+	exit 1
+fi
+
+if [ "${commit_count:-0}" -eq 0 ]; then
+	scan_dim "  no new commits to publish; nothing to scan"
+	exit 0
+fi
+scan_dim "  ${commit_count} outgoing commit(s)"
+
+# ---------------------------------------------------------------------------
+# Materialise every blob those commits introduce.
+# ---------------------------------------------------------------------------
+read -r blob_files blob_unique blob_occurrences < <(materialize_rev_blobs "$HIST_TREE" "${REV_ARGS[@]}")
+if [ -z "${blob_files:-}" ]; then
+	scan_err "failed to enumerate the objects in the outgoing commits."
+	scan_info "  Refusing to push on an incomplete scan."
+	exit 1
+fi
+scan_dim "  ${blob_unique} unique blob(s) from ${blob_occurrences} object reference(s); ${blob_files} written"
+
+status=0
+
+# ---------------------------------------------------------------------------
+# PII in historical content
+# ---------------------------------------------------------------------------
+ferret_scan_tree "$HIST_TREE" "outgoing commits"
+case $? in
+0) ;;
+1) status=1 ;;
+*)
+	scan_err "PII scan did not complete; refusing to push unscanned."
+	status=1
+	;;
+esac
+
+# ---------------------------------------------------------------------------
+# Credentials in historical content
+# ---------------------------------------------------------------------------
+# Scanning the materialised tree rather than `gitleaks git --log-opts <range>`
+# is deliberate: it covers add-then-delete identically, and it cannot be
+# defeated by the verified bug where a failed underlying `git log` makes
+# gitleaks exit 0 with an empty report.
+GITLEAKS_STRIP_PREFIX="$HIST_TREE" gitleaks_run "outgoing commits" dir "$HIST_TREE"
+case $? in
+0) ;;
+1) status=1 ;;
+*)
+	scan_err "credential scan did not complete; refusing to push unscanned."
+	status=1
+	;;
+esac
+
+# ---------------------------------------------------------------------------
+# PII in commit messages and author/committer metadata
+# ---------------------------------------------------------------------------
+scan_commit_metadata "outgoing commit metadata" "${REV_ARGS[@]}"
+case $? in
+0) ;;
+1) status=1 ;;
+*)
+	scan_err "commit metadata scan did not complete; refusing to push unscanned."
+	status=1
+	;;
+esac
+
+if [ "$status" -ne 0 ]; then
+	scan_info ""
+	scan_err "push blocked."
+	scan_info "  These findings are in COMMITTED history, so fixing the working tree"
+	scan_info "  is not enough -- the commits themselves must be rewritten:"
+	scan_info ""
+	scan_info "    git rebase -i ${REMOTE_NAME}/\$(git branch --show-current)   # edit the offending commits"
+	scan_info "  or, for something already spread across many commits:"
+	scan_info "    see 'History cleanup' in .security/README.md"
+	scan_info ""
+	scan_info "  Do not bypass this hook with --no-verify. Anything pushed to the"
+	scan_info "  remote must be assumed permanently recoverable, and any exposed"
+	scan_info "  credential must be rotated regardless of later rewriting."
+	exit 1
+fi
+
+scan_dim "pre-push: clean"
+exit 0

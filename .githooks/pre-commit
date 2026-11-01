@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+# debriefer pre-commit checkpoint: PII (ferret-scan) + credentials (gitleaks).
+#
+# Scans the EXACT STAGED CONTENT of every added/copied/modified/renamed path,
+# read from the git index rather than from the working tree. A partially
+# staged file is therefore scanned as it would be committed: an unstaged
+# secret does not block, and a staged secret is not missed because the working
+# tree happens to be clean.
+#
+# This hook only ever BLOCKS. It never edits files, never re-stages anything
+# and never rewrites a commit.
+#
+# Installed via `git config core.hooksPath .githooks` (repository-local).
+# Run .security/install-hooks.sh to configure, verify, or re-verify.
+
+set -uo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)" || exit 1
+SECURITY_DIR="${REPO_ROOT}/.security"
+
+# shellcheck source=../.security/policy.sh
+. "${SECURITY_DIR}/policy.sh" || {
+	printf 'error: cannot load .security/policy.sh; refusing to commit unscanned.\n' >&2
+	exit 1
+}
+# shellcheck source=../.security/lib/scan.sh
+. "${SECURITY_DIR}/lib/scan.sh" || {
+	printf 'error: cannot load .security/lib/scan.sh; refusing to commit unscanned.\n' >&2
+	exit 1
+}
+
+# ---------------------------------------------------------------------------
+# Preserve any hook that existed before core.hooksPath was redirected here.
+# ---------------------------------------------------------------------------
+# Setting core.hooksPath makes git stop looking in $GIT_DIR/hooks entirely, so
+# a pre-existing hook there would silently stop running. Chain to it first, so
+# its position in the pipeline is unchanged and so any index changes it makes
+# (formatters, lint-staged, and similar) are included in what we then scan.
+run_preexisting_hook() {
+	local git_dir legacy
+	git_dir="$(git rev-parse --git-dir)" || return 0
+	legacy="${git_dir}/hooks/pre-commit"
+	[ -x "$legacy" ] || return 0
+	scan_dim "running pre-existing hook: ${legacy}"
+	"$legacy" "$@" || {
+		local rc=$?
+		scan_err "pre-existing pre-commit hook failed (exit ${rc}); not overriding it."
+		exit "$rc"
+	}
+}
+run_preexisting_hook "$@"
+
+# ---------------------------------------------------------------------------
+# Scanner availability -- fail closed.
+# ---------------------------------------------------------------------------
+resolve_ferret || exit 1
+resolve_gitleaks || exit 1
+resolve_node || exit 1
+
+# ferret-scan infers "pre-commit mode" from PRE_COMMIT / _PRE_COMMIT_RUNNING /
+# PRE_COMMIT_HOOK / GIT_HOOK_TYPE and then narrows its check set to six types.
+# Force the inference off; this hook passes its own explicit --checks.
+export FERRET_PRECOMMIT=0
+
+STAGE_DIR="$(mktemp -d)" || exit 1
+cleanup() { rm -rf -- "$STAGE_DIR"; }
+trap cleanup EXIT INT TERM
+
+scan_info ""
+scan_info "pre-commit: scanning staged content for PII and credentials"
+
+# ---------------------------------------------------------------------------
+# Materialise the index.
+# ---------------------------------------------------------------------------
+staged_count="$(materialize_staged "$STAGE_DIR")"
+rc=$?
+if [ "$rc" -ne 0 ]; then
+	scan_err "failed to read staged content from the git index."
+	scan_info "  Refusing to commit on an incomplete scan."
+	exit 1
+fi
+
+if [ "${staged_count:-0}" -eq 0 ]; then
+	scan_dim "  no in-scope staged files; nothing to scan"
+	exit 0
+fi
+scan_dim "  ${staged_count} staged file(s) materialised from the index"
+
+status=0
+
+# ---------------------------------------------------------------------------
+# PII
+# ---------------------------------------------------------------------------
+ferret_scan_tree "$STAGE_DIR" "staged content"
+case $? in
+0) ;;
+1) status=1 ;;
+*)
+	scan_err "PII scan did not complete; refusing to commit unscanned."
+	status=1
+	;;
+esac
+
+# ---------------------------------------------------------------------------
+# Credentials
+# ---------------------------------------------------------------------------
+# `gitleaks git --staged` reads `git diff --staged`, so it is index-based and
+# handles partial staging correctly (verified -- see .security/README.md).
+gitleaks_run "staged content" git "$REPO_ROOT" --staged
+case $? in
+0) ;;
+1) status=1 ;;
+*)
+	scan_err "credential scan did not complete; refusing to commit unscanned."
+	status=1
+	;;
+esac
+
+if [ "$status" -ne 0 ]; then
+	scan_info ""
+	scan_err "commit blocked."
+	scan_info "  Fix the findings above. Values are hidden by design; to inspect"
+	scan_info "  them locally (output stays on this machine):"
+	scan_info ""
+	scan_info "    .security/scan-staged.sh --show-match"
+	scan_info ""
+	scan_info "  Do not bypass this hook with --no-verify to work around a finding."
+	scan_info "  If a finding is a genuine false positive, add a narrow, documented"
+	scan_info "  exception as described in .security/README.md."
+	exit 1
+fi
+
+scan_dim "pre-commit: clean"
+exit 0

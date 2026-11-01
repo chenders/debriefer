@@ -7,6 +7,15 @@ on:
     branches: [main]
   schedule:
     - cron: "0 0 * * 1" # Weekly on Monday
+  # A workflow containing `schedule:` is disabled entirely by GitHub after 60
+  # days of repository inactivity -- including its push and pull_request
+  # triggers. This workflow was found in that state (`disabled_inactivity`)
+  # while `Dependency Audit` was still a required status check, so it could
+  # not report and every pull request was blocked.
+  #
+  # workflow_dispatch allows a manual run, which recovers from that state and
+  # resets the inactivity timer. No job logic is changed by this.
+  workflow_dispatch:
 
 jobs:
   audit:

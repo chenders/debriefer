@@ -46,6 +46,10 @@
     "@debriefer/core": ">=2.0.0",
     "@debriefer/sources": ">=1.0.0"
   },
+  "devDependencies": {
+    "@debriefer/core": "*",
+    "@debriefer/sources": "*"
+  },
   "peerDependenciesMeta": {
     "@debriefer/sources": {
       "optional": true

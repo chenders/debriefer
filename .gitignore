@@ -10,3 +10,13 @@ __pycache__
 .venv
 .DS_Store
 .idea/
+
+# Generated coverage output (also in .prettierignore)
+coverage
+# Local session state from the Remember plugin -- working notes, not project files
+.remember
+
+# Pinned scanner binaries installed by .security/install-tools.sh
+.security/.tools/
+# Audit reports are masked but still belong outside version control
+.security/audit-report/

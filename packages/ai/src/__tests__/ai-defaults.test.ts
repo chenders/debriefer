@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
+// vitest 4 widened `ReturnType<typeof vi.fn>` to Mock<Procedure>, which is no
+// longer assignable to a specific signature. Parameterise Mock<> instead.
+import type { Mock } from "vitest"
 import type { ResearchSubject, TelemetryProvider } from "@debriefer/core"
 import type { WikipediaSection, WebSearchResult } from "@debriefer/sources"
 import type { AIClient, AICompletionRequest, AICompletionResponse } from "../ai-client.js"
@@ -28,9 +31,9 @@ function failingClient(error: string): AIClient & { complete: ReturnType<typeof 
 }
 
 function mockTelemetry(): TelemetryProvider & {
-  recordEvent: ReturnType<typeof vi.fn>
-  startSpan: ReturnType<typeof vi.fn>
-  recordError: ReturnType<typeof vi.fn>
+  recordEvent: Mock<TelemetryProvider["recordEvent"]>
+  startSpan: Mock<TelemetryProvider["startSpan"]>
+  recordError: Mock<TelemetryProvider["recordError"]>
 } {
   return {
     recordEvent: vi.fn(),

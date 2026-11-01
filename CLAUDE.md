@@ -22,7 +22,10 @@ debriefer/
 │   └── python/     # PyPI "debriefer" — Python HTTP client
 ├── docs/
 │   └── plans/      # Implementation plans (future use)
-└── docker/         # Dockerfile + docker-compose.yml
+├── docker/         # Dockerfile + docker-compose.yml
+├── .security/      # PII/secrets policy, scanner configs, audit + verify scripts
+├── .githooks/      # pre-commit / pre-push scanning hooks (core.hooksPath)
+└── .pi/            # Pi project config: hook-bypass guard extension, system prompt
 ```
 
 **Tooling**: npm workspaces, turborepo, TypeScript 5.x, vitest, Node.js 22
@@ -74,7 +77,23 @@ npx turbo test lint type-check        # all packages
 npx prettier --check .                # formatting (root-level, catches docs too)
 ```
 
-CI (`.github/workflows/ci.yml`) runs Build, Test, Type Check, Lint, Format Check (`prettier --check .`), and CodeQL (on `push`). The separate Security workflow (`.github/workflows/security.yml`) runs Dependency Audit (`npm audit`). All required checks must pass before merging.
+CI (`.github/workflows/ci.yml`) runs Build, Test, Type Check, Lint, Format Check (`prettier --check .`), and CodeQL (on `push`). The separate Security workflow (`.github/workflows/security.yml`) runs Dependency Audit (`npm audit`). The PII & Secrets workflow (`.github/workflows/pii-secrets.yml`) runs the PII/credential scan on PRs and pushes, plus a weekly full-history audit. All required checks must pass before merging.
+
+## PII & Secrets Protection
+
+Commits and pushes are scanned for personal data (ferret-scan) and credentials (gitleaks) via `core.hooksPath=.githooks`. **Keep these checks enabled and fix findings rather than bypassing them** — see [AGENTS.md](AGENTS.md) for the rules and [.security/README.md](.security/README.md) for the policy, verified scanner behaviour, coverage limits, and exception process.
+
+```bash
+.security/install-hooks.sh     # configure + verify (repository-local, run once)
+.security/scan-staged.sh       # preview what pre-commit will say
+.security/audit-history.sh     # full-history audit
+.security/verify.sh            # self-test the whole setup in a temp repo
+```
+
+Two things worth knowing before changing anything in `.security/`:
+
+- **ferret-scan exit 0 does not mean "clean"** — findings do not affect its exit code, so the hooks parse `--format json` and classify findings themselves.
+- **Do not add `--pre-commit-mode`** — it silently narrows detection to six check types, dropping addresses, dates of birth, passports, driver's licences, medical IDs and bank accounts.
 
 ### Copilot Review Loop
 

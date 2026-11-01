@@ -1,4 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
+// vitest 4 widened `ReturnType<typeof vi.fn>` to Mock<Procedure>, which is no
+// longer assignable to a specific method signature. Parameterise Mock<> with
+// the real signature instead.
+import type { Mock } from "vitest"
 import { BaseResearchSource } from "../base-source.js"
 import type { BaseSourceOptions } from "../base-source.js"
 import { ReliabilityTier } from "../reliability.js"
@@ -32,9 +36,9 @@ function makeFinding(overrides: Partial<RawFinding> = {}): RawFinding {
 }
 
 function makeCache(): CacheProvider & {
-  get: ReturnType<typeof vi.fn>
-  set: ReturnType<typeof vi.fn>
-  delete: ReturnType<typeof vi.fn>
+  get: Mock<CacheProvider["get"]>
+  set: Mock<CacheProvider["set"]>
+  delete: Mock<CacheProvider["delete"]>
 } {
   return {
     get: vi.fn().mockResolvedValue(null),
@@ -43,15 +47,15 @@ function makeCache(): CacheProvider & {
   }
 }
 
-function makeRateLimiter(): { acquire: ReturnType<typeof vi.fn> } {
+function makeRateLimiter(): { acquire: Mock<SourceRateLimiter["acquire"]> } {
   return {
     acquire: vi.fn().mockResolvedValue(undefined),
   }
 }
 
 function makeSpan(): TelemetrySpan & {
-  end: ReturnType<typeof vi.fn>
-  setAttributes: ReturnType<typeof vi.fn>
+  end: Mock<TelemetrySpan["end"]>
+  setAttributes: Mock<TelemetrySpan["setAttributes"]>
 } {
   return {
     end: vi.fn(),
@@ -60,9 +64,9 @@ function makeSpan(): TelemetrySpan & {
 }
 
 function makeTelemetry(): TelemetryProvider & {
-  recordEvent: ReturnType<typeof vi.fn>
-  startSpan: ReturnType<typeof vi.fn>
-  recordError: ReturnType<typeof vi.fn>
+  recordEvent: Mock<TelemetryProvider["recordEvent"]>
+  startSpan: Mock<TelemetryProvider["startSpan"]>
+  recordError: Mock<TelemetryProvider["recordError"]>
 } {
   const span = makeSpan()
   return {

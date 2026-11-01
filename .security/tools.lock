@@ -1,0 +1,23 @@
+# Pinned scanner binaries for the debriefer PII / secrets checkpoints.
+#
+# Consumed by .security/install-tools.sh. Versions must match the pins in
+# .security/policy.sh; install-tools.sh refuses to run if they disagree.
+#
+# Format:  <tool> <version> <platform> <sha256> <asset-name>
+#
+# sha256 values are the upstream published release checksums, retrieved from:
+#   https://github.com/awslabs/ferret-scan/releases/download/v2.5.5/checksums.txt
+#   https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_checksums.txt
+#
+# To bump a version: update policy.sh, update the rows here from the upstream
+# checksum file, then RE-VERIFY exit-code behaviour (see .security/README.md)
+# before relying on the new build. Neither tool treats its exit codes or its
+# default check set as stable API.
+
+ferret-scan 2.5.5 linux_amd64  816f06a8d1fb23bd687923fc8b47a9ddc3bec972a0f75d8f86443b8878f08994  ferret-scan_2.5.5_linux_amd64
+ferret-scan 2.5.5 linux_arm64  143ef19811a032477082a1e0b5909c1fa6b9732b4505d3689059d7d6b35bf816  ferret-scan_2.5.5_linux_arm64
+ferret-scan 2.5.5 darwin_arm64 f546779aa4ab752817c32139bc6294ccb8aa56defbd864bfcc09aad44e579cf3  ferret-scan_2.5.5_darwin_arm64
+
+gitleaks 8.30.1 linux_x64     551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks_8.30.1_linux_x64.tar.gz
+gitleaks 8.30.1 linux_arm64   e4a487ee7ccd7d3a7f7ec08657610aa3606637dab924210b3aee62570fb4b080  gitleaks_8.30.1_linux_arm64.tar.gz
+gitleaks 8.30.1 darwin_arm64  b40ab0ae55c505963e365f271a8d3846efbc170aa17f2607f13df610a9aeb6a5  gitleaks_8.30.1_darwin_arm64.tar.gz
