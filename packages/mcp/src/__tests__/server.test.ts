@@ -16,32 +16,38 @@ vi.mock("@debriefer/core", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@debriefer/core")>()
   return {
     ...actual,
-    ResearchOrchestrator: vi.fn().mockImplementation(() => ({
-      debrief: vi.fn().mockResolvedValue({
-        subject: { id: "Ada Lovelace", name: "Ada Lovelace" },
-        data: null,
-        findings: [
-          {
-            sourceType: "wikipedia",
-            sourceName: "Wikipedia",
-            text: "Ada Lovelace was an English mathematician.",
-            confidence: 0.9,
-            reliabilityScore: 0.85,
-            url: "https://en.wikipedia.org/wiki/Ada_Lovelace",
-          },
-        ],
-        totalCostUsd: 0,
-        sourcesAttempted: 2,
-        sourcesSucceeded: 1,
-        durationMs: 150,
-      }),
-    })),
-    NoopSynthesizer: vi.fn().mockImplementation(() => ({})),
+    ResearchOrchestrator: vi.fn().mockImplementation(function () {
+      return {
+        debrief: vi.fn().mockResolvedValue({
+          subject: { id: "Ada Lovelace", name: "Ada Lovelace" },
+          data: null,
+          findings: [
+            {
+              sourceType: "wikipedia",
+              sourceName: "Wikipedia",
+              text: "Ada Lovelace was an English mathematician.",
+              confidence: 0.9,
+              reliabilityScore: 0.85,
+              url: "https://en.wikipedia.org/wiki/Ada_Lovelace",
+            },
+          ],
+          totalCostUsd: 0,
+          sourcesAttempted: 2,
+          sourcesSucceeded: 1,
+          durationMs: 150,
+        }),
+      }
+    }),
+    NoopSynthesizer: vi.fn().mockImplementation(function () {
+      return {}
+    }),
   }
 })
 
 vi.mock("@debriefer/ai", () => ({
-  ClaudeSynthesizer: vi.fn().mockImplementation(() => ({})),
+  ClaudeSynthesizer: vi.fn().mockImplementation(function () {
+    return {}
+  }),
 }))
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"

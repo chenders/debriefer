@@ -43,7 +43,7 @@
     "@debriefer/sources": "^2.0.0",
     "cors": "^2",
     "express": "^4",
-    "zod": "^3"
+    "zod": "^4"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

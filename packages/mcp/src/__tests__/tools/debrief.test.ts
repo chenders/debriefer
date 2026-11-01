@@ -15,23 +15,29 @@ vi.mock("@debriefer/core", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@debriefer/core")>()
   return {
     ...actual,
-    ResearchOrchestrator: vi.fn().mockImplementation(() => ({
-      debrief: vi.fn().mockResolvedValue({
-        subject: { id: "Test", name: "Test" },
-        data: null,
-        findings: [],
-        totalCostUsd: 0,
-        sourcesAttempted: 2,
-        sourcesSucceeded: 0,
-        durationMs: 100,
-      }),
-    })),
-    NoopSynthesizer: vi.fn().mockImplementation(() => ({})),
+    ResearchOrchestrator: vi.fn().mockImplementation(function () {
+      return {
+        debrief: vi.fn().mockResolvedValue({
+          subject: { id: "Test", name: "Test" },
+          data: null,
+          findings: [],
+          totalCostUsd: 0,
+          sourcesAttempted: 2,
+          sourcesSucceeded: 0,
+          durationMs: 100,
+        }),
+      }
+    }),
+    NoopSynthesizer: vi.fn().mockImplementation(function () {
+      return {}
+    }),
   }
 })
 
 vi.mock("@debriefer/ai", () => ({
-  ClaudeSynthesizer: vi.fn().mockImplementation(() => ({})),
+  ClaudeSynthesizer: vi.fn().mockImplementation(function () {
+    return {}
+  }),
 }))
 
 import { debriefHandler } from "../../tools/debrief.js"

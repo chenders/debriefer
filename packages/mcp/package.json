@@ -46,6 +46,6 @@
     "@debriefer/core": "^2.0.0",
     "@debriefer/sources": "^2.0.0",
     "@modelcontextprotocol/sdk": "^1",
-    "zod": "^3"
+    "zod": "^4"
   }
 }
