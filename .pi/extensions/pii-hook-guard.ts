@@ -32,6 +32,12 @@
  * granted for this directory (pi --approve, or accept the trust prompt).
  * Until then this guard is inactive -- but the git hooks still run, because
  * they do not depend on Pi at all.
+ *
+ * The repository's instructions live in AGENTS.md at the root, which Pi
+ * discovers as a context file. That discovery does NOT require project trust,
+ * so the rules apply even when this guard does not. (There is deliberately no
+ * .pi/APPEND_SYSTEM.md: it would only duplicate AGENTS.md and would load
+ * later, behind the trust prompt.)
  */
 
 import type { ExtensionAPI, ToolCallEvent, UserBashEvent } from "@earendil-works/pi-coding-agent"

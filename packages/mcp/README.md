@@ -1,6 +1,6 @@
 # @debriefer/mcp
 
-Model Context Protocol server that exposes debriefer's multi-source research engine as tools for AI assistants (Claude Desktop, Claude Code, etc.).
+Model Context Protocol server that exposes debriefer's multi-source research engine as tools for any MCP-compatible AI assistant.
 
 ## Run
 

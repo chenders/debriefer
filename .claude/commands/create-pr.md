@@ -44,15 +44,16 @@ gh pr create --title "PR Title" --body "$(cat <<'EOF'
 
 ## Test Plan
 
-- [x] All 195+ tests pass
+- [x] All tests pass
 - [x] Build clean
 - [x] Lint clean
 - [x] Format clean
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
 )"
 ```
+
+> Do NOT add an assistant attribution footer or any assistant session URL
+> to the PR body. See AGENTS.md, 'Commit messages and PR bodies'.
 
 ### 5. Report
 

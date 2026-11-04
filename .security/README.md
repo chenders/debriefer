@@ -313,5 +313,4 @@ clone, keep a backup outside the repository, and understand that:
   pre-push             every outgoing commit
 .pi/
   extensions/pii-hook-guard.ts   blocks hook-bypass attempts under Pi
-  APPEND_SYSTEM.md               project instructions for Pi
 ```
