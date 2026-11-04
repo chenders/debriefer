@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 // Classify a ferret-scan JSON report against the repository's two-tier policy.
 //
-//   argv: <report.json> <blockingChecksCsv> <blockAtLevel> <scanRoot> <label>
+//   argv: <report.json> <blockingChecksCsv> <blockAtLevel> <scanRoot> <label> <benignSkipExtsCsv>
 //
-// Exit 0  = no blocking findings (advisory findings may still be reported)
-// Exit 10 = at least one blocking finding
+// Exit 0  = nothing blocking (advisory findings may still be reported)
+// Exit 10 = at least one blocking finding, OR a file was skipped in a format that
+//           is not on the benign list -- "unscanned" must not read as "clean"
 // Exit 1  = the report could not be read or parsed -> caller treats as failure
 //
 // Never prints a matched value. ferret-scan already replaces matches with
@@ -14,7 +15,8 @@
 
 import { readFileSync } from "node:fs"
 
-const [reportPath, blockingCsv, blockAtLevel, scanRoot, label] = process.argv.slice(2)
+const [reportPath, blockingCsv, blockAtLevel, scanRoot, label, benignSkipCsv] =
+  process.argv.slice(2)
 
 let report
 try {
@@ -115,15 +117,37 @@ const advisoryFindings = findings.filter((f) => !blockingFindings.includes(f))
 
 const plural = (n, s) => `${n} ${s}${n === 1 ? "" : "s"}`
 
+// Files ferret-scan could not read were NOT scanned. Separate benign media
+// formats, which may skip silently, from opaque containers that must block: an
+// unscanned archive, keystore or blob is indistinguishable from a clean one,
+// and that is exactly how a credential reaches the repository.
+const benignSkip = new Set(
+  String(benignSkipCsv || "")
+    .split(",")
+    .map((x) => x.trim().replace(/^\./, "").toLowerCase())
+    .filter(Boolean)
+)
+const skippedTypes = (stats && typeof stats.skipped_types === "object" && stats.skipped_types) || {}
+// An empty or unknown extension is never benign -- it tells us nothing.
+const offendingSkips = Object.entries(skippedTypes).filter(([ext]) => {
+  const bare = String(ext).replace(/^\./, "").toLowerCase()
+  return !bare || !benignSkip.has(bare)
+})
+const benignSkipped = Object.entries(skippedTypes).filter(
+  ([e]) => !offendingSkips.some(([o]) => o === e)
+)
+
 if (stats) {
   const skipped = Number(stats.files_skipped ?? 0)
   const bits = [`${plural(Number(stats.files_processed ?? 0), "file")} scanned`]
   if (skipped > 0) bits.push(`${skipped} skipped`)
   if (Number(stats.suppressed ?? 0) > 0) bits.push(`${stats.suppressed} suppressed`)
   console.error(`  ferret-scan (${label}): ${bits.join(", ")}`)
-  if (skipped > 0) {
+  if (benignSkipped.length > 0) {
     console.error(
-      `    note: ${plural(skipped, "file")} was not scanned -- coverage for ${label} is incomplete`
+      `    not scanned (benign media, allowed): ${benignSkipped
+        .map(([e, n]) => `${n}x ${e}`)
+        .join(", ")}`
     )
   }
 } else {
@@ -144,6 +168,23 @@ if (advisoryFindings.length > 0) {
     .map(([k, v]) => `${v}x ${k}`)
     .join(", ")
   console.error(`    advisory (not blocking): ${summary}`)
+}
+
+if (offendingSkips.length > 0) {
+  console.error("")
+  console.error(
+    `  BLOCKED: ${plural(offendingSkips.length, "file type")} could not be scanned in ${label}:`
+  )
+  for (const [ext, n] of offendingSkips) {
+    console.error(`    ${n}x ${ext || "(no extension)"}  -- not scanned, so not known to be clean`)
+  }
+  console.error("")
+  console.error("  A secret or a PII dump inside an unscanned file reaches the repository")
+  console.error("  unchecked. Either commit the content in a scannable form, or -- if the")
+  console.error("  format genuinely cannot carry one -- add its extension to")
+  console.error("  SCAN_BENIGN_SKIP_EXTENSIONS in .security/policy.sh with a stated reason.")
+  console.error("  Do not add archive, database or keystore formats.")
+  process.exit(10)
 }
 
 if (blockingFindings.length === 0) {

@@ -52,9 +52,15 @@ _version_ge() {
 }
 
 # Resolve a scanner, preferring a pinned local install over PATH.
-# Sets the named variable. Returns 1 if unavailable.
+# PRINTS the resolved path on stdout; returns 1 if unavailable.
+#
+# This used to assign to a caller-named variable with `declare -g`, which needs
+# bash 4.2+. macOS ships /bin/bash 3.2.57, so on a machine without a newer bash
+# the hooks died with "declare: -g: invalid option" and then blamed ferret-scan
+# for having no version. Printing the path needs no indirection and works on
+# every bash the hooks might run under.
 resolve_tool() {
-	local var="$1" bin="$2" found=""
+	local bin="$1" found=""
 	# A pinned install produced by .security/install-tools.sh wins, so CI and
 	# local runs agree even when PATH carries a different build.
 	if [ -n "${SECURITY_TOOLS_DIR:-}" ] && [ -x "${SECURITY_TOOLS_DIR}/${bin}" ]; then
@@ -64,15 +70,13 @@ resolve_tool() {
 	else
 		return 1
 	fi
-	# Assign to the caller-named variable. `declare -g` keeps it global even
-	# when resolve_tool is called from inside another function.
-	declare -g "${var}=${found}"
+	printf '%s' "$found"
 	return 0
 }
 
 # Resolve ferret-scan and verify its version against the pin.
 resolve_ferret() {
-	if ! resolve_tool FERRET_BIN ferret-scan; then
+	if ! FERRET_BIN="$(resolve_tool ferret-scan)"; then
 		scan_err "ferret-scan not found on PATH."
 		scan_info "  PII detection cannot run, so this check fails closed."
 		scan_info "  Install:  brew install ferret-scan   (or: pip install ferret-scan==${FERRET_SCAN_PINNED_VERSION})"
@@ -102,7 +106,7 @@ resolve_ferret() {
 
 # Resolve gitleaks and verify its version against the pin.
 resolve_gitleaks() {
-	if ! resolve_tool GITLEAKS_BIN gitleaks; then
+	if ! GITLEAKS_BIN="$(resolve_tool gitleaks)"; then
 		scan_err "gitleaks not found on PATH."
 		scan_info "  Credential detection cannot run, so this check fails closed."
 		scan_info "  Install:  brew install gitleaks"
@@ -127,7 +131,7 @@ resolve_gitleaks() {
 # requirement of this monorepo, so depending on it adds no new burden -- but if
 # it is missing we still fail closed rather than guessing with grep.
 resolve_node() {
-	if ! resolve_tool NODE_BIN node; then
+	if ! NODE_BIN="$(resolve_tool node)"; then
 		scan_err "node not found on PATH; cannot classify scanner reports."
 		scan_info "  This repository requires Node 22+ (see package.json)."
 		return 1
@@ -246,7 +250,7 @@ materialize_rev_blobs() {
 # ferret-scan
 # ---------------------------------------------------------------------------
 
-# Scan a directory tree. Prints a report and sets FERRET_BLOCKING_COUNT.
+# Scan a directory tree and print a report.
 #
 #   $1 tree to scan
 #   $2 human label for messages
@@ -263,7 +267,6 @@ materialize_rev_blobs() {
 ferret_scan_tree() {
 	local tree="$1" label="$2"
 	local blocking="${3:-$FERRET_BLOCKING_CHECKS}"
-	FERRET_BLOCKING_COUNT=0
 
 	# An empty tree is a legitimate "nothing to do", not a failure.
 	if [ -z "$(find "$tree" -type f -print -quit 2>/dev/null)" ]; then
@@ -339,7 +342,8 @@ ferret_scan_tree() {
 	local classified
 	rc=0
 	classified="$("$NODE_BIN" "${SECURITY_DIR}/lib/classify.mjs" \
-		"$report" "$blocking" "$FERRET_BLOCK_AT_LEVEL" "$tree" "$label")" || rc=$?
+		"$report" "$blocking" "$FERRET_BLOCK_AT_LEVEL" "$tree" "$label" \
+		"$SCAN_BENIGN_SKIP_EXTENSIONS")" || rc=$?
 	if [ "$rc" -ne 0 ] && [ "$rc" -ne 10 ]; then
 		scan_err "could not classify the ferret-scan report for ${label}."
 		printf '%s\n' "$classified" >&2
@@ -351,7 +355,6 @@ ferret_scan_tree() {
 
 	# classify.mjs exits 10 when at least one blocking finding was found.
 	if [ "$rc" -eq 10 ]; then
-		FERRET_BLOCKING_COUNT=1
 		return 1
 	fi
 	return 0
@@ -394,6 +397,7 @@ gitleaks_run() {
 		--no-color \
 		--log-level error \
 		--exit-code "$GITLEAKS_LEAK_EXIT_CODE" \
+		--max-archive-depth "$GITLEAKS_MAX_ARCHIVE_DEPTH" \
 		--report-format json \
 		--report-path "$report" \
 		${GITLEAKS_CONFIG:+--config "$GITLEAKS_CONFIG"} \

@@ -390,12 +390,68 @@ git -C "$R7" push -q origin main >"${SANDBOX}/out16b" 2>&1
 check zero $? "opaque identifiers in a commit message do NOT block"
 hook_ran "${SANDBOX}/out16b" "pre-push"
 
-printf '\n17. Pi hook-guard rules\n'
-if node "${SECURITY_SRC}/tests/pi-hook-guard.test.mjs" >"${SANDBOX}/out17" 2>&1; then
-	ok "Pi bypass-guard rules pass ($(grep -c '  ok ' "${SANDBOX}/out17") cases)"
+# ===========================================================================
+printf '\n17. Unscannable files block -- "not scanned" must not read as "clean"\n'
+# ===========================================================================
+# Regression test for a verified hole: a live-looking AWS key embedded in a
+# genuinely binary blob and inside a real .zip both committed at exit 0, with
+# only an advisory "coverage is incomplete" note. ferret could not extract text
+# and gitleaks allowlists both extensions with archive traversal off.
+R8="${SANDBOX}/repo8"
+new_repo "$R8"
+{ head -c 100000 /dev/urandom; printf 'AWS_ACCESS_KEY_ID=%s' "$SYNTH_AWS"; } >"$R8/keystore.bin"
+mkdir -p "$R8/zsrc" && printf 'AWS_ACCESS_KEY_ID=%s\n' "$SYNTH_AWS" >"$R8/zsrc/creds.env"
+( cd "$R8/zsrc" && zip -q ../payload.zip creds.env ) && rm -rf "$R8/zsrc"
+git -C "$R8" add keystore.bin payload.zip
+git -C "$R8" commit -qm "secret inside a binary and an archive" >"${SANDBOX}/out17a" 2>&1
+check nonzero $? "a secret in a binary blob and a zip blocks the commit"
+hook_ran "${SANDBOX}/out17a" "pre-commit"
+grep -q 'could not be scanned' "${SANDBOX}/out17a" && ok "names the unscannable file types" || no "expected an unscannable-type message"
+grep -q '\.bin' "${SANDBOX}/out17a" && ok "reports .bin" || no "expected .bin in the report"
+# gitleaks archive traversal should independently find it inside the zip.
+grep -q 'aws-access-token' "${SANDBOX}/out17a" && ok "gitleaks read into the archive and found the key" || no "expected gitleaks to traverse the zip"
+
+printf '\n18. Benign media is allowed to skip silently\n'
+git -C "$R8" reset -q
+rm -f "$R8/keystore.bin" "$R8/payload.zip"
+# A real font: binary, ubiquitous, cannot meaningfully carry a text credential.
+printf '\000\001\000\000' >"$R8/fake.woff2" && head -c 4000 /dev/urandom >>"$R8/fake.woff2"
+git -C "$R8" add fake.woff2
+git -C "$R8" commit -qm "add a font" >"${SANDBOX}/out18" 2>&1
+check zero $? "a benign media file commits without blocking"
+grep -q 'BLOCKED' "${SANDBOX}/out18" && no "benign media should not block" || ok "no block for benign media"
+
+printf '\n19. An extensionless blob blocks\n'
+head -c 50000 /dev/urandom >"$R8/mystery"
+git -C "$R8" add mystery
+git -C "$R8" commit -qm "extensionless blob" >"${SANDBOX}/out19" 2>&1
+check nonzero $? "an extensionless binary blob blocks"
+grep -qi 'no extension' "${SANDBOX}/out19" && ok "reports it as having no extension" || no "expected a (no extension) label"
+
+printf '\n20. The hooks run under bash 3.2 (stock macOS /bin/bash)\n'
+# resolve_tool used `declare -g`, which needs bash 4.2+. Under 3.2 it failed
+# and the hook then misreported the cause as ferret-scan having no version.
+if [ -x /bin/bash ]; then
+	b32="$(/bin/bash --version | head -1 | grep -oE '[0-9]+\.[0-9]+' | head -1)"
+	out32="$(/bin/bash -c "cd '$SECURITY_SRC/..' && SECURITY_DIR='$SECURITY_SRC' . '$SECURITY_SRC/policy.sh' && . '$SECURITY_SRC/lib/scan.sh' && resolve_ferret && printf 'OK:%s' \"\$FERRET_VERSION\"" 2>&1)"
+	case "$out32" in
+	*OK:*) ok "resolve_ferret works under /bin/bash ${b32}" ;;
+	*) no "resolve_ferret failed under /bin/bash ${b32}: ${out32}" ;;
+	esac
+	case "$out32" in
+	*"declare: -g"*) no "declare -g is still in use (bash 4.2+ only)" ;;
+	*) ok "no bash-4-only construct on the tool-resolution path" ;;
+	esac
+else
+	printf '  note: /bin/bash not present; skipped the bash 3.2 check\n'
+fi
+
+printf '\n21. Pi hook-guard rules\n'
+if node "${SECURITY_SRC}/tests/pi-hook-guard.test.mjs" >"${SANDBOX}/out21" 2>&1; then
+	ok "Pi bypass-guard rules pass ($(grep -c '  ok ' "${SANDBOX}/out21") cases)"
 else
 	no "Pi bypass-guard rules failed"
-	sed 's/^/      /' "${SANDBOX}/out17" | grep -i fail | head
+	sed 's/^/      /' "${SANDBOX}/out21" | grep -i fail | head
 fi
 
 # ===========================================================================

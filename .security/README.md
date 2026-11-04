@@ -39,7 +39,7 @@ only**. Global git config is never modified.
 .security/scan-worktree.sh              # tracked files in the working tree
 .security/audit-history.sh              # all blobs on all refs + metadata
 .security/ci-scan.sh --base <rev> --head <rev>   # exactly what CI runs
-.security/verify.sh                     # 46-assertion self-test, isolated
+.security/verify.sh                     # 57-assertion self-test, isolated
 node .security/tests/pi-hook-guard.test.mjs      # Pi bypass-guard rules
 ```
 
@@ -164,12 +164,31 @@ which is indistinguishable. The hooks pass `--exit-code 2` to separate them:
 - **The Homebrew and upstream-release builds print different version
   strings** (`ferret-scan v2.5.5` vs `ferret-scan 2.5.5`). The version check
   accepts both; requiring the `v` made the hooks fail closed on a good binary.
-- **Unsupported formats are reported, not blocked.** A file ferret-scan skips
-  because it is a binary is surfaced as `N skipped — coverage is incomplete`,
-  but does not fail the checkpoint; blocking on every commit touching a PNG
-  would be unusable. `--fail-on-incomplete` (exit 3) _does_ block, and covers
-  the genuine "cut short" cases: timeouts, per-validator budgets, and files
-  that could not be opened.
+- **Unscannable files block; benign media does not.** This was originally the
+  other way round — anything ferret-scan skipped was merely reported as
+  `N skipped — coverage is incomplete` and the commit proceeded. Verified hole:
+  a live-looking AWS key embedded in a 200 KB binary blob **and** inside a
+  `.zip` both committed at exit 0, recoverable afterwards with `strings`.
+  ferret could not extract text from either, and gitleaks allowlists both
+  extensions with archive traversal off by default.
+
+  Now: ferret-scan reports the extensions it could not read as
+  `stats.skipped_types`, and anything outside
+  `SCAN_BENIGN_SKIP_EXTENSIONS` (images, fonts, audio, video) **blocks** —
+  archives, databases, keystores, compiled objects, extensionless blobs.
+  Those are the containers a credential or a PII dump realistically travels
+  in, and "unscanned" must not read as "clean". gitleaks additionally runs
+  with `--max-archive-depth 8`, so it reads into archives rather than skipping
+  them. `verify.sh` cases 17–19 assert all three behaviours.
+
+  There are currently **zero** skipped files in this repository (221/221
+  processed), so this costs nothing day to day. To allow a new binary format,
+  add its extension to the benign list with a comment saying why it cannot
+  carry a secret — never an archive, database or keystore format.
+
+- **`--fail-on-incomplete` (exit 3) still blocks** separately, covering the
+  genuine "cut short" cases: timeouts, per-validator budgets, and files that
+  could not be opened at all.
 
 ## Coverage and its limits
 
@@ -235,6 +254,26 @@ refuses `--no-verify`, `git commit -n`, `-c core.hooksPath=`, `git config
 core.hooksPath` writes, and attempts to delete or chmod `.githooks/`. A human
 can still bypass from their own shell; that decision is not delegated to an
 agent. See [`../AGENTS.md`](../AGENTS.md).
+
+### The hooks must run under bash 3.2
+
+macOS ships `/bin/bash` 3.2.57, and the hooks use `#!/usr/bin/env bash`. On a
+machine without a newer bash on PATH, anything requiring bash 4+ breaks.
+
+`resolve_tool` originally assigned to a caller-named variable with
+`declare -g`, which needs bash 4.2. Under 3.2 it emitted
+`declare: -g: invalid option`, left the tool path unset, and the hook then
+reported `could not determine ferret-scan version` — blaming the scanner for a
+shell problem. It failed closed, so nothing unsafe got through, but the hooks
+were unusable and the error pointed at the wrong thing.
+
+It now prints the resolved path on stdout, which needs no indirection and works
+everywhere. `verify.sh` case 20 runs the resolution path under `/bin/bash`
+explicitly and fails if any bash-4-only construct reappears.
+
+Keep new shell in this directory 3.2-compatible: no `declare -g`, no
+associative arrays (`declare -A`), no `mapfile`/`readarray`, no `${var^^}` /
+`${var,,}`.
 
 ### Commit messages need gitleaks, not entropy
 
@@ -331,7 +370,7 @@ clone, keep a backup outside the repository, and understand that:
   scan-worktree.sh     manual: tracked working-tree files
   audit-history.sh     manual: full history + metadata + current files
   ci-scan.sh           CI entry point (range + checked-out tree)
-  verify.sh            isolated 46-assertion self-test
+  verify.sh            isolated 57-assertion self-test
   tests/               Pi bypass-guard rule tests
 .githooks/
   pre-commit           staged (index) content

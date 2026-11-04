@@ -66,6 +66,34 @@ FERRET_ADVISORY_CHECKS="PERSON_NAME,EMAIL,IP_ADDRESS,VIN,SOCIAL_MEDIA,INTELLECTU
 # blocking here, because they do not false-positive on opaque identifiers.
 FERRET_METADATA_BLOCKING_CHECKS="SSN,CREDIT_CARD,BANK_ACCOUNT,PASSPORT,DRIVERS_LICENSE,MEDICAL_ID,DATE_OF_BIRTH,PHYSICAL_ADDRESS"
 
+# ---------------------------------------------------------------------------
+# Unscannable files
+# ---------------------------------------------------------------------------
+# ferret-scan reports the EXTENSIONS it could not read as stats.skipped_types,
+# e.g. {".bin":1,".zip":1}. Anything skipped was not scanned at all, so a
+# secret inside it reaches the repository unchecked. Verified: a live-looking
+# AWS key embedded in a 200 KB binary blob and inside a .zip both committed at
+# exit 0, recoverable afterwards with `strings`.
+#
+# These extensions MAY be skipped silently. They are ubiquitous, and a text
+# credential inside one is not a realistic way to ship a secret.
+SCAN_BENIGN_SKIP_EXTENSIONS="png,jpg,jpeg,gif,bmp,tif,tiff,webp,ico,heic,avif,ttf,otf,woff,woff2,eot,mp3,mp4,m4a,wav,ogg,oga,opus,webm,mov,avi,mkv,flac,aac"
+#
+# Anything else that gets skipped BLOCKS the checkpoint: archives, databases,
+# keystores, compiled objects, extensionless blobs. Those are exactly the
+# containers a credential or a PII dump realistically travels in, and
+# "unscanned" must not read as "clean". There are currently zero skipped files
+# in this repository (221/221 processed), so this costs nothing today.
+#
+# To add a genuinely-needed binary format, add its extension above WITH a
+# comment saying why it cannot carry a secret. Do not add archive, database or
+# keystore formats.
+
+# gitleaks does not traverse archives by default (--max-archive-depth 0), so a
+# credential inside a .zip reads as clean. Verified: depth 0 exits 0 on a zip
+# containing an AWS key, depth 4 exits 2 and finds it.
+GITLEAKS_MAX_ARCHIVE_DEPTH=8
+
 # Confidence level at which a BLOCKING check fails the checkpoint.
 # ferret-scan emits HIGH / MEDIUM / LOW. MEDIUM and LOW blocking-check
 # findings are reported but do not block.
