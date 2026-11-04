@@ -19,7 +19,7 @@ Prepare and commit the current work with proper tests and documentation.
    - Run `npx turbo build lint type-check` and `npx prettier --check .`
    - Fix any issues before committing
 
-4. **Update CLAUDE.md if any of these apply**
+4. **Update AGENTS.md if any of these apply**
    - Added, removed, or renamed a package → update Monorepo Structure + Architecture
    - Moved a module between packages → update both Architecture sections
    - Changed a hard/peer dependency → update Dependencies Policy
@@ -31,7 +31,9 @@ Prepare and commit the current work with proper tests and documentation.
 5. **Create the commit**
    - Stage relevant changes with `git add` (specific files, not `-A`)
    - Write a clear commit message in imperative mood
-   - Include the Claude Code footer
+   - A `Co-Authored-By:` trailer is fine
+   - Do NOT add an assistant attribution footer or any link to an
+     assistant session URL — see AGENTS.md, 'Commit messages and PR bodies'
 
 ## Notes
 
