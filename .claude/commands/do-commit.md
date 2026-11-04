@@ -19,7 +19,7 @@ Prepare and commit the current work with proper tests and documentation.
    - Run `npx turbo build lint type-check` and `npx prettier --check .`
    - Fix any issues before committing
 
-4. **Update AGENTS.md if any of these apply** (`CLAUDE.md` is a symlink to it — edit the real file)
+4. **Update AGENTS.md if any of these apply**
    - Added, removed, or renamed a package → update Monorepo Structure + Architecture
    - Moved a module between packages → update both Architecture sections
    - Changed a hard/peer dependency → update Dependencies Policy
