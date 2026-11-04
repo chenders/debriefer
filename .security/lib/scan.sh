@@ -250,6 +250,8 @@ materialize_rev_blobs() {
 #
 #   $1 tree to scan
 #   $2 human label for messages
+#   $3 optional: blocking check list (defaults to FERRET_BLOCKING_CHECKS).
+#      Commit metadata passes FERRET_METADATA_BLOCKING_CHECKS -- see policy.sh.
 #
 # Returns 0 = no blocking findings, 1 = blocking findings, 2 = scanner failure.
 #
@@ -260,6 +262,7 @@ materialize_rev_blobs() {
 # street address passes --pre-commit-mode at exit 0. See .security/README.md.
 ferret_scan_tree() {
 	local tree="$1" label="$2"
+	local blocking="${3:-$FERRET_BLOCKING_CHECKS}"
 	FERRET_BLOCKING_COUNT=0
 
 	# An empty tree is a legitimate "nothing to do", not a failure.
@@ -336,7 +339,7 @@ ferret_scan_tree() {
 	local classified
 	rc=0
 	classified="$("$NODE_BIN" "${SECURITY_DIR}/lib/classify.mjs" \
-		"$report" "$FERRET_BLOCKING_CHECKS" "$FERRET_BLOCK_AT_LEVEL" "$tree" "$label")" || rc=$?
+		"$report" "$blocking" "$FERRET_BLOCK_AT_LEVEL" "$tree" "$label")" || rc=$?
 	if [ "$rc" -ne 0 ] && [ "$rc" -ne 10 ]; then
 		scan_err "could not classify the ferret-scan report for ${label}."
 		printf '%s\n' "$classified" >&2
@@ -482,5 +485,28 @@ scan_commit_metadata() {
 		fi
 	done < <(git tag 2>/dev/null)
 
-	ferret_scan_tree "$tree" "$label"
+	# Two complementary passes over the same metadata:
+	#
+	#  * ferret-scan for PII, using FERRET_METADATA_BLOCKING_CHECKS -- the
+	#    identifier checks without SECRETS, because its entropy heuristic
+	#    false-positives on the opaque identifiers commit messages are full of
+	#    (commit SHAs, advisory ids, build and session URLs). See policy.sh.
+	#
+	#  * gitleaks for credentials, which is the right tool for this: ~180
+	#    precise rules plus allowlists rather than an entropy guess. This is
+	#    what keeps a real token in a commit message blocked.
+	local meta_status=0
+	ferret_scan_tree "$tree" "$label" "$FERRET_METADATA_BLOCKING_CHECKS" || meta_status=$?
+
+	local gl_status=0
+	GITLEAKS_STRIP_PREFIX="$tree" gitleaks_run "$label" dir "$tree" || gl_status=$?
+
+	# A scanner failure (2) outranks a findings result (1).
+	if [ "$meta_status" -eq 2 ] || [ "$gl_status" -eq 2 ]; then
+		return 2
+	fi
+	if [ "$meta_status" -ne 0 ] || [ "$gl_status" -ne 0 ]; then
+		return 1
+	fi
+	return 0
 }

@@ -350,12 +350,52 @@ else
 	printf '  note: --pre-commit-mode exited %s here; upstream check set may have changed\n' "$addr_rc"
 fi
 
-printf '\n16. Pi hook-guard rules\n'
-if node "${SECURITY_SRC}/tests/pi-hook-guard.test.mjs" >"${SANDBOX}/out16" 2>&1; then
-	ok "Pi bypass-guard rules pass ($(grep -c '  ok ' "${SANDBOX}/out16") cases)"
+# ===========================================================================
+printf '\n16. Commit-message credential detection (not weakened by the SECRETS carve-out)\n'
+# ===========================================================================
+# ferret-scan's SECRETS check is excluded from BLOCKING on commit metadata,
+# because its entropy heuristic fires on the opaque identifiers commit messages
+# legitimately carry. gitleaks covers credentials there instead. Prove that a
+# real token in a commit message still blocks, and that an ordinary
+# identifier-bearing message does not.
+R6="${SANDBOX}/repo6"
+new_repo "$R6"
+git -C "$R6" remote add origin "$REMOTE" 2>/dev/null || true
+printf 'export const m = 1\n' >"$R6/m.ts"
+git -C "$R6" add m.ts
+# A real credential pasted into the commit MESSAGE, not the diff.
+git -C "$R6" commit -q --no-verify -m "chore: rotate key
+
+AWS_ACCESS_KEY_ID=${SYNTH_AWS}
+"
+git -C "$R6" push -q origin main >"${SANDBOX}/out16a" 2>&1
+check nonzero $? "credential in a commit MESSAGE blocks the push"
+hook_ran "${SANDBOX}/out16a" "pre-push"
+grep -q 'aws-access-token' "${SANDBOX}/out16a" && ok "gitleaks caught it in the metadata" || no "expected gitleaks to flag the commit message"
+
+# An ordinary message full of opaque identifiers must NOT block.
+R7="${SANDBOX}/repo7"
+new_repo "$R7"
+git -C "$R7" remote add origin "${SANDBOX}/remote7.git" 2>/dev/null || true
+git init -q --bare "${SANDBOX}/remote7.git"
+printf 'export const n = 2\n' >"$R7/n.ts"
+git -C "$R7" add n.ts
+git -C "$R7" commit -q --no-verify -m "fix(deps): clear advisories
+
+GHSA-6pq8-jhm2-2vcw, GHSA-4mjr-xmp4-gh2g
+Session: https://example.invalid/code/session_014eK2ELHjvSpV1JkGXUMnx6
+Reverts commit 3705475e951018b3ad82f9b718c54f04dcde6076.
+"
+git -C "$R7" push -q origin main >"${SANDBOX}/out16b" 2>&1
+check zero $? "opaque identifiers in a commit message do NOT block"
+hook_ran "${SANDBOX}/out16b" "pre-push"
+
+printf '\n17. Pi hook-guard rules\n'
+if node "${SECURITY_SRC}/tests/pi-hook-guard.test.mjs" >"${SANDBOX}/out17" 2>&1; then
+	ok "Pi bypass-guard rules pass ($(grep -c '  ok ' "${SANDBOX}/out17") cases)"
 else
 	no "Pi bypass-guard rules failed"
-	sed 's/^/      /' "${SANDBOX}/out16" | grep -i fail | head
+	sed 's/^/      /' "${SANDBOX}/out17" | grep -i fail | head
 fi
 
 # ===========================================================================

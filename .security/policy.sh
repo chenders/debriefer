@@ -45,6 +45,27 @@ FERRET_BLOCKING_CHECKS="SSN,CREDIT_CARD,BANK_ACCOUNT,PASSPORT,DRIVERS_LICENSE,ME
 # a suppression file, so the findings stay visible.
 FERRET_ADVISORY_CHECKS="PERSON_NAME,EMAIL,IP_ADDRESS,VIN,SOCIAL_MEDIA,INTELLECTUAL_PROPERTY,CLOUD_RESOURCES,METADATA,OTP"
 
+# ---------------------------------------------------------------------------
+# Blocking checks for COMMIT AND TAG METADATA
+# ---------------------------------------------------------------------------
+# Same identifier checks as FERRET_BLOCKING_CHECKS, minus SECRETS.
+#
+# Commit messages are free text that legitimately carries opaque high-entropy
+# identifiers: commit SHAs, GHSA advisory ids, build and session URLs, issue
+# links. ferret-scan's SECRETS validator is entropy-based and matches those at
+# HIGH confidence -- it scored a `Claude-Session:` trailer URL at 95% while
+# scoring the same trailer MEDIUM in a neighbouring commit, so it blocks
+# INTERMITTENTLY on identical content. A checkpoint that randomly rejects
+# legitimate pushes is the fastest route to habitual --no-verify.
+#
+# This is NOT a reduction in credential coverage: scan_commit_metadata now
+# also runs gitleaks over the metadata, which uses ~180 precise credential
+# rules plus allowlists instead of an entropy guess. A real token in a commit
+# message is therefore still blocked -- asserted by .security/verify.sh.
+# Identifier checks (SSN, CREDIT_CARD, PASSPORT, MEDICAL_ID and the rest) stay
+# blocking here, because they do not false-positive on opaque identifiers.
+FERRET_METADATA_BLOCKING_CHECKS="SSN,CREDIT_CARD,BANK_ACCOUNT,PASSPORT,DRIVERS_LICENSE,MEDICAL_ID,DATE_OF_BIRTH,PHYSICAL_ADDRESS"
+
 # Confidence level at which a BLOCKING check fails the checkpoint.
 # ferret-scan emits HIGH / MEDIUM / LOW. MEDIUM and LOW blocking-check
 # findings are reported but do not block.

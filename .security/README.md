@@ -39,7 +39,7 @@ only**. Global git config is never modified.
 .security/scan-worktree.sh              # tracked files in the working tree
 .security/audit-history.sh              # all blobs on all refs + metadata
 .security/ci-scan.sh --base <rev> --head <rev>   # exactly what CI runs
-.security/verify.sh                     # 41-assertion self-test, isolated
+.security/verify.sh                     # 46-assertion self-test, isolated
 node .security/tests/pi-hook-guard.test.mjs      # Pi bypass-guard rules
 ```
 
@@ -236,6 +236,31 @@ core.hooksPath` writes, and attempts to delete or chmod `.githooks/`. A human
 can still bypass from their own shell; that decision is not delegated to an
 agent. See [`../AGENTS.md`](../AGENTS.md).
 
+### Commit messages need gitleaks, not entropy
+
+ferret-scan's `SECRETS` check is deliberately **not** in the blocking tier for
+commit and tag metadata (`FERRET_METADATA_BLOCKING_CHECKS` in
+[`policy.sh`](policy.sh)). Commit messages are free text that legitimately
+carries opaque high-entropy strings — commit SHAs, GHSA advisory ids, build
+and session URLs, issue links — and an entropy-based validator matches those
+at HIGH confidence.
+
+Measured: the same `Claude-Session:` trailer URL scored **MEDIUM** in one
+commit and **95% HIGH** in the next, because scoring is context-dependent. A
+checkpoint that rejects identical legitimate content intermittently is the
+fastest possible route to habitual `--no-verify`.
+
+This is **not** reduced credential coverage. `scan_commit_metadata` now runs
+**both** scanners over the metadata: ferret-scan for PII identifiers, and
+gitleaks for credentials using ~180 precise rules plus allowlists instead of
+an entropy guess. `verify.sh` case 16 asserts both directions — a real AWS key
+pasted into a commit message blocks, and a message full of GHSA ids, a session
+URL and a 40-char commit SHA does not.
+
+All the identifier checks (SSN, CREDIT_CARD, PASSPORT, MEDICAL_ID and the
+rest) remain blocking on metadata; they do not false-positive on opaque
+identifiers.
+
 ### A CI check can stop running without anyone noticing
 
 GitHub **disables an entire workflow after 60 days of repository inactivity if
@@ -306,7 +331,7 @@ clone, keep a backup outside the repository, and understand that:
   scan-worktree.sh     manual: tracked working-tree files
   audit-history.sh     manual: full history + metadata + current files
   ci-scan.sh           CI entry point (range + checked-out tree)
-  verify.sh            isolated 41-assertion self-test
+  verify.sh            isolated 46-assertion self-test
   tests/               Pi bypass-guard rule tests
 .githooks/
   pre-commit           staged (index) content
