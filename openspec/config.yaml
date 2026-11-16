@@ -1,0 +1,10 @@
+schema: spec-driven
+
+context: |
+  Debriefer is a TypeScript npm-workspaces monorepo (turbo, vitest, Node 22).
+  Changes go through PRs against a protected default branch; never commit to it.
+  Commits are scanned for PII and credentials by .githooks (core.hooksPath).
+  Do not bypass, disable or weaken those hooks. Domain knowledge lives in the
+  consumer, not the engine: synthesis prompts, output schemas and source
+  selection are caller-supplied. Early stopping counts distinct sourceType
+  families that meet both confidence and reliability thresholds.

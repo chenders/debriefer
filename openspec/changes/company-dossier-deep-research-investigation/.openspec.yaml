@@ -1,0 +1,7 @@
+schema: spec-driven
+created: 2026-11-16
+goal: Determine, from a reproducible company-dossier request and observable
+  execution evidence, where deep research fails across request validation,
+  context propagation, source selection and availability, query construction,
+  collection, synthesis and response mapping, without changing production
+  behavior or treating a successful HTTP response as proof of useful research.
